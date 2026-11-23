@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { initialState, type AppState } from '../../../../ui/src/contexts/appStateModel';
 import { SplitContentView } from '../../../../ui/src/components/Content/SplitContent';
+import { SplitPaneTabs } from '../../../../ui/src/components/Content/SplitPaneTabs';
 import { createSplitViewState } from '../../../../ui/src/split-view/paneState';
 import { beginSplitPointerDrag, resolveTabDropIndex } from '../../../../ui/src/split-view/splitPointerDrag';
 
@@ -67,6 +68,27 @@ function tabRect(left: number) {
 }
 
 describe('split view pointer drag', () => {
+  it('activates an unlabeled tab by keyboard and closes it only for a middle-button auxiliary click', () => {
+    const onActivate = vi.fn();
+    const onClose = vi.fn();
+    render(<SplitPaneTabs paneId="primary" paths={['C:\\docs\\guide.md']} activePath={null} labels={new Map()} onActivate={onActivate} onClose={onClose} />);
+    const tab = screen.getByRole('tab', { name: 'guide.md', selected: false });
+    fireEvent.keyDown(tab, { key: 'Tab' });
+    expect(onActivate).not.toHaveBeenCalled();
+    fireEvent.keyDown(tab, { key: ' ' });
+    expect(onActivate).toHaveBeenCalledExactlyOnceWith('primary', 'C:\\docs\\guide.md');
+    expect(fireEvent.mouseDown(tab, { button: 0 })).toBe(true);
+    expect(fireEvent.mouseDown(tab, { button: 1 })).toBe(false);
+    fireEvent(tab, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 2 }));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent(tab, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }));
+    expect(onClose).toHaveBeenCalledExactlyOnceWith('primary', 'C:\\docs\\guide.md');
+    const close = screen.getByRole('button', { name: 'Close tab guide.md' });
+    close.dispatchEvent(pointer('pointerdown', 0));
+    fireEvent.click(close);
+    expect(onClose).toHaveBeenCalledTimes(2);
+    expect(onActivate).toHaveBeenCalledOnce();
+  });
   it('reorders tabs within the same pane', () => {
     const onMoveTab = vi.fn();
     renderSplit(state(['/docs/a.md', '/docs/b.md', '/docs/c.md'], ['/docs/d.md']), { onMoveTab });

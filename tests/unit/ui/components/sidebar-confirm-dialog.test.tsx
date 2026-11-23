@@ -33,4 +33,34 @@ describe('SidebarConfirmDialog', () => {
     expect(error.mock.calls.filter((call) => String(call[0]).includes('same key'))).toEqual([]);
     error.mockRestore();
   });
+
+  it('traps focus, leaves secondary actions alone on Enter, and cancels only on backdrop clicks', () => {
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+    render(<SidebarConfirmDialog title="Clear pins" message="Sure?" cancelLabel="Cancel"
+      options={<button type="button">More information</button>} onCancel={onCancel} onConfirm={onConfirm} />);
+    const dialog = screen.getByRole('alertdialog');
+    const confirm = screen.getByRole('button', { name: 'Clear pins' });
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    actOn(confirm, 'Tab');
+    expect(screen.getByRole('button', { name: 'More information' })).toHaveFocus();
+    actOn(screen.getByRole('button', { name: 'More information' }), 'Tab', true);
+    expect(confirm).toHaveFocus();
+    actOn(cancel, 'Enter');
+    for (const modifier of ['shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'isComposing']) {
+      fireEvent.keyDown(confirm, { key: 'Enter', [modifier]: true });
+    }
+    expect(onConfirm).not.toHaveBeenCalled();
+    actOn(confirm, 'Enter');
+    expect(onConfirm).toHaveBeenCalledOnce();
+    fireEvent.mouseDown(dialog);
+    expect(onCancel).not.toHaveBeenCalled();
+    fireEvent.mouseDown(dialog.parentElement!);
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
 });
+
+function actOn(button: HTMLElement, key: string, shiftKey = false) {
+  button.focus();
+  fireEvent.keyDown(button, { key, shiftKey });
+}

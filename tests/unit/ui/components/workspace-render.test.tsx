@@ -190,6 +190,35 @@ describe('WorkspaceSelection', () => {
     expect(onBefore).toHaveBeenCalled();
   });
 
+  it('shows macOS guidance and forwards recent workspace alias changes from an embedded desktop tab', () => {
+    mockState.settings.language = '';
+    mockState.hostPlatform = 'macos';
+    mockState.recentWorkspaces = [{ path: '/docs', name: 'Docs' }];
+    vi.stubGlobal('electronAPI', {});
+    try {
+      const onWorkspaceAliasChange = vi.fn();
+      const { container } = render(React.createElement(WorkspaceSelection, {
+        embeddedInTabs: true, workspaceAliases: { '/docs': '  Project Notes  ' }, onWorkspaceAliasChange,
+      }));
+      expect(container.querySelector('.workspace-selection__guide--mac')).toHaveTextContent(/macOS/i);
+      expect(container.querySelector('.workspace-selection__recents-note')).toBeInTheDocument();
+      expect(screen.getByText('Project Notes')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+      expect(onWorkspaceAliasChange).toHaveBeenCalledWith('/docs', 'new-name', 'Docs');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('renders an empty workspace selection when a legacy host omits its recents list', () => {
+    delete mockState.recentWorkspaces;
+    render(React.createElement(WorkspaceSelection));
+    const dismiss = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    expect(document.dispatchEvent(dismiss)).toBe(true);
+    expect(screen.getByRole('button', { name: /open folder/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('recent-workspace-item')).not.toBeInTheDocument();
+  });
+
   it('renders recent workspaces when present', () => {
     mockState.recentWorkspaces = [
       { name: 'Project A', path: '/a', lastOpened: Date.now() },

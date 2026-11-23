@@ -4,6 +4,16 @@ import { RenderedDiffView } from '../../../../ui/src/components/History/Rendered
 import { SplitSourceDiffView } from '../../../../ui/src/components/History/SplitSourceDiffView';
 
 describe('SplitSourceDiffView', () => {
+  it('distinguishes removed rows from blank context lines and omits empty tooltips', () => {
+    render(<SplitSourceDiffView leftSource={'keep\nremove me\n\nlast'} rightSource={'keep\n\nlast'} language="en" />);
+    const removed = screen.getByText('remove me').closest('tr')!;
+    const empty = removed.querySelector('[data-diff-type="empty"]')!;
+    expect(empty.querySelector('code')).toBeEmptyDOMElement();
+    expect(empty).not.toHaveAttribute('data-hover-tooltip');
+    const blankCells = Array.from(document.querySelectorAll('[data-diff-type="context"]')).filter(cell => cell.textContent === ' ');
+    expect(blankCells).toHaveLength(2);
+    blankCells.forEach(cell => expect(cell).not.toHaveAttribute('data-hover-tooltip'));
+  });
   it('renders old lines on the left and new lines on the right with diff types', () => {
     render(<SplitSourceDiffView leftSource={'a\nb\nc'} rightSource={'a\nB\nX\nc'} leftLabel="abc1234 · old" rightLabel="def5678 · new" language="en" />);
 

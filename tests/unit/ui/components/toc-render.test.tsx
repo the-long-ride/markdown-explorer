@@ -1,8 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { TableOfContents } from '../../../../ui/src/components/TOC/TableOfContents';
+import { registerDocumentRoot } from '../../../../ui/src/document/activeDocumentRoot';
 
 let mockState: any;
 let contentScrollEl: HTMLDivElement;
@@ -118,6 +119,41 @@ describe('TableOfContents', () => {
       block: 'start',
     });
     getByIdSpy.mockRestore();
+  });
+
+  it('scopes duplicate heading IDs to the pane and skips missing headings when tracking the viewport', () => {
+    const outside = document.createElement('h2');
+    outside.id = 'first';
+    outside.scrollIntoView = vi.fn();
+    contentScrollEl.appendChild(outside);
+    const body = document.createElement('article');
+    body.innerHTML = '<h2 id="first">First</h2><h2 id="later">Later</h2>';
+    contentScrollEl.appendChild(body);
+    const first = body.querySelector<HTMLElement>('h2')!;
+    first.scrollIntoView = vi.fn();
+    vi.spyOn(first, 'getBoundingClientRect').mockReturnValue({ top: 50 } as DOMRect);
+    vi.spyOn(body.lastElementChild!, 'getBoundingClientRect').mockReturnValue({ top: 200 } as DOMRect);
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true })));
+    let update: FrameRequestCallback;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { update = callback; return 1; });
+    const unregister = registerDocumentRoot({ id: 'secondary', body, scroll: contentScrollEl, filePath: '/a.md', markdownSource: null });
+    try {
+      const { unmount } = render(<TableOfContents rootId="secondary" entries={[
+        { id: 'invalid', text: 'Missing', level: 1 },
+        { id: 'first', text: 'First in pane', level: 2 },
+        { id: 'later', text: 'Below viewport', level: 2 },
+      ]} />);
+      act(() => update!(0));
+      const firstButton = screen.getByRole('button', { name: 'First in pane' });
+      expect(firstButton).toHaveClass('is-active');
+      fireEvent.click(firstButton);
+      expect(first.scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' });
+      expect(outside.scrollIntoView).not.toHaveBeenCalled();
+      unmount();
+    } finally {
+      unregister();
+      vi.unstubAllGlobals();
+    }
   });
 
   it('expands parent sections on click', () => {

@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Sidebar } from '../../../../ui/src/components/Sidebar/Sidebar';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
+import { WORKSPACE_ENTRY_TIMEOUT_MS } from '../../../../ui/src/workspace/workspaceEntriesClient';
 
 const t = getTranslations('en');
 const WS = 'C:\\ws';
@@ -20,6 +21,9 @@ const emptyOnlyTree = { name: 'ws', path: WS, files: [], children: [{ name: 'voi
 const spies = {
   navigate: vi.fn(), updateSettings: vi.fn(), closeContentTab: vi.fn(), discardDocumentChanges: vi.fn(), setDocumentEditMode: vi.fn(), dispatch: vi.fn(),
 };
+const openSnapshotFile = vi.fn();
+const searchRevision = vi.fn();
+let snapshot: { state: { activePath: string | null }; repositoryView: { mode: 'live' | 'revision'; oid?: string }; revisionWorkspace: { tree: typeof tree; fileList: ReturnType<typeof file>[] } | null };
 let mockState: any;
 const posted: any[] = [];
 const listeners = new Set<(message: any) => void>();
@@ -32,9 +36,7 @@ const emit = (message: unknown) => act(() => { for (const listener of [...listen
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({ usePlatform: () => bridge }));
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({ useAppState: () => ({ state: mockState, ...spies }) }));
 vi.mock('../../../../ui/src/contexts/RepositorySnapshotContext', () => ({
-  useRepositorySnapshot: () => ({
-    state: { activePath: null }, repositoryView: { mode: 'live' }, revisionWorkspace: null, openSnapshotFile: vi.fn(), searchRevision: vi.fn(),
-  }),
+  useRepositorySnapshot: () => ({ ...snapshot, openSnapshotFile, searchRevision }),
 }));
 vi.mock('../../../../ui/src/components/Sidebar/SidebarSearch', () => ({ SidebarSearch: () => <div data-testid="sidebar-search" /> }));
 
@@ -57,6 +59,9 @@ const onNotice = (event: Event) => notices.push((event as CustomEvent).detail);
 
 beforeEach(() => {
   mockState = makeState();
+  snapshot = { state: { activePath: null }, repositoryView: { mode: 'live' }, revisionWorkspace: null };
+  openSnapshotFile.mockClear();
+  searchRevision.mockClear();
   posted.length = 0;
   notices.length = 0;
   Object.values(spies).forEach((spy) => spy.mockClear());
@@ -70,6 +75,46 @@ afterEach(() => {
 });
 
 describe('Sidebar file operations', () => {
+  it('shows a read-only revision tree and opens snapshot files rather than live paths', () => {
+    const old = file('Old.md');
+    snapshot = {
+      state: { activePath: old.relativePath },
+      repositoryView: { mode: 'revision', oid: 'abc123' },
+      revisionWorkspace: { tree: { ...tree, files: [old], children: [] }, fileList: [old] },
+    };
+    const { rerender } = render(<Sidebar />);
+    expect(row('Old.md')).toBeInTheDocument();
+    expect(screen.queryByText('Readme.md')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t.sidebar.newFile })).not.toBeInTheDocument();
+    fireEvent.click(row('Old.md'));
+    expect(openSnapshotFile).toHaveBeenCalledExactlyOnceWith('Old.md');
+    expect(spies.navigate).not.toHaveBeenCalled();
+    fireEvent.contextMenu(row('Old.md'));
+    fireEvent.keyDown(row('Old.md'), { key: 'F2' });
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: t.sidebar.renameFile })).not.toBeInTheDocument();
+
+    snapshot = { ...snapshot, revisionWorkspace: null };
+    rerender(<Sidebar />);
+    expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+    snapshot = { ...snapshot, repositoryView: { mode: 'live' } };
+    rerender(<Sidebar />);
+    expect(row('Readme.md')).toBeInTheDocument();
+    expect(btn(t.sidebar.newFile)).toBeInTheDocument();
+  });
+
+  it('ignores editing hotkeys with modifiers or an IME composition', () => {
+    render(<Sidebar />);
+    const target = row('Readme.md');
+    for (const modifier of ['ctrlKey', 'altKey', 'metaKey', 'shiftKey', 'isComposing']) {
+      expect(fireEvent.keyDown(target, { key: 'F2', [modifier]: true })).toBe(true);
+      expect(fireEvent.keyDown(target, { key: 'Delete', [modifier]: true })).toBe(true);
+    }
+    expect(textbox(t.sidebar.renameFile)).toBeNull();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(fireEvent.keyDown(target, { key: 'F2' })).toBe(false);
+    expect(textbox(t.sidebar.renameFile)).toBeInTheDocument();
+  });
   it('renders create and select buttons before the sort group, and hides them without a workspace', () => {
     render(<Sidebar />);
     const sort = btn(t.sidebar.sortFiles);
@@ -358,6 +403,79 @@ it('restores row keyboard focus after cancelling rename',async()=>{
   fireEvent.keyDown(screen.getByRole('textbox',{name:'Rename file'}),{key:'Escape'});
   await waitFor(()=>expect(document.activeElement).toBe(row('Readme.md')));
 });
+it('does not retain a stale file focus after the workspace file list removes the row', () => {
+  const { rerender } = render(<Sidebar />);
+  fireEvent.click(row('Readme.md'));
+  expect(row('Readme.md')).toHaveClass('is-entry-focused');
+  mockState = makeState({ tree: emptyOnlyTree, fileList: [] });
+  rerender(<Sidebar />);
+  fireEvent.keyDown(treeEl(), { key: 'F2' });
+  fireEvent.keyDown(treeEl(), { key: 'Delete' });
+  expect(screen.queryByRole('textbox', { name: t.sidebar.renameFile })).not.toBeInTheDocument();
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(posted).toHaveLength(0);
+});
+
+it('cancels a delete from the keyboard and restores focus to the selected entry', async () => {
+  render(<Sidebar />);
+  fireEvent.click(row('docs'));
+  fireEvent.keyDown(row('docs'), { key: 'Delete' });
+  expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: t.bookmarks.cancel }));
+  await waitFor(() => expect(row('docs')).toHaveFocus());
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(posted.some((message) => message.command === 'deleteWorkspaceEntries')).toBe(false);
+});
+
+it('restores focus to the renamed POSIX row after the tree updates', async () => {
+  const before = { ...readme, fsPath: '/ws/Readme.md' };
+  const after = { ...readme, fsPath: '/ws/Guide.md', relativePath: 'Guide.md', fileName: 'Guide.md', title: 'Guide.md', parts: ['Guide.md'] };
+  mockState = makeState({ workspacePath: '/ws', hostPlatform: 'linux', fileList: [before], tree: { ...tree, path: '/ws', files: [before], children: [] } });
+  const { rerender } = render(<Sidebar />);
+  fireEvent.keyDown(row('Readme.md'), { key: 'F2' });
+  const input = screen.getByRole('textbox', { name: t.sidebar.renameFile });
+  fireEvent.change(input, { target: { value: 'Guide.md' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const request = posted.find(message => message.command === 'renameWorkspaceEntry');
+  mockState = { ...mockState, fileList: [after], tree: { ...mockState.tree, files: [after] } };
+  emit({ command: 'renameWorkspaceEntryResult', requestId: request.requestId, ok: true, path: 'Guide.md', oldPath: 'Readme.md', kind: 'file' });
+  await act(async () => rerender(<Sidebar />));
+  await waitFor(() => expect(row('Guide.md')).toHaveFocus());
+  expect(spies.dispatch).toHaveBeenCalledWith(expect.objectContaining({ oldAbsolutePath: before.fsPath, newAbsolutePath: after.fsPath }));
+});
+
+it('clears stale folder focus when the folder disappears without leaving the workspace', () => {
+  const { rerender } = render(<Sidebar />);
+  fireEvent.click(row('docs'));
+  expect(row('docs')).toHaveClass('is-entry-focused');
+  mockState = makeState({ tree: { ...tree, children: [] }, fileList: [readme] });
+  rerender(<Sidebar />);
+  expect(fireEvent.keyDown(treeEl(), { key: 'F2' })).toBe(true);
+  expect(fireEvent.keyDown(treeEl(), { key: 'Delete' })).toBe(true);
+  expect(screen.queryByRole('textbox', { name: t.sidebar.renameFolder })).not.toBeInTheDocument();
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+});
+
+it('keeps the rename pending beyond the initial timeout until the host replies', async () => {
+  vi.useFakeTimers();
+  try {
+    render(<Sidebar />);
+    fireEvent.click(row('Readme.md'));
+    fireEvent.keyDown(row('Readme.md'), { key: 'F2' });
+    const input = screen.getByRole('textbox', { name: t.sidebar.renameFile });
+    fireEvent.change(input, { target: { value: 'Guide.md' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await act(async () => { await vi.advanceTimersByTimeAsync(WORKSPACE_ENTRY_TIMEOUT_MS); });
+    expect(input).toHaveAttribute('aria-busy', 'true');
+    expect(spies.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'RENAME_WORKSPACE_ENTRY' }));
+    const request = posted.find(message => message.command === 'renameWorkspaceEntry');
+    emit({ command: 'renameWorkspaceEntryResult', requestId: request.requestId, ok: false, error: 'Host rejected the rename', reason: 'failed', kind: 'file' });
+    expect(input).not.toHaveAttribute('aria-busy', 'true');
+    expect(notices).toContainEqual(expect.objectContaining({ message: 'Host rejected the rename' }));
+  } finally {
+    vi.useRealTimers();
+  }
+});
 it('restores folder focus and keeps keyboard actions after unchanged-name Enter',async()=>{
   render(<Sidebar />);fireEvent.click(row('docs'));fireEvent.keyDown(row('docs'),{key:'F2'});
   fireEvent.keyDown(screen.getByRole('textbox',{name:'Rename folder'}),{key:'Escape'});
@@ -366,4 +484,61 @@ it('restores folder focus and keeps keyboard actions after unchanged-name Enter'
   await waitFor(()=>expect(document.activeElement).toBe(row('docs')));
   fireEvent.keyDown(row('docs'),{key:'Delete'});expect(screen.getByRole('alertdialog')).toBeTruthy();
   expect(posted.some(m=>m.command==='renameWorkspaceEntry')).toBe(false);
+});
+
+it('renames an empty folder using the workspace path and handles an unnamed host failure', async () => {
+  mockState = makeState({ tree: emptyOnlyTree, fileList: [] });
+  render(<Sidebar />);
+  fireEvent.keyDown(treeEl(), { key: 'F2' });
+  expect(textbox(t.sidebar.renameFolder)).toBeNull();
+  fireEvent.keyDown(row('void'), { key: 'F2' });
+  const input = screen.getByRole('textbox', { name: t.sidebar.renameFolder });
+  fireEvent.change(input, { target: { value: 'empty' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const first = posted.find((message) => message.command === 'renameWorkspaceEntry');
+  expect(first).toMatchObject({ path: 'void', name: 'empty', kind: 'folder' });
+  emit({ command: 'renameWorkspaceEntryResult', requestId: first.requestId, ok: false });
+  await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'));
+  expect(notices).toHaveLength(0);
+
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const retry = posted.filter((message) => message.command === 'renameWorkspaceEntry').at(-1);
+  emit({ command: 'renameWorkspaceEntryResult', requestId: retry.requestId, ok: true, path: 'empty' });
+  await waitFor(() => expect(spies.dispatch).toHaveBeenCalledWith(expect.objectContaining({
+    type: 'RENAME_WORKSPACE_ENTRY', oldAbsolutePath: 'C:/ws/void', newAbsolutePath: 'C:/ws/empty',
+  })));
+  expect(input).not.toBeInTheDocument();
+});
+
+it('validates folder renames before posting, then allows retry after a host conflict', async () => {
+  render(<Sidebar />);
+  fireEvent.keyDown(row('docs'), { key: 'F2', shiftKey: true });
+  expect(textbox(t.sidebar.renameFolder)).toBeNull();
+  fireEvent.keyDown(row('docs'), { key: 'F2' });
+  const input = screen.getByRole('textbox', { name: t.sidebar.renameFolder });
+  fireEvent.change(input, { target: { value: 'invalid/name' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(input).toHaveAttribute('aria-invalid', 'true');
+  expect(posted.some((message) => message.command === 'renameWorkspaceEntry')).toBe(false);
+  fireEvent.change(input, { target: { value: 'manual' } });
+  expect(input).toHaveAttribute('aria-invalid', 'false');
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const first = posted.find((message) => message.command === 'renameWorkspaceEntry');
+  expect(first).toMatchObject({ path: 'docs', name: 'manual', kind: 'folder' });
+  expect(input).toHaveAttribute('aria-busy', 'true');
+  fireEvent.blur(input);
+  fireEvent.keyDown(input, { key: 'Escape' });
+  expect(input).toBeInTheDocument();
+
+  emit({ command: 'renameWorkspaceEntryResult', requestId: first.requestId, ok: false, reason: 'exists', error: 'A folder with this name already exists' });
+  await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'));
+  expect(input).toHaveAttribute('aria-busy', 'false');
+  expect(notices).toContainEqual(expect.objectContaining({ message: 'A folder with this name already exists', tone: 'error' }));
+  fireEvent.change(input, { target: { value: 'guides' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const retry = posted.filter((message) => message.command === 'renameWorkspaceEntry').at(-1);
+  expect(retry.requestId).not.toBe(first.requestId);
+  emit({ command: 'renameWorkspaceEntryResult', requestId: retry.requestId, ok: true, path: 'guides', oldPath: 'docs', kind: 'folder' });
+  await waitFor(() => expect(input).not.toBeInTheDocument());
+  expect(spies.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'RENAME_WORKSPACE_ENTRY', oldPath: 'docs', newPath: 'guides' }));
 });

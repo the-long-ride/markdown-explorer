@@ -436,6 +436,29 @@ describe('Tour Subsystem', () => {
       expect(screen.getByText('Step 1 of 5')).toBeTruthy();
     });
 
+    it('leaves navigation keys to a select, textarea, and editable target', () => {
+      const { container } = render(
+        <div>
+          <select aria-label="Choose"><option>One</option></select>
+          <textarea aria-label="Edit" />
+          <div contentEditable data-testid="tour-editable" />
+          <TourGuideOverlay />
+        </div>
+      );
+      act(() => { requestStartUserTour(); });
+      expect(screen.getByText('Step 1 of 5')).toBeInTheDocument();
+      fireEvent.keyDown(container, { key: 'ArrowLeft' });
+      expect(screen.getByText('Step 1 of 5')).toBeInTheDocument();
+      fireEvent.keyDown(window, { key: 'ArrowRight' });
+      const editable = screen.getByTestId('tour-editable');
+      Object.defineProperty(editable, 'isContentEditable', { value: true });
+      for (const target of [screen.getByRole('combobox'), screen.getByRole('textbox'), editable]) {
+        expect(fireEvent.keyDown(target, { key: 'ArrowLeft' })).toBe(true);
+        expect(fireEvent.keyDown(target, { key: 'ArrowRight' })).toBe(true);
+        expect(screen.getByText('Step 2 of 5')).toBeInTheDocument();
+      }
+    });
+
     it('registers keydown listener in capture phase so bubbles cannot intercept', () => {
       const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
       render(<TourGuideOverlay />);

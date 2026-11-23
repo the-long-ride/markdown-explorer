@@ -182,7 +182,6 @@ export function SplitContent({ onImageClick = NOOP_IMAGE_CLICK }: { onImageClick
     openInSplit,
     moveSplitTab,
     swapSplitPanes,
-    moveToOtherPane,
     guardUnsavedChanges = (_filePaths: string[], commit: () => void) => commit(),
     setContentTabHtmlPreview,
   } = useAppState();
@@ -293,10 +292,6 @@ export function SplitContent({ onImageClick = NOOP_IMAGE_CLICK }: { onImageClick
         closeSplitView();
         break;
 
-      case 'moveToOtherPane':
-        moveToOtherPane(filePath);
-        break;
-
       case 'closeThisTab':
         requestCloseSplitTabs([filePath], () => closeTab(paneId, filePath));
         break;
@@ -347,7 +342,6 @@ export function SplitContent({ onImageClick = NOOP_IMAGE_CLICK }: { onImageClick
     closeTab,
     dispatch,
     guardUnsavedChanges,
-    moveToOtherPane,
     openInSplit,
     requestCloseSplitTabs,
     swapSplitPanes,

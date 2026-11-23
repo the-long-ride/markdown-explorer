@@ -2,6 +2,10 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
 import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
+import { getExportScopeTranslations } from '../../../../ui/src/contexts/exportScopeTranslations';
+import { SCOPE_NAVIGATION_REQUEST_EVENT, SCOPE_NAVIGATION_STATE_EVENT } from '../../../../ui/src/components/Modal/scopeHistory';
+import { extractScopeTocEntries, ScopeViewToc } from '../../../../ui/src/components/Modal/ScopeViewToc';
+import type { DocumentSnapshot } from '../../../../ui/src/export/documentSnapshot';
 
 const mocks = vi.hoisted(() => ({
   loadDocumentSnapshot: vi.fn(),
@@ -42,6 +46,7 @@ vi.mock('../../../../ui/src/export/documentSnapshot', () => ({
     if (!link.resolved) return null;
     const target = decodeURIComponent(link.resolved)
       .replace(/^file:\/\//, '')
+      .replace(/^\/(?=[a-z]:\/)/i, '')
       .replace(/[?#].*$/, '')
       .replace(/\\/g, '/');
     return candidates.find((candidate) => candidate.fsPath.replace(/\\/g, '/') === target) ?? null;
@@ -93,6 +98,83 @@ function snapshot(target: MdFile) {
   };
 }
 
+describe('ScopeViewToc', () => {
+  it('updates the visible heading on scroll and jumps with reduced motion', () => {
+    const body = document.createElement('div');
+    body.innerHTML = '<h1 id="first">First heading</h1><h2 id="second">Second heading</h2>';
+    const second = body.querySelector('h2')!;
+    second.scrollIntoView = vi.fn();
+    second.getBoundingClientRect = () => new DOMRect(0, 200, 10, 20);
+    const scroll = document.createElement('div');
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.set(++id, callback); return id; });
+    vi.stubGlobal('cancelAnimationFrame', (frame: number) => { frames.delete(frame); });
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    const flush = () => act(() => {
+      for (const [frame, callback] of frames) { frames.delete(frame); callback(0); }
+    });
+    try {
+      const { unmount } = render(<ScopeViewToc
+        entries={[{ id: 'first', text: 'First', level: 1 }, { id: 'missing', text: 'Missing', level: 2 }, { id: 'second', text: 'Second', level: 2 }]}
+        documentKey="scroll" emptyLabel="No headings" scrollRef={{ current: scroll }} bodyRef={{ current: body }}
+      />);
+      flush();
+      expect(screen.getByRole('button', { name: 'First' })).toHaveAttribute('aria-current', 'location');
+      second.getBoundingClientRect = () => new DOMRect(0, 50, 10, 20);
+      fireEvent.scroll(scroll);
+      fireEvent.scroll(scroll);
+      expect(frames.size).toBe(1);
+      flush();
+      expect(screen.getByRole('button', { name: 'Second' })).toHaveAttribute('aria-current', 'location');
+      fireEvent.click(screen.getByRole('button', { name: 'Second' }));
+      expect(second.scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'auto' });
+      unmount();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+  it('uses supplied entries, or derives nonempty headings and stable fallback identifiers from older snapshots', () => {
+    const legacy: DocumentSnapshot = { file: file(0), markdownSource: '', html: '' };
+    const body = document.createElement('div');
+    body.innerHTML = '<h1 id="intro">Intro</h1><h2> </h2><section class="mdn-section" id="parent"><h3> Nested </h3></section><h4>Legacy</h4>';
+    const entries = [
+      { id: 'intro', text: 'Intro', level: 1 },
+      { id: 'parent', text: 'Nested', level: 3 },
+      { id: 'scope-toc-heading-3', text: 'Legacy', level: 4 },
+    ];
+    expect(extractScopeTocEntries(null, body)).toEqual([]);
+    expect(extractScopeTocEntries(legacy, null)).toEqual([]);
+    expect(extractScopeTocEntries(legacy, body)).toEqual(entries);
+    expect(extractScopeTocEntries({ ...legacy, toc: [] }, body)).toEqual([]);
+    expect(extractScopeTocEntries({ ...legacy, toc: entries }, null)).toBe(entries);
+  });
+
+  it('expands nested sections, scrolls to legacy headings, and resets when the document has no headings', () => {
+    const body = document.createElement('div');
+    body.innerHTML = '<h1 id="first">First</h1><section class="mdn-section" data-expanded="false"><section class="mdn-section" data-expanded="false"><h2>Second</h2></section></section>';
+    const second = body.querySelector('h2')!;
+    second.scrollIntoView = vi.fn();
+    const bodyRef = { current: body };
+    const scrollRef = { current: null };
+    const entries = [
+      { id: 'first', text: 'First', level: 1 },
+      { id: 'scope-toc-heading-8', text: 'Missing', level: 2 },
+      { id: 'scope-toc-heading-1', text: 'Second', level: 2 },
+    ];
+    const props = { bodyRef, scrollRef, emptyLabel: 'No sections' };
+    const { rerender } = render(<ScopeViewToc {...props} documentKey="first" entries={entries} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Missing' }));
+    expect(screen.getByRole('button', { name: 'First' })).toHaveAttribute('aria-current', 'location');
+    fireEvent.click(screen.getByRole('button', { name: 'Second' }));
+    expect(screen.getByRole('button', { name: 'Second' })).toHaveAttribute('aria-current', 'location');
+    expect(second.scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' });
+    expect(body.querySelectorAll('[data-expanded="true"]')).toHaveLength(2);
+    rerender(<ScopeViewToc {...props} documentKey="empty" entries={[]} />);
+    expect(screen.getByText('No sections')).toBeInTheDocument();
+  });
+});
+
 describe('ScopeViewModal', () => {
   beforeEach(() => {
     mocks.loadDocumentSnapshot.mockReset();
@@ -112,6 +194,96 @@ describe('ScopeViewModal', () => {
       switchView: mocks.switchView,
       closeViewDropdown: mocks.closeViewDropdown,
     };
+  });
+
+  it('ignores a stale initial read, shows errors, and resets to a closed dialog when the initial file is removed', async () => {
+    let complete: (value: ReturnType<typeof snapshot>) => void;
+    mocks.loadDocumentSnapshot
+      .mockReturnValueOnce(new Promise((resolve) => { complete = resolve; }))
+      .mockRejectedValueOnce(new Error('Document no longer exists'));
+    const props = { files, onClose: vi.fn() };
+    const { rerender } = render(<ScopeViewModal {...props} initialFile={files[0]} />);
+    const english = getExportScopeTranslations('en').scopeView;
+    expect(screen.getByText(english.loading)).toBeInTheDocument();
+    rerender(<ScopeViewModal {...props} initialFile={files[1]} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Document no longer exists');
+    await act(async () => complete!(snapshot(files[0])));
+    expect(screen.queryByRole('heading', { name: files[0].title })).not.toBeInTheDocument();
+    rerender(<ScopeViewModal {...props} initialFile={null} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    rerender(<ScopeViewModal {...props} initialFile={files[2]} />);
+    expect(await screen.findByRole('heading', { name: files[2].title })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('uses the English close label and generic error for a non-Error initial failure', async () => {
+    mocks.appState.settings.language = '';
+    mocks.loadDocumentSnapshot.mockRejectedValueOnce('Host unavailable');
+    const onClose = vi.fn();
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={onClose} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent(getExportScopeTranslations('en').scopeView.unableOpen);
+    fireEvent.click(screen.getByRole('button', { name: 'Close scope view' }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    [new Error('Nested document unavailable'), 'Nested document unavailable'],
+    ['Host unavailable', getExportScopeTranslations('en').scopeView.unableOpen],
+  ])('keeps the current scope open when a nested read fails (%s)', async (reason, message) => {
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={vi.fn()} />);
+    expect(await screen.findByRole('heading', { name: files[0].title })).toBeVisible();
+    mocks.loadDocumentSnapshot.mockRejectedValueOnce(reason);
+    fireEvent.click(screen.getByRole('link', { name: 'Open 2' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(screen.getByRole('heading', { name: files[0].title })).toBeVisible();
+  });
+
+  it('publishes history availability, supports navigation requests, and opens the scoped file only on command', async () => {
+    const listener = vi.fn();
+    const onClose = vi.fn();
+    window.addEventListener(SCOPE_NAVIGATION_STATE_EVENT, listener);
+    try {
+      const { unmount } = render(<ScopeViewModal files={files} initialFile={files[0]} onClose={onClose} />);
+      const english = getExportScopeTranslations('en').scopeView;
+      fireEvent.click(await screen.findByRole('link', { name: 'Open 2' }));
+      expect(await screen.findByRole('heading', { name: files[1].title })).toBeInTheDocument();
+      expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { active: true, canPrevious: true, canNext: false } }));
+      act(() => window.dispatchEvent(new CustomEvent(SCOPE_NAVIGATION_REQUEST_EVENT, { detail: { direction: 'previous' } })));
+      expect(screen.getByRole('heading', { name: files[0].title })).toBeInTheDocument();
+      act(() => window.dispatchEvent(new CustomEvent(SCOPE_NAVIGATION_REQUEST_EVENT, { detail: { direction: 'next' } })));
+      expect(mocks.postMessage).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: english.openFile }));
+      expect(mocks.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'navigate', path: files[1].fsPath });
+      expect(onClose).toHaveBeenCalledOnce();
+      unmount();
+      expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { active: false, canPrevious: false, canNext: false } }));
+    } finally {
+      window.removeEventListener(SCOPE_NAVIGATION_STATE_EVENT, listener);
+    }
+  });
+
+  it('allows nested overlays to handle Escape before closing the scope', async () => {
+    const onClose = vi.fn();
+    render(<ScopeViewModal files={files} initialFile={files[0]} onClose={onClose} />);
+    const link = await screen.findByRole('link', { name: 'Open 2' });
+    fireEvent.contextMenu(link);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    const media = document.createElement('div');
+    media.id = 'mediaModal';
+    document.body.append(media);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+    media.remove();
+    const dropdown = document.createElement('div');
+    dropdown.className = 'mdn-filter-dropdown';
+    document.body.append(dropdown);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(dropdown).not.toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('renders ten depth segments and enlarges the active segment marker', async () => {
@@ -266,7 +438,7 @@ describe('ScopeViewModal', () => {
     mocks.loadDocumentSnapshot.mockResolvedValue({
       file: files[0],
       markdownSource: '# Doc 1',
-      html: '<div class="mdn-table-wrap" id="sales-wrap"><div class="mdn-table-view-dropdown" id="sales-view-dropdown"><button class="mdn-table-view-select">Area Chart</button><div class="mdn-table-view-menu"><button class="mdn-table-view-menu__option" data-value="line">Line Chart</button></div></div></div>',
+      html: '<div class="mdn-table-wrap" id="sales-wrap"><div class="mdn-table-view-dropdown" id="sales-view-dropdown"><button class="mdn-table-view-select">Area Chart</button><div class="mdn-table-view-menu"><button class="mdn-table-view-menu__option" data-value="line">Line Chart</button><button class="mdn-table-view-menu__option">Missing view</button></div></div><div class="mdn-table-view-dropdown"><button class="mdn-table-view-select">Missing table</button></div></div>',
     });
     render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Area Chart');
@@ -278,6 +450,10 @@ describe('ScopeViewModal', () => {
     fireEvent.click(screen.getByText('Line Chart'));
     expect(mocks.switchView).toHaveBeenCalledWith('sales', 'line');
     expect(mocks.closeViewDropdown).toHaveBeenCalledWith('sales');
+    fireEvent.click(screen.getByText('Missing view'));
+    fireEvent.click(screen.getByText('Missing table'));
+    expect(mocks.switchView).toHaveBeenCalledOnce();
+    expect(mocks.toggleViewDropdown).toHaveBeenCalledOnce();
   });
 
   it('opens Mermaid diagrams in the shared media viewer from Scope View', async () => {
@@ -295,6 +471,72 @@ describe('ScopeViewModal', () => {
     fireEvent.click(screen.getByLabelText('Scope diagram'));
     expect(onMediaClick).toHaveBeenCalledTimes(1);
     expect(onMediaClick).toHaveBeenCalledWith(baseElement.querySelector('.mdn-mermaid-wrap'));
+  });
+
+  it('opens legacy Mermaid and standalone SVG media without requiring a wrapper', async () => {
+    const onMediaClick = vi.fn();
+    mocks.loadDocumentSnapshot.mockResolvedValue({
+      ...snapshot(files[0]),
+      html: '<div class="mermaid"><svg aria-label="Legacy diagram"></svg></div><svg aria-label="Standalone diagram"></svg>',
+    });
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={vi.fn()} onMediaClick={onMediaClick} />);
+    const legacy = await screen.findByLabelText('Legacy diagram');
+    const standalone = screen.getByLabelText('Standalone diagram');
+    fireEvent.click(legacy);
+    fireEvent.click(standalone);
+    expect(onMediaClick.mock.calls).toEqual([[legacy.parentElement], [standalone]]);
+  });
+
+  it('leaves unrelated link schemes to the browser', async () => {
+    const html = '<a href="mailto:docs@example.test">Mail</a>';
+    mocks.loadDocumentSnapshot.mockResolvedValue({ ...snapshot(files[0]), html, toc: [] });
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={vi.fn()} />);
+    expect(fireEvent.click(await screen.findByRole('link', { name: 'Mail' }))).toBe(true);
+    expect(mocks.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('handles external, fragment, missing workspace, and image links without replacing the scope', async () => {
+    const onMediaClick = vi.fn();
+    const onClose = vi.fn();
+    const html = '<a href="https://example.test/docs">External</a><a href="#scope%2Dheading">Jump</a><a href="missing.md">Missing</a><h2 id="scope-heading">Section</h2><img alt="Scope image" src="image.png">';
+    mocks.loadDocumentSnapshot.mockResolvedValue({ ...snapshot(files[0]), html, toc: [] });
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={onClose} onMediaClick={onMediaClick} />);
+    fireEvent.click(await screen.findByRole('link', { name: 'External' }));
+    expect(mocks.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'openExternal', url: 'https://example.test/docs' });
+    const section = screen.getByRole('heading', { name: 'Section' });
+    section.scrollIntoView = vi.fn();
+    fireEvent.click(screen.getByRole('link', { name: 'Jump' }));
+    expect(section.scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+    const missing = screen.getByRole('link', { name: 'Missing' });
+    fireEvent.contextMenu(missing);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    fireEvent.click(missing);
+    expect(screen.getByRole('status')).toHaveTextContent(getExportScopeTranslations('en').scopeView.outsideWorkspace);
+    const image = screen.getByRole('img', { name: 'Scope image' });
+    fireEvent.click(image);
+    expect(onMediaClick).toHaveBeenCalledExactlyOnceWith(image);
+    expect(mocks.loadDocumentSnapshot).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ['Host unavailable', getExportScopeTranslations('en').scopeView.unableOpen],
+    [new Error('Document moved'), 'Document moved'],
+  ])('keeps the current scope and clears loading when a nested document fails with %s', async (reason, message) => {
+    let fail: (reason: unknown) => void;
+    mocks.loadDocumentSnapshot
+      .mockResolvedValueOnce(snapshot(files[0]))
+      .mockReturnValueOnce(new Promise((_, reject) => { fail = reject; }));
+    const { baseElement } = render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
+    fireEvent.click(await screen.findByRole('link', { name: 'Open 2' }));
+    expect(baseElement.querySelector('.scope-view__loading-overlay')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: files[0].title })).toBeInTheDocument();
+    await act(async () => fail!(reason));
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+    expect(baseElement.querySelector('.scope-view__loading-overlay')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: files[0].title })).toBeInTheDocument();
   });
 
   it('rerenders Mermaid when Scope View appearance changes', async () => {
@@ -330,6 +572,26 @@ describe('ScopeViewModal', () => {
       expect(baseElement.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(1);
     } finally {
       window.removeEventListener(ACTION_NOTICE_EVENT, onNotice);
+    }
+  });
+
+  it('falls back to English with an unknown locale and recognizes a Windows self-link despite a case change', async () => {
+    mocks.appState.settings.language = 'legacy';
+    const active = { ...files[0], fsPath: 'C:/Docs/1.md' };
+    const same = { ...active, fsPath: 'c:/docs/1.md' };
+    mocks.loadDocumentSnapshot.mockResolvedValue({ ...snapshot(active), html: '<a href="file:///c:/docs/1.md">Same file</a>' });
+    const notice = vi.fn();
+    window.addEventListener(ACTION_NOTICE_EVENT, notice);
+    try {
+      render(<ScopeViewModal initialFile={active} files={[same]} onClose={vi.fn()} />);
+      expect(screen.getByRole('button', { name: 'Close scope view' })).toBeVisible();
+      fireEvent.click(await screen.findByRole('link', { name: 'Same file' }));
+      expect(mocks.loadDocumentSnapshot).toHaveBeenCalledOnce();
+      expect(notice).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+        detail: expect.objectContaining({ message: 'You are currently viewing this document.' }),
+      }));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, notice);
     }
   });
 

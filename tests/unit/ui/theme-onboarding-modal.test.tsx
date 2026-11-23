@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { ThemeOnboardingModal } from '../../../ui/src/components/Modal/ThemeOnboardingModal';
 import { createInitialState, type AppState } from '../../../ui/src/contexts/appStateModel';
+import { getTranslations } from '../../../ui/src/contexts/translations';
 
 const mockMethods = {
   setTheme: vi.fn(),
@@ -37,6 +38,60 @@ describe('ThemeOnboardingModal', () => {
     fireEvent.click(trigger);
     const options = screen.getAllByRole('option');
     expect(options.length).toBe(9);
+  });
+
+  test('selects a locale and dismisses only the language menu on outside click or its first Escape', () => {
+    const t = getTranslations('en');
+    const { onComplete } = renderModal();
+    const trigger = screen.getByRole('button', { name: t.onboarding.language });
+    fireEvent.click(trigger);
+    expect(screen.getByRole('option', { name: 'English' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.mouseDown(trigger);
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(fireEvent.keyDown(document, { key: 'Enter' })).toBe(true);
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(fireEvent.keyDown(document, { key: 'Escape' })).toBe(false);
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(onComplete).not.toHaveBeenCalled();
+
+    fireEvent.click(trigger);
+    fireEvent.mouseDown(screen.getByRole('heading', { name: t.onboarding.title }));
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole('option', { name: 'Français' }));
+    expect(mockMethods.updateSettings).toHaveBeenCalledExactlyOnceWith({ language: 'fr' });
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(fireEvent.keyDown(document, { key: 'Escape' })).toBe(false);
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  test('changes appearance and desktop view on Tauri without treating modified Enter as completion', () => {
+    const t = getTranslations('en');
+    currentState = { ...currentState, appRuntime: 'tauri', settings: { ...currentState.settings, desktopViewMode: 'tabs' } };
+    const { onComplete, onOpenSettings, rerender } = renderModal();
+    const layout = within(screen.getByRole('radiogroup', { name: t.onboarding.viewMode }));
+    expect(layout.getByRole('button', { name: t.tabs })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(t.onboarding.viewModeTabsDesc)).toBeInTheDocument();
+    fireEvent.click(layout.getByRole('button', { name: t.focus }));
+    expect(mockMethods.updateSettings).toHaveBeenCalledWith({ desktopViewMode: 'focus' });
+    fireEvent.click(screen.getByRole('button', { name: t.dark, exact: true }));
+    expect(mockMethods.setTheme).toHaveBeenCalledExactlyOnceWith('dark');
+
+    const openSettings = screen.getByRole('button', { name: t.onboarding.openSettings });
+    openSettings.focus();
+    expect(fireEvent.keyDown(openSettings, { key: 'Enter' })).toBe(true);
+    expect(onComplete).not.toHaveBeenCalled();
+    openSettings.blur();
+    for (const modifier of ['shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'isComposing']) {
+      expect(fireEvent.keyDown(document, { key: 'Enter', [modifier]: true })).toBe(true);
+    }
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(fireEvent.keyDown(document, { key: 'Enter' })).toBe(false);
+    expect(onComplete).toHaveBeenCalledOnce();
+    rerender(<ThemeOnboardingModal isOpen={false} onComplete={onComplete} onOpenSettings={onOpenSettings} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(fireEvent.keyDown(document, { key: 'Escape' })).toBe(true);
+    expect(onComplete).toHaveBeenCalledOnce();
   });
 
   test('shows settings hint and open-settings button', () => {

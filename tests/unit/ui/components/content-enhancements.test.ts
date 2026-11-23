@@ -64,4 +64,33 @@ describe('content enhancement scheduling', () => {
     expect(detectChartable).toHaveBeenCalledWith('table-1');
     expect(document.getElementById('table-1')?.dataset.mdnEnhanced).toBe('true');
   });
+
+  it('retries a failing table before marking it terminal without blocking a healthy table', async () => {
+    const root = document.implementation.createHTMLDocument();
+    root.body.innerHTML = '<table class="mdn-table" id="healthy"></table><table class="mdn-table"></table>';
+    const destroy = vi.fn(() => { throw new Error('chart already disposed'); });
+    const detectChartable = vi.fn((id: string) => {
+      if (!id) throw new Error('table has no ID');
+    });
+    const tableGlobals = { states: { healthy: { chartInstance: { destroy } } }, detectChartable };
+    const options = { getChart: async () => null, tableGlobals, documentRoot: root };
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const failed = root.querySelector('table:not([id])')!;
+      await enhanceTables(root, options);
+      expect(failed.dataset.mdnRenderAttempts).toBe('1');
+      await enhanceTables(root, options);
+      expect(failed.dataset.mdnRenderError).toBeUndefined();
+      await enhanceTables(root, options);
+      expect(failed.dataset.mdnRenderError).toBe('true');
+      await enhanceTables(root, options);
+      expect(detectChartable.mock.calls).toEqual([['healthy'], [''], [''], ['']]);
+      expect(destroy).toHaveBeenCalledOnce();
+      expect(tableGlobals.states).toEqual({});
+      expect(root.getElementById('healthy')?.dataset.mdnEnhanced).toBe('true');
+      expect(errors).toHaveBeenLastCalledWith('Table enhancement error (unknown):', expect.any(Error));
+    } finally {
+      errors.mockRestore();
+    }
+  });
 });

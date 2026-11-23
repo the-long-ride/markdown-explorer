@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { MdFile } from '../../../../ui/src/types/files';
 import { ExportCenterSourcePanel } from '../../../../ui/src/components/Export/ExportCenterSourcePanel';
 import { ExportMultiSelect } from '../../../../ui/src/components/Export/ExportMultiSelect';
+import { ExportSourceSelect } from '../../../../ui/src/components/Export/ExportSourceSelect';
 import { SearchableSelect } from '../../../../ui/src/components/shared/SearchableSelect';
 
 function file(relativePath: string): MdFile {
@@ -110,5 +111,71 @@ describe('Export Center source controls', () => {
     fireEvent.change(search, { target: { value: 'deep' } });
     fireEvent.keyDown(search, { key: 'Enter' });
     expect(onChange).toHaveBeenCalledWith('guide/deep');
+  });
+
+  it('flips both source menus at the viewport edge and dismisses only on outside input', () => {
+    const onChange = vi.fn();
+    const options = [{ value: 'guide', label: 'Guide', detail: 'Instructions' }, { value: 'disabled', label: 'Unavailable', disabled: true }];
+    render(<>
+      <ExportSourceSelect value="unknown" options={options} onChange={onChange} ariaLabel="Export source" />
+      <SearchableSelect label="Folder" value="unknown" options={options} onChange={onChange} />
+    </>);
+    const source = screen.getByRole('button', { name: 'Export source' });
+    const folder = screen.getByRole('combobox', { name: 'Folder' });
+    expect(source).toHaveTextContent('Guide');
+    expect(folder).toHaveTextContent('Folder');
+    for (const trigger of [source, folder]) {
+      vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(window.innerWidth - 40, window.innerHeight - 40, 80, 30));
+      fireEvent.click(trigger);
+      const list = screen.getByRole('listbox');
+      const menu = trigger === source ? list : list.parentElement!;
+      expect(menu.style.getPropertyValue('--menu-top')).toBe('');
+      expect(menu.style.getPropertyValue('--menu-bottom')).toMatch(/^4[45]px$/);
+      fireEvent.scroll(window);
+      fireEvent.pointerDown(trigger);
+      fireEvent.pointerDown(list);
+      expect(list).toBeInTheDocument();
+      if (trigger === source) {
+        fireEvent.click(screen.getByRole('option', { name: 'Unavailable' }));
+        expect(onChange).not.toHaveBeenCalled();
+        fireEvent.keyDown(document, { key: 'Tab' });
+        expect(list).toBeInTheDocument();
+        fireEvent.keyDown(document, { key: 'Escape' });
+      } else {
+        fireEvent.pointerDown(document.body);
+      }
+      expect(list).not.toBeInTheDocument();
+    }
+  });
+
+  it('keeps empty folder searches open on Enter and supports arrow and pointer selection', () => {
+    const onChange = vi.fn();
+    const options = [{ value: 'guide', label: 'Guide', detail: 'Instructions' }, { value: 'other', label: 'Other' }];
+    const { rerender } = render(<SearchableSelect label="Folder" value="" options={options} onChange={onChange} emptyLabel="Nothing found" />);
+    const trigger = screen.getByRole('combobox');
+    fireEvent.click(trigger);
+    const search = screen.getByRole('searchbox', { name: 'Search' });
+    fireEvent.change(search, { target: { value: 'Missing' } });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(screen.getByText('Nothing found')).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.change(search, { target: { value: '' } });
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    fireEvent.keyDown(search, { key: 'ArrowUp' });
+    fireEvent.keyDown(search, { key: 'ArrowUp' });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(onChange).toHaveBeenLastCalledWith('other');
+    fireEvent.click(trigger);
+    const nextSearch = screen.getByRole('searchbox');
+    fireEvent.change(nextSearch, { target: { value: 'instructions' } });
+    const guide = screen.getByRole('option', { name: /Guide/ });
+    fireEvent.pointerMove(guide);
+    fireEvent.click(guide);
+    expect(onChange).toHaveBeenLastCalledWith('guide');
+    fireEvent.click(trigger);
+    fireEvent.keyDown(screen.getByRole('searchbox'), { key: 'Escape' });
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    rerender(<SearchableSelect label="Folder" value="" options={[]} onChange={onChange} disabled />);
+    expect(trigger).toBeDisabled();
   });
 });

@@ -9,8 +9,10 @@ import {
   clearMermaidSvgCache,
   getCachedMermaidSvg,
   mermaidCacheKey,
+  setCachedMermaidSvg,
 } from '../../../../ui/src/components/Content/enhancements/mermaidSvgCache';
 import {
+  createMermaidRerenderQueue,
   isMermaidNodeHidden,
   type MermaidQueueScheduler,
 } from '../../../../ui/src/components/Content/enhancements/mermaidRerenderQueue';
@@ -56,9 +58,51 @@ describe('resolveMermaidViewport', () => {
     expect(resolveMermaidViewport(null, win)).toEqual({ top: 0, bottom: 800, nearDistance: 800 });
     expect(resolveMermaidViewport(rectOf(0, 0), win)).toEqual({ top: 0, bottom: 800, nearDistance: 800 });
   });
+
+  it('uses the document height when the window height is unavailable, then a minimum viewport', () => {
+    expect(resolveMermaidViewport(undefined, { document: { documentElement: { clientHeight: 420 } } }))
+      .toEqual({ top: 0, bottom: 420, nearDistance: 420 });
+    expect(resolveMermaidViewport(null, { innerHeight: 0 }))
+      .toEqual({ top: 0, bottom: 1, nearDistance: 1 });
+  });
 });
 
 describe('renderMermaidNodesLazily', () => {
+  it('leaves a nonempty document unchanged if rendering is already cancelled', async () => {
+    const renderNode = vi.fn(async () => {});
+    await renderMermaidNodesLazily([node('a', 0)], renderNode, { isCancelled: () => true });
+    expect(renderNode).not.toHaveBeenCalled();
+  });
+
+  it('does not insert a cached SVG when its diagram is collapsed while waiting for the render lane', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<details open><div class="mermaid">block-beta\n  a</div></details>';
+    document.body.appendChild(root);
+    const details = root.querySelector('details')!;
+    const diagram = root.querySelector<HTMLElement>('.mermaid')!;
+    const getLibrary = vi.fn(async () => ({ initialize: vi.fn(), run: vi.fn() }));
+    let release!: () => void;
+    const blocker = runInMermaidRenderLane(() => new Promise<void>(resolve => { release = resolve; }));
+    await Promise.resolve();
+    const source = diagram.textContent!;
+    setCachedMermaidSvg(mermaidCacheKey(source, 'test'), '<svg viewBox="0 0 1 1"></svg>');
+    try {
+      const pending = enhanceMermaidLazily(root, {
+        getLibrary, isDark: false, isCancelled: () => false, runIdRef: { current: 0 }, cacheSignature: 'test',
+      });
+      details.open = false;
+      release();
+      await pending;
+      expect(diagram).toHaveTextContent('block-beta');
+      expect(diagram.querySelector('svg')).toBeNull();
+      expect(getLibrary).not.toHaveBeenCalled();
+    } finally {
+      release();
+      await blocker;
+      clearMermaidSvgCache();
+      root.remove();
+    }
+  });
   it('renders nothing synchronously and orders diagrams by the root scroll container', async () => {
     const { scheduler, flush } = manualScheduler();
     const rendered: string[] = [];
@@ -90,6 +134,65 @@ describe('renderMermaidNodesLazily', () => {
   it('resolves immediately when there is nothing to render', async () => {
     await expect(renderMermaidNodesLazily([], async () => {}, { isCancelled: () => false })).resolves.toBeUndefined();
   });
+
+  it('stops before rendering when cancelled while waiting for the first scheduled diagram', async () => {
+    const { scheduler, flush } = manualScheduler();
+    const renderNode = vi.fn(async () => {});
+    let cancelled = false;
+    const done = renderMermaidNodesLazily([node('a', 0)], renderNode, { isCancelled: () => cancelled, scheduler });
+    cancelled = true;
+    await flush();
+    await done;
+    expect(renderNode).not.toHaveBeenCalled();
+  });
+});
+
+describe('createMermaidRerenderQueue', () => {
+  it('ignores already-delivered idle and frame callbacks from a cancelled generation', async () => {
+    const { scheduler, pending, flush } = manualScheduler();
+    const draw = vi.fn(async () => {});
+    const onComplete = vi.fn();
+    const queue = createMermaidRerenderQueue(draw, scheduler, { onComplete });
+    queue.start([node('cancelled-idle', 0)]);
+    const idle = [...pending.values()][0];
+    queue.cancel();
+    idle();
+    expect(pending.size).toBe(0);
+    queue.start([node('cancelled-frame', 0)]);
+    const [id, nextIdle] = [...pending][0];
+    pending.delete(id);
+    nextIdle();
+    const frame = [...pending.values()][0];
+    queue.cancel();
+    frame();
+    expect(draw).not.toHaveBeenCalled();
+    const live = node('live', 0);
+    queue.start([live]);
+    await flush();
+    expect(draw).toHaveBeenCalledExactlyOnceWith(live, expect.any(Function));
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  it('cancels pending idle and frame work when started again or explicitly stopped', async () => {
+    const { scheduler, pending, flush } = manualScheduler();
+    const rendered: string[] = [];
+    const onComplete = vi.fn();
+    const queue = createMermaidRerenderQueue(async (element: HTMLElement) => { rendered.push(element.id); }, scheduler, { onComplete });
+    queue.start([node('idle', 0)]);
+    queue.start([node('frame', 0)]);
+    for (const [id, callback] of [...pending]) {
+      pending.delete(id);
+      callback();
+    }
+    expect(pending.size).toBe(1);
+    queue.cancel();
+    expect(pending.size).toBe(0);
+    expect(onComplete).not.toHaveBeenCalled();
+    queue.start([node('visible', 0)]);
+    await flush();
+    expect(rendered).toEqual(['visible']);
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
 });
 
 describe('runInMermaidRenderLane', () => {
@@ -109,6 +212,20 @@ describe('runInMermaidRenderLane', () => {
 });
 
 describe('isMermaidNodeHidden', () => {
+  it('allows diagrams inside a closed details summary while honoring computed styles', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `<style>.hidden-mermaid-test { display: none }</style>
+      <details><summary><div id="summary-diagram"></div></summary></details>
+      <div class="hidden-mermaid-test"><div id="computed-hidden-diagram"></div></div>`;
+    document.body.appendChild(root);
+    try {
+      expect(isMermaidNodeHidden(null)).toBe(false);
+      expect(isMermaidNodeHidden(root.querySelector('#summary-diagram'))).toBe(false);
+      expect(isMermaidNodeHidden(root.querySelector('#computed-hidden-diagram'))).toBe(true);
+    } finally {
+      root.remove();
+    }
+  });
   it('detects collapsed sections, nested collapsed ancestors, closed details, hidden attributes, and display:none', () => {
     const container = document.createElement('div');
     container.innerHTML = `
@@ -162,12 +279,14 @@ describe('isMermaidNodeHidden', () => {
         el.innerHTML = '<svg viewBox="0 0 10 10"><g></g></svg>';
       }
     });
+    const onRawSvg = vi.fn();
     const options = {
       getLibrary: async () => ({ initialize: vi.fn(), run }),
       isDark: false,
       isCancelled: () => false,
       runIdRef: { current: 0 },
       cacheSignature: 'sig-light',
+      onRawSvg,
     };
 
     try {
@@ -185,6 +304,15 @@ describe('isMermaidNodeHidden', () => {
       expect(run).toHaveBeenCalledTimes(1);
       expect(diag.dataset.mdnRendered).toBe('true');
       expect(getCachedMermaidSvg(mermaidCacheKey('block-beta\n  a["Hello"]', 'sig-light'))).toBe('<svg viewBox="0 0 10 10"><g></g></svg>');
+      expect(onRawSvg).toHaveBeenCalledWith(diag, 'block-beta\n  a["Hello"]', expect.stringContaining('<svg'));
+
+      const duplicate = document.createElement('div');
+      duplicate.className = 'mermaid';
+      duplicate.textContent = 'block-beta\n  a["Hello"]';
+      root.appendChild(duplicate);
+      await enhanceMermaidLazily(root, options, { scheduler });
+      expect(duplicate.dataset.mdnRendered).toBe('true');
+      expect(run).toHaveBeenCalledTimes(1);
     } finally {
       clearMermaidSvgCache();
       root.remove();
