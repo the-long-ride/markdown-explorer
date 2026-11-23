@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EditorView } from '@codemirror/view';
 import { InlineMarkdownEditor } from '../../../../ui/src/components/Content/InlineMarkdownEditor';
+import { EDITOR_FONT_SIZE_EVENT, EDITOR_FONT_SIZE_STORAGE_KEY } from '../../../../ui/src/editor/editorUx';
 
 const formatting = {
   toolbar: 'Formatting tools',
@@ -33,6 +34,44 @@ afterEach(() => {
 });
 
 describe('InlineMarkdownEditor', () => {
+  it('cancels an unchanged visual table instead of rewriting its source', () => {
+    const source = '| Header |\n| --- |\n| Cell |';
+    const target = document.createElement('div');
+    target.className = 'mdn-table-source';
+    target.setAttribute('data-mdn-source-start', '0');
+    target.setAttribute('data-mdn-source-end', String(source.length));
+    document.body.appendChild(target);
+    const onCancel = vi.fn();
+    const onApply = vi.fn();
+    render(<InlineMarkdownEditor target={target} source={source} labels={labels} onApply={onApply} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it('synchronizes valid font size events and notifies the owner on a local size change', () => {
+    const previousSize = localStorage.getItem(EDITOR_FONT_SIZE_STORAGE_KEY);
+    const onFontSizeChange = vi.fn();
+    try {
+      render(<InlineMarkdownEditor target={createTarget()} source={'# A\n\nText\nEnd'} labels={labels}
+        onApply={vi.fn()} onCancel={vi.fn()} onFontSizeChange={onFontSizeChange} />);
+      const editor = document.querySelector('.markdown-inline-editor')!;
+      fireEvent(window, new CustomEvent(EDITOR_FONT_SIZE_EVENT, { detail: 18 }));
+      expect(editor).toHaveAttribute('data-editor-font-size', '18');
+      fireEvent(window, new CustomEvent(EDITOR_FONT_SIZE_EVENT, { detail: '9' }));
+      fireEvent(window, new StorageEvent('storage', { key: 'unrelated', newValue: '9' }));
+      fireEvent(window, new StorageEvent('storage', { key: EDITOR_FONT_SIZE_STORAGE_KEY, newValue: null }));
+      expect(editor).toHaveAttribute('data-editor-font-size', '18');
+      fireEvent(window, new StorageEvent('storage', { key: EDITOR_FONT_SIZE_STORAGE_KEY, newValue: '21' }));
+      expect(editor).toHaveAttribute('data-editor-font-size', '21');
+      fireEvent.keyDown(screen.getByRole('textbox', { name: labels.sourceLabel }), { key: '=', ctrlKey: true });
+      expect(onFontSizeChange).toHaveBeenCalledExactlyOnceWith(22);
+    } finally {
+      if (previousSize === null) localStorage.removeItem(EDITOR_FONT_SIZE_STORAGE_KEY);
+      else localStorage.setItem(EDITOR_FONT_SIZE_STORAGE_KEY, previousSize);
+    }
+  });
+
   it('edits the exact source slice and applies without saving to disk', () => {
     const target = createTarget();
     const onApply = vi.fn();

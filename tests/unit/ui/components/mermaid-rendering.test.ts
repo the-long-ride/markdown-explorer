@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  applyGanttIntrinsicWidth, enhanceMermaid, fitMermaidSvg, getMermaidRenderNodes, invalidateMermaidRenderings,
+  applyGanttIntrinsicWidth, enhanceMermaid, fitMermaidSvg, getMermaidRenderNodes, invalidateMermaidRendering, invalidateMermaidRenderings,
   polishMermaidSvg, resolveMermaidThemeOptions,
 } from '../../../../ui/src/components/Content/enhancements/mermaidRendering';
 
@@ -24,6 +24,40 @@ function renderOptions() {
 }
 
 describe('Mermaid rendering', () => {
+  it.each(['gantt\nTask : 2026-01-01, 7d', 'sankey-beta\nA,B,1'])('renders bare diagrams without measured wrappers (%s)', async (source) => {
+    const { node } = wrapper(source);
+    const root = document.createElement('div');
+    root.appendChild(node);
+    const options = renderOptions();
+    await enhanceMermaid(root, options);
+    expect(node.dataset.mdnRendered).toBe('true');
+    expect(node.querySelector('svg')).not.toBeNull();
+    invalidateMermaidRendering(node);
+    expect(node.textContent).toBe(source);
+    expect(node.dataset.mdnRendered).toBeUndefined();
+  });
+
+  it.each([false, true])('leaves a render owned by a different token undisturbed (rejects: %s)', async (reject) => {
+    const { root, node } = wrapper('flowchart LR\n A --> B');
+    const options = renderOptions();
+    options.run.mockImplementationOnce(async () => {
+      node.dataset.mdnRenderRun = 'replacement';
+      node.innerHTML = '<svg><text>Replacement</text></svg>';
+      if (reject) throw new Error('Old render failed');
+    });
+    await enhanceMermaid(root, options);
+    expect(node.querySelector('text')).toHaveTextContent('Replacement');
+    expect(node.dataset.mdnRenderRun).toBe('replacement');
+    expect(node.dataset.mdnRendered).toBeUndefined();
+    expect(node.dataset.mdnRenderAttempts).toBeUndefined();
+    expect(options.onRawSvg).not.toHaveBeenCalled();
+  });
+
+  it('does not restore text for an untouched node with no recorded source', () => {
+    const { node } = wrapper('unchanged source');
+    invalidateMermaidRendering(node);
+    expect(node.textContent).toBe('unchanged source');
+  });
   it('assigns wide Gantt layout before render, publishes raw SVG, and restores source when invalidated', async () => {
     const source = 'gantt\nTask:2026-01-01, 7d';
     const { root, node } = wrapper(source);
@@ -164,7 +198,7 @@ describe('Mermaid rendering', () => {
   });
 
   it('selects categorical colors only for plots and pie charts with more than four slices', () => {
-    const prefix = '---\ntitle: Sample\n"frontmatter": 1\n---\npie\n%% "comment": 2\n\nshowData\n';
+    const prefix = '---\ntitle: Sample\n"frontmatter": 1\n---\npie\n%% "comment": 2\n\nshowData\nnot a slice\n';
     const slices = Array.from({ length: 8 }, (_, i) => `"Slice ${i + 1}": ${i + 1}`);
     expect(resolveMermaidThemeOptions('pie', prefix + slices.slice(0, 4).join('\n'))).toEqual({});
     expect(resolveMermaidThemeOptions('pie', prefix + slices.slice(0, 5).join('\n'))).toEqual({ categoricalFills: true, softFillCount: 6 });

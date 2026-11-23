@@ -445,6 +445,20 @@ describe('ThemeStylePicker', () => {
     expect(onChange).toHaveBeenCalledWith('pet-white-shiba');
   });
 
+  it('uses the default theme and omits the custom group when stored theme settings are unavailable', () => {
+    mockState.settings.language = '';
+    delete mockState.settings.customThemes;
+    mockState.settings.activeCustomThemeId = 'removed-theme';
+    render(<ThemeStylePicker value={'removed-theme' as never} onChange={vi.fn()} showCustomThemes />);
+    expect(screen.queryByText('Your custom themes')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Explorer Classic/i })).toBeInTheDocument();
+    const pet = screen.getAllByRole('button').find((button) => button.className.includes('pet-theme-select'))!;
+    fireEvent.click(pet);
+    expect(screen.getByRole('listbox', { name: 'Pet themes' })).toBeInTheDocument();
+    fireEvent.click(pet);
+    expect(screen.queryByRole('listbox', { name: 'Pet themes' })).not.toBeInTheDocument();
+  });
+
   it('marks Pet themes group active when a pet theme is selected', () => {
     const { container } = render(<ThemeStylePicker value="pet-white-shiba" onChange={() => {}} />);
     expect(container.querySelector('[data-theme-group="pets"]')).toHaveClass('is-active');

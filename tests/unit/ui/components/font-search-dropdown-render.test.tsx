@@ -13,6 +13,27 @@ const mockFonts: DesktopFontFamily[] = [
 const t = getTranslations('en');
 
 describe('FontSearchDropdown component', () => {
+  it('opens above an imported selection when the settings card has no room below', () => {
+    const value: DesktopFontBinding = { source: 'imported', id: 'custom-sans', family: 'Custom Sans', style: 'normal', weight: 400 };
+    const onChange = vi.fn();
+    const { container } = render(<div className="settings-card--settings"><FontSearchDropdown value={value} fonts={mockFonts} t={t} onChange={onChange} /></div>);
+    const card = container.firstElementChild!;
+    const trigger = screen.getByRole('button', { expanded: false });
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue({ top: 0, left: 0, right: 450, bottom: 300 } as DOMRect);
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({ top: 269, bottom: 299, left: 15, width: 100 } as DOMRect);
+    fireEvent.click(trigger);
+    const option = screen.getByRole('option', { name: /Custom Sans/ });
+    expect(option).toHaveAttribute('aria-selected', 'true');
+    const menu = screen.getByRole('listbox');
+    expect(menu.style.getPropertyValue('--menu-top')).toBe('263px');
+    const search = screen.getByPlaceholderText(t.fontSearchPlaceholder);
+    fireEvent.keyDown(search, { key: 'Tab' });
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.keyDown(search, { key: 'ArrowUp' });
+    expect(search).toHaveAttribute('aria-activedescendant', option.id);
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith({ source: 'imported', family: 'Custom Sans', id: 'custom-sans' });
+  });
   it('renders default selection when value source is default', () => {
     const value: DesktopFontBinding = { source: 'default', style: 'normal', weight: 400 };
     render(

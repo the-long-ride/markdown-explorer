@@ -71,6 +71,33 @@ describe('MermaidThumbnail', () => {
     expect(screen.queryByTestId('mermaid-thumbnail-rendered')).toBeNull();
   });
 
+  it('does not render offscreen, and discards a result when its visible thumbnail unmounts', async () => {
+    const { renderMermaidToSvg } = await import('../../../../ui/src/components/Content/enhancements/mermaidRenderToSvg.ts');
+    const mockRender = vi.mocked(renderMermaidToSvg);
+    mockRender.mockClear();
+    let finish: (result: { svgHtml: string }) => void;
+    mockRender.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    vi.stubGlobal('IntersectionObserver', class {
+      constructor(callback: typeof intersectionCallback) { intersectionCallback = callback; }
+      observe() {}
+      disconnect() {}
+    });
+    const props = { code: 'graph TD; Discard-->Result;', label: 'Deferred' };
+    const { unmount } = render(<MermaidThumbnail {...props} />);
+    act(() => intersectionCallback!([{ isIntersecting: false }]));
+    expect(mockRender).not.toHaveBeenCalled();
+    expect(screen.getByTestId('mermaid-thumbnail-placeholder')).toBeVisible();
+    act(() => intersectionCallback!([{ isIntersecting: true }]));
+    expect(mockRender).toHaveBeenCalledOnce();
+    unmount();
+    await act(async () => finish!({ svgHtml: '<svg data-testid="discarded"></svg>' }));
+    render(<MermaidThumbnail {...props} />);
+    act(() => intersectionCallback!([{ isIntersecting: true }]));
+    expect(await screen.findByTestId('mock-svg')).toBeInTheDocument();
+    expect(screen.queryByTestId('discarded')).not.toBeInTheDocument();
+    expect(mockRender).toHaveBeenCalledTimes(2);
+  });
+
   it('renders straight away without an observer and reuses the dark-mode SVG when reopened', async () => {
     const { renderMermaidToSvg } = await import('../../../../ui/src/components/Content/enhancements/mermaidRenderToSvg.ts');
     const mockRender = vi.mocked(renderMermaidToSvg);

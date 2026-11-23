@@ -49,6 +49,16 @@ describe('renderMermaidToSvg', () => {
     }));
   });
 
+  it.each([
+    ['gantt', 'gantt\nTask : 2026-01-01, 7d', { useWidth: expect.any(Number) }],
+    ['sankey', 'sankey-beta\nA,B,1', { width: expect.any(Number), useMaxWidth: false }],
+    ['c4', 'C4Context\nPerson(a, "Reader")', { person_bg_color: expect.any(String) }],
+  ])('uses the standalone %s layout and defaults to the browser document', async (kind, source, config) => {
+    const result = await renderMermaidToSvg({ source, isDark: false });
+    expect(initializeMock.mock.lastCall?.[0][kind]).toMatchObject(config);
+    expect(result.svgHtml).toContain('<svg');
+  });
+
   it('rejects when mermaid produces no svg', async () => {
     runMock.mockImplementationOnce(async () => { /* leaves nodes untouched */ });
     await expect(

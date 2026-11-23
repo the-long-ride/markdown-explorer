@@ -33,6 +33,21 @@ function keys(mode: SidebarSortMode, pinnedKeys: ReadonlySet<string> = new Set()
 }
 
 describe('orderSidebarLevel', () => {
+  test('sorts same-name entries by path after date ties and prioritizes a pinned file over folders', () => {
+    const sameTitle = ['b', 'a'].map((dir) => ({ ...files[1], fsPath: `/${dir}/a.md`, modifiedAt: undefined }));
+    const sameNameFolders = ['z', 'a', 'dated'].map((path) => ({
+      ...folders[0], path, modifiedAt: path === 'dated' ? 21 : undefined,
+    }));
+    const list = orderSidebarLevel(sameTitle, sameNameFolders, {
+      sortMode: 'modified-desc', pinnedKeys: new Set(['file:/b/a.md']), showTitle: false,
+    });
+    expect(list.map(({ key }) => key)).toEqual([
+      'file:/b/a.md', 'folder:dated', 'folder:a', 'folder:z', 'file:/a/a.md',
+    ]);
+    expect(orderSidebarLevel(sameTitle, [], {
+      sortMode: 'modified-asc', pinnedKeys: new Set(), showTitle: true,
+    }).map(({ key }) => key)).toEqual(['file:/a/a.md', 'file:/b/a.md']);
+  });
   test.each([
     ['name-asc', ['folder:beta', 'file:/a.md', 'file:/z.md']],
     ['name-desc', ['folder:beta', 'file:/z.md', 'file:/a.md']],

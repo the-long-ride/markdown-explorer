@@ -266,7 +266,7 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(markdown).not.toContain('Authentication refresh tokens.');
   });
 
-  it('copies AI prompt to fix graph and link issues', () => {
+  it('copies AI prompt to fix graph and link issues', async () => {
     const { snapshot } = fixture();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
@@ -278,5 +278,6 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     const copiedText = writeText.mock.calls[0][0];
     expect(copiedText).toBeDefined();
     expect(copiedText.length).toBeGreaterThan(0);
+    expect(await screen.findByRole('button', { name: 'Copied AI prompt!' })).toBeVisible();
   });
 });
