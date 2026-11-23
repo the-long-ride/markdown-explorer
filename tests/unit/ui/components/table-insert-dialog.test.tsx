@@ -8,6 +8,19 @@ describe('TableInsertDialog', () => {
     expect(screen.queryByTestId('table-insert-dialog')).toBeNull();
   });
 
+  it('defaults cleared dimensions to one and leaves the dialog open after an inside press', () => {
+    const onInsert = vi.fn();
+    const onClose = vi.fn();
+    render(<TableInsertDialog open language="en" onInsert={onInsert} onClose={onClose} />);
+    fireEvent.mouseDown(screen.getByRole('dialog'));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByTestId('table-insert-cols'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('table-insert-rows'), { target: { value: '' } });
+    fireEvent.click(screen.getByTestId('table-insert-confirm'));
+    expect(onInsert).toHaveBeenCalledExactlyOnceWith(1, 1);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it('renders default values and submits custom rows and cols', () => {
     const handleInsert = vi.fn();
     const handleClose = vi.fn();

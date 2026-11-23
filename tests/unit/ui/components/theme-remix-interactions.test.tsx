@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ThemeRemixModal } from '../../../../ui/src/components/Settings/ThemeRemixModal';
+import { ThemeRemixDropdown } from '../../../../ui/src/components/Settings/ThemeRemixDropdown';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
 
 const mockSetTheme = vi.fn();
@@ -269,6 +270,28 @@ describe('ThemeRemixModal interactions', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('listbox', { name: 'Density' })).not.toBeInTheDocument();
     expect(mockUpdateSettings).not.toHaveBeenCalled();
+  });
+
+  it('keeps the density dropdown open during inside interactions and dismisses it outside', () => {
+    mockState.settings.customThemes = [makeTheme()];
+    render(<ThemeRemixModal isOpen={true} onClose={() => {}} />);
+    const trigger = openDropdownFor('Density');
+    const menu = screen.getByRole('listbox', { name: 'Density' });
+    fireEvent.pointerDown(trigger);
+    fireEvent.pointerDown(menu);
+    fireEvent.keyDown(document, { key: 'ArrowDown' });
+    expect(menu).toBeVisible();
+    fireEvent.pointerDown(document.body);
+    expect(menu).not.toBeInTheDocument();
+    expect(mockUpdateSettings).not.toHaveBeenCalled();
+  });
+
+  it('displays the current value when the dropdown has no options', () => {
+    const onChange = vi.fn();
+    render(<ThemeRemixDropdown ariaLabel="Density" value="unknown" options={[]} onChange={onChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'unknown' }));
+    expect(screen.getByRole('listbox', { name: 'Density' })).toBeEmptyDOMElement();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('duplicates a theme when duplicate button is clicked', () => {

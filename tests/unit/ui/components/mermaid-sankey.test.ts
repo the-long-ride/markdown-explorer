@@ -8,6 +8,13 @@ import {
 
 describe('mermaidSankey', () => {
   describe('estimateSankeyIntrinsicWidth', () => {
+    it('sizes a graph with both a terminating route and a disconnected cycle', () => {
+      const a = 'Long cycle starting label shared between the routes';
+      const flow = 'sankey-beta\nSource,Destination,1';
+      expect(estimateSankeyIntrinsicWidth(`${flow}\n${a},Cycle B,2\nCycle B,Cycle C,2\nCycle C,${a},2`))
+        .toBeGreaterThan(estimateSankeyIntrinsicWidth(flow));
+    });
+
     it('estimates width for simple sankey source', () => {
       const source = `
         sankey-beta

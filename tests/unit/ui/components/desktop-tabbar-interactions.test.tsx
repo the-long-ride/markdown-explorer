@@ -345,6 +345,36 @@ describe('DesktopTabBar interactions', () => {
     expect(props.onReorderTabs).toHaveBeenCalledWith('ws2', 'ws1');
   });
 
+  it('ignores right-button drags and suppresses tab selection after a reorder', () => {
+    const { container } = renderTabBar();
+    const [first, second] = screen.getAllByRole('tab');
+    fireEvent.pointerDown(second, { button: 2 });
+    fireEvent.pointerEnter(first);
+    expect(props.onReorderTabs).not.toHaveBeenCalled();
+    expect(container.querySelector('.tab-drag-ghost')).not.toBeInTheDocument();
+    fireEvent.pointerDown(second, { button: 0 });
+    fireEvent.pointerMove(document, { clientX: 20, clientY: 30 });
+    expect(container.querySelector('.tab-drag-ghost')).toHaveStyle({ transform: 'translate3d(30px, 40px, 0)' });
+    fireEvent.pointerEnter(second);
+    expect(props.onReorderTabs).not.toHaveBeenCalled();
+    fireEvent.pointerEnter(first);
+    fireEvent.pointerCancel(document);
+    expect(container.querySelector('.tab-drag-ghost')).not.toBeInTheDocument();
+    fireEvent.click(second);
+    expect(props.onSelectTab).not.toHaveBeenCalled();
+    fireEvent.click(second);
+    expect(props.onSelectTab).toHaveBeenCalledExactlyOnceWith('ws2');
+  });
+
+  it('only closes a workspace on middle-button auxiliary click', () => {
+    renderTabBar();
+    const [, tab] = screen.getAllByRole('tab');
+    fireEvent(tab, new MouseEvent('auxclick', { bubbles: true, button: 2 }));
+    expect(props.onCloseTab).not.toHaveBeenCalled();
+    fireEvent(tab, new MouseEvent('auxclick', { bubbles: true, button: 1 }));
+    expect(props.onCloseTab).toHaveBeenCalledExactlyOnceWith('ws2');
+  });
+
   it('toggles fullscreen from the toolbar action menu', () => {
     const onFullscreenToggle = vi.fn();
     renderTabBar({ onFullscreenToggle });

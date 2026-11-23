@@ -167,6 +167,17 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(onSelectPath).toHaveBeenCalledWith('b.md');
   });
 
+  it('ignores unrelated fullscreen keys and returns to embedded view on Escape', () => {
+    const { snapshot } = fixture();
+    const { container } = render(<GraphView snapshot={snapshot} nodeCap={100} />);
+    fireEvent.click(screen.getByRole('button', { name: /fullscreen/i }));
+    const graph = container.querySelector('.insights-graph')!;
+    fireEvent.keyDown(window, { key: 'R' });
+    expect(graph).toHaveClass('is-fullscreen');
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(graph).not.toHaveClass('is-fullscreen');
+  });
+
   it('highlights multi-level relationships with lighter level colors when a node is clicked', async () => {
     const a = doc('a.md', '# A\n[[b.md]]');
     const b = doc('b.md', '# B\n[[d.md]]');
@@ -232,6 +243,20 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(screen.getByText('API Reference')).toBeVisible();
     expect(screen.getByText(/shared tags.*api.*docs/i)).toBeVisible();
     expect(screen.getByText(/score/i)).toBeVisible();
+  });
+
+  it('falls back to the first document and explains direct links and shared headings', () => {
+    const documents = [
+      doc('a.md', '# First\n## Shared heading\n[[b.md]]'),
+      doc('b.md', '# Second\n## Shared heading'),
+    ];
+    const { rerender } = render(<RelatedView documents={documents} selectedPath="missing.md" />);
+    expect(screen.getByText(/related to first/i)).toBeVisible();
+    expect(screen.getByText(/direct links.*b\.md/i)).toBeVisible();
+    expect(screen.getByText(/shared headings.*shared heading/i)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Second' }));
+    rerender(<RelatedView documents={documents} />);
+    expect(screen.getByText(/related to first/i)).toBeVisible();
   });
 
   it('checks unique external URLs only after explicit user action', async () => {

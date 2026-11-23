@@ -226,6 +226,18 @@ describe('ScopeViewModal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it.each([
+    [new Error('Nested document unavailable'), 'Nested document unavailable'],
+    ['Host unavailable', getExportScopeTranslations('en').scopeView.unableOpen],
+  ])('keeps the current scope open when a nested read fails (%s)', async (reason, message) => {
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={vi.fn()} />);
+    expect(await screen.findByRole('heading', { name: files[0].title })).toBeVisible();
+    mocks.loadDocumentSnapshot.mockRejectedValueOnce(reason);
+    fireEvent.click(screen.getByRole('link', { name: 'Open 2' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(screen.getByRole('heading', { name: files[0].title })).toBeVisible();
+  });
+
   it('publishes history availability, supports navigation requests, and opens the scoped file only on command', async () => {
     const listener = vi.fn();
     const onClose = vi.fn();

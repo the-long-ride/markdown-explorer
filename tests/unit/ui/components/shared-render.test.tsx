@@ -306,6 +306,18 @@ describe('TooltipButton', () => {
     expect(portalTooltip).toBeInTheDocument();
   });
 
+  it('positions an above tooltip below the top edge and dismisses it on blur', () => {
+    render(React.createElement(TooltipButton, { as: 'span', role: 'switch', tooltip: 'Pin', portalTooltip: true, tooltipPos: 'above', tooltipAlign: 'right' }));
+    const trigger = screen.getByRole('switch', { name: 'Pin' });
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({ left: 100, right: 150, top: 4, bottom: 30, width: 50, height: 26 } as DOMRect);
+    fireEvent.focus(trigger);
+    const tooltip = document.querySelector<HTMLElement>('.tooltip-portal');
+    expect(tooltip?.style.getPropertyValue('--portal-top')).toBe('38px');
+    expect(tooltip?.style.getPropertyValue('--portal-left')).toBe('150px');
+    fireEvent.blur(trigger);
+    expect(tooltip).not.toBeInTheDocument();
+  });
+
   it('opens clamped portal tooltip on hover of disabled button and keeps button identity across disabled changes', () => {
     const originalInnerWidth = window.innerWidth;
     Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });

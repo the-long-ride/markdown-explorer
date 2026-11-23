@@ -211,6 +211,24 @@ describe('split content tab actions', () => {
     expect(closeSplitView).toHaveBeenCalledOnce();
   });
 
+  it('uses a cached HTML tab override instead of the default preview setting', () => {
+    const { setContentTabHtmlPreview } = fixture(html, undefined, {
+      contentTabs: [{ filePath: html, fileName: 'c.html', relativePath: 'c.html', title: 'c.html', htmlPreviewOverride: true }],
+    });
+    menuAction('c.html', t.showMarkdownView);
+    expect(setContentTabHtmlPreview).toHaveBeenCalledExactlyOnceWith(html, false);
+  });
+
+  it('does not navigate when closing tabs to the right leaves the active tab in place', () => {
+    const { dispatch } = fixture(first);
+    menuAction('a.md', t.tabContextMenu.closeTabsToRight);
+    expect(dispatch.mock.calls.flat()).toEqual([
+      { type: 'CLOSE_SPLIT_PANE_TAB', paneId: 'primary', filePath: second },
+      { type: 'CLOSE_SPLIT_PANE_TAB', paneId: 'primary', filePath: html },
+    ]);
+    expect(context.postMessage).not.toHaveBeenCalled();
+  });
+
   it('navigates without dispatching a document activation for a pane tab that has not been cached', () => {
     const split = createSplitViewState(first);
     const { dispatch } = fixture(second, undefined, {

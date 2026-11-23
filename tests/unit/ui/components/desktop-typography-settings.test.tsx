@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DesktopTypographySettings } from '../../../../ui/src/components/Settings/DesktopTypographySettings.tsx';
+import { desktopTypographyBindingsEqual, getDesktopTypographyChanges } from '../../../../ui/src/components/Settings/desktopTypographyChanges.ts';
 import { PlatformProvider } from '../../../../ui/src/contexts/PlatformContext.tsx';
 import { getTranslations } from '../../../../ui/src/contexts/translations.ts';
 import { DEFAULT_DESKTOP_FONT_BINDINGS } from '../../../../ui/src/desktop/fonts/fontModel.ts';
@@ -9,6 +10,23 @@ import type { DesktopFontFamily } from '../../../../ui/src/desktop/fonts/fontMod
 
 describe('DesktopTypographySettings', () => {
   const t = getTranslations('en');
+
+  it('summarizes unavailable font families and missing sizes using saved labels and role defaults', () => {
+    const original = DEFAULT_DESKTOP_FONT_BINDINGS;
+    const saved = { ...original, body: { ...original.body, size: undefined } };
+    const draft = {
+      ...saved,
+      body: { ...saved.body, source: 'system' as const, id: 'missing', family: 'Missing Sans' },
+      heading: { ...saved.heading, source: 'system' as const, id: 'unknown', family: undefined },
+    };
+    const changes = getDesktopTypographyChanges(saved, draft, [], 'Default');
+    expect(changes).toEqual([
+      expect.objectContaining({ role: 'body', before: expect.objectContaining({ family: 'Default', size: original.body.size }), after: expect.objectContaining({ family: 'Missing Sans', size: original.body.size }) }),
+      expect.objectContaining({ role: 'heading', after: expect.objectContaining({ family: 'Default' }) }),
+    ]);
+    expect(desktopTypographyBindingsEqual(saved, { ...saved, body: { ...saved.body, size: 13 } })).toBe(true);
+    expect(desktopTypographyBindingsEqual(saved, draft)).toBe(false);
+  });
 
   const mockFonts: DesktopFontFamily[] = [
     {

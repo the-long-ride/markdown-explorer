@@ -134,4 +134,15 @@ describe('search document preview', () => {
     expect(fireEvent.click(screen.getByRole('button', { name: 'Chart' }))).toBe(false);
     expect(table.switchView).toHaveBeenCalledOnce();
   });
+
+  it('scrolls to an existing outer fragment when the preview has no matching target', () => {
+    const { props, reply } = fixture();
+    render(<><p id="outside">Outer target</p><SearchDocumentPreview {...props} /></>);
+    reply('<a href="#outside">Go outside</a>');
+    const scroll = vi.fn();
+    screen.getByText('Outer target').scrollIntoView = scroll;
+    vi.stubGlobal('CSS', { escape: (id: string) => id });
+    expect(fireEvent.click(screen.getByRole('link', { name: 'Go outside' }))).toBe(false);
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'start' });
+  });
 });

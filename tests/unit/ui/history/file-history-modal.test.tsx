@@ -332,6 +332,42 @@ describe('FileHistoryModal', () => {
     expect(split).toHaveAttribute('aria-valuenow', '50');
   });
 
+  it('requests the next history page only when scrolling near the bottom', async () => {
+    const entries = Array.from({ length: 150 }, (_, index) => entry(index));
+    const client = createClient(entries.slice(0, 100));
+    vi.mocked(client.listDocumentHistory).mockResolvedValueOnce(entries.slice(0, 100)).mockResolvedValue(entries);
+    const bridge = createBridge();
+    render(<PlatformProvider bridge={bridge}><FileHistoryModal filePath="docs/a.md" client={client} language="en" currentSource={() => null} onClose={vi.fn()} bridge={bridge} /></PlatformProvider>);
+    await screen.findByText('commit 99');
+    const list = screen.getByText('commit 99').closest('ol')!;
+    Object.defineProperties(list, {
+      scrollHeight: { value: 1000, configurable: true },
+      clientHeight: { value: 200, configurable: true },
+    });
+    fireEvent.scroll(list, { target: { scrollTop: 120 } });
+    expect(client.listDocumentHistory).toHaveBeenCalledExactlyOnceWith('docs/a.md', 100);
+    fireEvent.scroll(list, { target: { scrollTop: 800 } });
+    expect(await screen.findByText('commit 149')).toBeVisible();
+    expect(client.listDocumentHistory).toHaveBeenLastCalledWith('docs/a.md', 200);
+    fireEvent.scroll(list);
+    expect(client.listDocumentHistory).toHaveBeenCalledTimes(2);
+  });
+
+  it('resizes a measured split diff and ignores drags until its guide has usable width', async () => {
+    renderModal(undefined, createBridge({ fileHistoryView: 'raw-split' }));
+    const handle = await screen.findByRole('separator', { name: /resize diff panes/i });
+    const guide = handle.parentElement!;
+    const pointer = (type: string, x: number) => Object.assign(new MouseEvent(type, { bubbles: true, clientX: x }), { pointerId: 4 });
+    fireEvent(handle, pointer('pointerdown', 240));
+    fireEvent(handle, pointer('pointermove', 330));
+    expect(handle).toHaveAttribute('aria-valuenow', '50');
+    Object.defineProperty(guide, 'clientWidth', { value: 424, configurable: true });
+    vi.spyOn(guide, 'getBoundingClientRect').mockReturnValue(new DOMRect(80, 0, 424, 500));
+    fireEvent(handle, pointer('pointermove', 330));
+    expect(handle).not.toHaveAttribute('aria-valuenow', '50');
+    fireEvent(handle, pointer('pointerup', 330));
+  });
+
   it('drags the commit list from its left edge, ignores a secondary-button press, and ends on pointer cancellation', async () => {
     renderModal();
     await screen.findByText('commit 0');
