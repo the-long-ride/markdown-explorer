@@ -2,10 +2,7 @@
 
 use parking_lot::RwLock;
 use std::collections::HashSet;
-use std::sync::{
-    atomic::AtomicBool,
-    Arc, Mutex,
-};
+use std::sync::{atomic::AtomicBool, Arc, Mutex};
 
 #[derive(Clone)]
 pub struct AppState {

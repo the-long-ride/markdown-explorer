@@ -41,7 +41,9 @@ fn read_zip_member(path: &Path, member: &str) -> Result<Vec<u8>, ConversionError
         .has_overlapping_files()
         .map_err(|error| ConversionError::Parse(error.to_string()))?
     {
-        return Err(ConversionError::Parse("overlapping ZIP members are not allowed".to_string()));
+        return Err(ConversionError::Parse(
+            "overlapping ZIP members are not allowed".to_string(),
+        ));
     }
     let mut entry = archive
         .by_name(member)

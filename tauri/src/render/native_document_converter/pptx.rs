@@ -146,7 +146,9 @@ fn parse_slide_relationships(xml: &[u8]) -> Result<HashMap<String, String>, Conv
             {
                 let relationship_type = attribute_value(&reader, &start, b"Type");
                 let target_mode = attribute_value(&reader, &start, b"TargetMode");
-                if relationship_type.as_deref().is_some_and(|value| value.ends_with("/slide"))
+                if relationship_type
+                    .as_deref()
+                    .is_some_and(|value| value.ends_with("/slide"))
                     && target_mode.as_deref() != Some("External")
                 {
                     if let (Some(id), Some(target)) = (
@@ -309,7 +311,11 @@ mod tests {
             .join("sample-presentation.pptx");
         let output = convert(&path).expect("convert PPTX fixture");
         assert_eq!(output.quality, ConversionQuality::Standard);
-        assert!(output.markdown.contains("Alpha & beta"), "{:?}", output.markdown);
+        assert!(
+            output.markdown.contains("Alpha & beta"),
+            "{:?}",
+            output.markdown
+        );
         assert!(!output.markdown.contains("&amp;"));
         assert!(output.markdown.contains("Second line"));
         assert!(

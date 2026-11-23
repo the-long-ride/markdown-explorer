@@ -420,7 +420,9 @@ mod tests {
         let file = dir.join("test_doc.docx");
         fs::write(&file, "fake doc").unwrap();
         let result = conv.read_markdown(&file.to_string_lossy(), false);
-        assert!(result.markdown.contains("Document conversion is not enabled"));
+        assert!(result
+            .markdown
+            .contains("Document conversion is not enabled"));
         assert!(result.preview_info.is_some());
         let info = result.preview_info.unwrap();
         assert_eq!(info.kind, "converted");
@@ -439,7 +441,9 @@ mod tests {
 
         let result = conv.read_markdown(&file.to_string_lossy(), false);
 
-        assert!(result.markdown.contains("Document conversion is not enabled"));
+        assert!(result
+            .markdown
+            .contains("Document conversion is not enabled"));
         let info = result.preview_info.expect("preview info");
         assert_eq!(info.kind, "converted");
         assert_eq!(info.source_extension, ".pptx");
@@ -565,7 +569,8 @@ mod tests {
                 size: metadata.len(),
                 markdown: "# Legacy".to_string(),
                 duration_ms: 7,
-                quality: crate::render::native_document_converter::ConversionQuality::BestEffortLegacy,
+                quality:
+                    crate::render::native_document_converter::ConversionQuality::BestEffortLegacy,
             },
         );
 

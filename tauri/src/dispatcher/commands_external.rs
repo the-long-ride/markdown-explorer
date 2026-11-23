@@ -1,41 +1,14 @@
 use super::*;
 
+#[path = "commands_external_fonts.rs"]
+mod fonts;
+
 impl Dispatcher {
-    fn emit_desktop_fonts_result(
+    pub(super) async fn handle_external_command(
         &self,
-        request_id: &str,
-        imported_id: Option<String>,
-        explicit_error: Option<String>,
-    ) {
-        let mut extra = serde_json::Map::new();
-        extra.insert("requestId".into(), request_id.into());
-        let catalog = self
-            .app
-            .path()
-            .app_data_dir()
-            .map_err(|error| error.to_string())
-            .and_then(|path| crate::fonts::list_fonts(&path));
-        match catalog {
-            Ok(fonts) => {
-                extra.insert(
-                    "fonts".into(),
-                    serde_json::to_value(fonts).unwrap_or_else(|_| json!([])),
-                );
-            }
-            Err(error) => {
-                extra.insert("fonts".into(), json!([]));
-                extra.insert("error".into(), error.into());
-            }
-        }
-        if let Some(id) = imported_id {
-            extra.insert("importedId".into(), id.into());
-        }
-        if let Some(error) = explicit_error {
-            extra.insert("error".into(), error.into());
-        }
-        host_message::emit(&self.app, "desktopFontsResult", extra);
-    }
-    pub(super) async fn handle_external_command(&self, cmd: &str, msg: &Value) -> Result<bool, String> {
+        cmd: &str,
+        msg: &Value,
+    ) -> Result<bool, String> {
         match cmd {
             "listDesktopFonts" => {
                 let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("");
@@ -45,7 +18,11 @@ impl Dispatcher {
                 let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("");
                 let path = self.pick_font_file();
                 if let Some(path) = path {
-                    let app_data = self.app.path().app_data_dir().map_err(|error| error.to_string())?;
+                    let app_data = self
+                        .app
+                        .path()
+                        .app_data_dir()
+                        .map_err(|error| error.to_string())?;
                     match crate::fonts::import_font_files(&app_data, &[path]) {
                         Ok(font) => self.emit_desktop_fonts_result(request_id, Some(font.id), None),
                         Err(error) => self.emit_desktop_fonts_result(request_id, None, Some(error)),
@@ -56,7 +33,11 @@ impl Dispatcher {
             }
             "removeImportedDesktopFont" => {
                 let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("");
-                let app_data = self.app.path().app_data_dir().map_err(|error| error.to_string())?;
+                let app_data = self
+                    .app
+                    .path()
+                    .app_data_dir()
+                    .map_err(|error| error.to_string())?;
                 let result = msg
                     .get("id")
                     .and_then(Value::as_str)
@@ -66,7 +47,9 @@ impl Dispatcher {
             }
             "saveChartPng" => {
                 let file_name = crate::runtime::png_export::normalize_png_file_name(
-                    msg.get("fileName").and_then(Value::as_str).unwrap_or("chart.png"),
+                    msg.get("fileName")
+                        .and_then(Value::as_str)
+                        .unwrap_or("chart.png"),
                 );
                 let data_url = msg
                     .get("dataUrl")
@@ -122,7 +105,9 @@ impl Dispatcher {
                     .unwrap_or("")
                     .to_string();
                 let file_name = crate::runtime::png_export::normalize_export_file_name(
-                    msg.get("fileName").and_then(Value::as_str).unwrap_or("export.bin"),
+                    msg.get("fileName")
+                        .and_then(Value::as_str)
+                        .unwrap_or("export.bin"),
                 );
                 let mut extra = serde_json::Map::new();
                 extra.insert("requestId".into(), request_id.into());
@@ -144,7 +129,10 @@ impl Dispatcher {
                             Some(path) => match std::fs::write(&path, bytes) {
                                 Ok(()) => {
                                     extra.insert("ok".into(), true.into());
-                                    extra.insert("path".into(), path.to_string_lossy().to_string().into());
+                                    extra.insert(
+                                        "path".into(),
+                                        path.to_string_lossy().to_string().into(),
+                                    );
                                 }
                                 Err(error) => {
                                     extra.insert("ok".into(), false.into());
@@ -188,7 +176,10 @@ impl Dispatcher {
                     let resource_path = resource_path.ok_or("unsupported")?;
                     let workspace_path = workspace_path.ok_or("missing")?;
                     let workspace_base = if workspace_path.is_file() {
-                        workspace_path.parent().unwrap_or(workspace_path.as_path()).to_path_buf()
+                        workspace_path
+                            .parent()
+                            .unwrap_or(workspace_path.as_path())
+                            .to_path_buf()
                     } else {
                         workspace_path
                     };
@@ -224,19 +215,29 @@ impl Dispatcher {
                                 .join(reference_path)
                         }
                     };
-                    let allowed = resolved
-                        .extension()
-                        .and_then(|ext| ext.to_str())
-                        .map_or(false, |ext| matches!(ext.to_ascii_lowercase().as_str(), "css" | "js" | "mjs" | "cjs"));
+                    let allowed =
+                        resolved
+                            .extension()
+                            .and_then(|ext| ext.to_str())
+                            .map_or(false, |ext| {
+                                matches!(
+                                    ext.to_ascii_lowercase().as_str(),
+                                    "css" | "js" | "mjs" | "cjs"
+                                )
+                            });
                     if !allowed {
                         return Err("outside-workspace");
                     }
-                    let canonical_workspace = workspace_base.canonicalize().map_err(|_| "missing")?;
+                    let canonical_workspace =
+                        workspace_base.canonicalize().map_err(|_| "missing")?;
                     let canonical_target = resolved.canonicalize().map_err(|_| "missing")?;
-                    if !canonical_target.starts_with(&canonical_workspace) || !canonical_target.is_file() {
+                    if !canonical_target.starts_with(&canonical_workspace)
+                        || !canonical_target.is_file()
+                    {
                         return Err("outside-workspace");
                     }
-                    let content = std::fs::read_to_string(&canonical_target).map_err(|_| "unreadable")?;
+                    let content =
+                        std::fs::read_to_string(&canonical_target).map_err(|_| "unreadable")?;
                     Ok((content, canonical_target.to_string_lossy().into_owned()))
                 })();
                 match result {
@@ -261,10 +262,10 @@ impl Dispatcher {
                     if source.exists() {
                         match mode {
                             "open-directory" => {
-                                let _ = self.app.opener().open_path(
-                                    source.to_string_lossy().into_owned(),
-                                    None::<&str>,
-                                );
+                                let _ = self
+                                    .app
+                                    .opener()
+                                    .open_path(source.to_string_lossy().into_owned(), None::<&str>);
                             }
                             "open-parent-directory" => {
                                 if let Some(parent) = source.parent() {
