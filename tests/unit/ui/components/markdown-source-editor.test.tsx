@@ -156,6 +156,23 @@ describe('MarkdownSourceEditor', () => {
     requestMeasureSpy.mockRestore();
   });
 
+  it('reports the requested font size without overriding a controlled font size', () => {
+    const onFontSizeChange = vi.fn();
+    const previous = localStorage.getItem(EDITOR_FONT_SIZE_STORAGE_KEY);
+    try {
+      const { props, rerender } = renderEditor({ fontSize: 20, onFontSizeChange });
+      const container = screen.getByTestId('markdown-source-editor');
+      fireEvent.keyDown(screen.getByRole('textbox', { name: 'Markdown source' }), { key: '-', ctrlKey: true });
+      expect(onFontSizeChange).toHaveBeenCalledExactlyOnceWith(19);
+      expect(container).toHaveAttribute('data-editor-font-size', '20');
+      rerender(<MarkdownSourceEditor {...props} fontSize={19} />);
+      expect(container).toHaveAttribute('data-editor-font-size', '19');
+    } finally {
+      if (previous === null) localStorage.removeItem(EDITOR_FONT_SIZE_STORAGE_KEY);
+      else localStorage.setItem(EDITOR_FONT_SIZE_STORAGE_KEY, previous);
+    }
+  });
+
   it('synchronizes font size across windows without accepting unrelated storage events', () => {
     const { container, unmount } = renderEditor();
     const editor = container.querySelector('.markdown-source-editor');
@@ -393,6 +410,18 @@ it('preserves undo and redo history across unmount and remount with the same ses
     const inserted = onChange.mock.calls[0][0];
     expect(inserted).toContain('| Column 1 | Column 2 |');
     expect(inserted).toContain('| Value 1  | Value 2  |');
+  });
+
+  it('separates a new table from both halves of a split line', () => {
+    const onChange = vi.fn();
+    renderEditor({ value: 'beforeafter', onChange });
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Markdown source' }))!;
+    act(() => view.dispatch({ selection: { anchor: 6 } }));
+    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+    fireEvent.click(screen.getByTestId('table-insert-confirm'));
+    const source = onChange.mock.lastCall?.[0];
+    expect(source).toMatch(/^before\n\n\|/);
+    expect(source).toMatch(/\|\n\n\s*after$/);
   });
 
   it('opens link dialog on toolbar link click and inserts link with custom url and text', () => {

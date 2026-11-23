@@ -55,4 +55,29 @@ describe('GitCommitGraph virtualization', () => {
     const firstSubject = rows[0].querySelector('.repository-history__commit-subject')?.textContent ?? '';
     expect(Number(firstSubject.replace('commit ', ''))).toBeGreaterThanOrEqual(990);
   });
+
+  it('opens a commit menu from the row and clamps the hover card at viewport edges', () => {
+    const [head] = makeCommits(1);
+    const commit = { ...head, shortOid: 'abc123', subject: '', refs: ['main', 'v1'] };
+    const activate = vi.fn();
+    render(<GitCommitGraph commits={[commit]} selectedOid={null} headLabel="HEAD" browseLabel="Browse" onActivateRevision={activate} onReturnToHead={vi.fn()} />);
+    const row = screen.getByRole('listitem');
+    const button = screen.getByRole('button', { name: /abc123/ });
+    expect(row.querySelector('.repository-history__commit-subject')).toHaveTextContent('abc123');
+    fireEvent.click(row);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    const node = screen.getByTestId(`repository-history-node-${commit.oid}`);
+    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue(new DOMRect(window.innerWidth - 30, window.innerHeight - 25, 20, 20));
+    fireEvent.mouseEnter(node);
+    const card = screen.getByRole('tooltip');
+    expect(card).toHaveTextContent('main · v1');
+    expect(card.style.getPropertyValue('--repository-history-card-left')).toBe(`${window.innerWidth - 300}px`);
+    expect(card.style.getPropertyValue('--repository-history-card-top')).toBe(`${window.innerHeight - 122}px`);
+    fireEvent.resize(window);
+    expect(card).not.toBeInTheDocument();
+    fireEvent.click(node);
+    expect(activate).toHaveBeenCalledExactlyOnceWith(commit.oid);
+  });
 });

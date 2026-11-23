@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
-import { groupToolbarMenuItems, ToolbarActionMenu } from '../../../../ui/src/components/shared/ToolbarActionMenu';
+import { describe, expect, it, vi } from 'vitest';
+import { DOCUMENT_HISTORY_OPEN_EVENT, groupToolbarMenuItems, ToolbarActionMenu, WORKSPACE_INSIGHTS_TOGGLE_EVENT } from '../../../../ui/src/components/shared/ToolbarActionMenu';
 
 type MenuProps = Parameters<typeof ToolbarActionMenu>[0];
 const noop = () => {};
@@ -71,6 +71,47 @@ describe('ToolbarActionMenu grouping', () => {
       expect(separator).toHaveClass('toolbar-action-menu__separator');
       expect(separator).toHaveAttribute('aria-orientation', 'horizontal');
     }
+  });
+
+  it('dispatches the history and Insights fallback events when no callbacks are supplied', () => {
+    const history = vi.fn();
+    const insights = vi.fn();
+    window.addEventListener(DOCUMENT_HISTORY_OPEN_EVENT, history);
+    window.addEventListener(WORKSPACE_INSIGHTS_TOGGLE_EVENT, insights);
+    try {
+      const menu = renderMenu({ onInsightsToggle: undefined, isDark: true, isFocusMode: true, hasUpdate: true });
+      fireEvent.pointerDown(menu);
+      expect(menu).toBeInTheDocument();
+      fireEvent.keyDown(menu, { key: 'Tab' });
+      fireEvent.click(within(menu).getByRole('menuitem', { name: 'History' }));
+      expect(history).toHaveBeenCalledOnce();
+      expect(menu).not.toBeInTheDocument();
+      fireEvent.click(screen.getByLabelText('More actions'));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Insights' }));
+      expect(insights).toHaveBeenCalledOnce();
+      fireEvent.click(screen.getByLabelText('More actions'));
+      expect(screen.getByRole('menuitem', { name: 'Settings' })).toHaveClass('has-update');
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    } finally {
+      window.removeEventListener(DOCUMENT_HISTORY_OPEN_EVENT, history);
+      window.removeEventListener(WORKSPACE_INSIGHTS_TOGGLE_EVENT, insights);
+    }
+  });
+
+  it('runs the supplied history and fullscreen actions and puts unknown groups in the panels section', () => {
+    const onHistory = vi.fn();
+    const onFullscreenToggle = vi.fn();
+    expect(groupToolbarMenuItems([{ id: 'custom' }, { id: 'home' }])).toEqual([
+      { item: { id: 'home' }, dividerBefore: false },
+      { item: { id: 'custom' }, dividerBefore: true },
+    ]);
+    renderMenu({ onHistory, onFullscreenToggle });
+    fireEvent.click(screen.getByRole('menuitem', { name: 'History' }));
+    expect(onHistory).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByLabelText('More actions'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Fullscreen' }));
+    expect(onFullscreenToggle).toHaveBeenCalledOnce();
   });
 });
 

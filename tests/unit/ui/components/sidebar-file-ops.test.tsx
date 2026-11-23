@@ -412,6 +412,30 @@ it('restores folder focus and keeps keyboard actions after unchanged-name Enter'
   expect(posted.some(m=>m.command==='renameWorkspaceEntry')).toBe(false);
 });
 
+it('renames an empty folder using the workspace path and handles an unnamed host failure', async () => {
+  mockState = makeState({ tree: emptyOnlyTree, fileList: [] });
+  render(<Sidebar />);
+  fireEvent.keyDown(treeEl(), { key: 'F2' });
+  expect(textbox(t.sidebar.renameFolder)).toBeNull();
+  fireEvent.keyDown(row('void'), { key: 'F2' });
+  const input = screen.getByRole('textbox', { name: t.sidebar.renameFolder });
+  fireEvent.change(input, { target: { value: 'empty' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const first = posted.find((message) => message.command === 'renameWorkspaceEntry');
+  expect(first).toMatchObject({ path: 'void', name: 'empty', kind: 'folder' });
+  emit({ command: 'renameWorkspaceEntryResult', requestId: first.requestId, ok: false });
+  await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'));
+  expect(notices).toHaveLength(0);
+
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const retry = posted.filter((message) => message.command === 'renameWorkspaceEntry').at(-1);
+  emit({ command: 'renameWorkspaceEntryResult', requestId: retry.requestId, ok: true, path: 'empty' });
+  await waitFor(() => expect(spies.dispatch).toHaveBeenCalledWith(expect.objectContaining({
+    type: 'RENAME_WORKSPACE_ENTRY', oldAbsolutePath: 'C:/ws/void', newAbsolutePath: 'C:/ws/empty',
+  })));
+  expect(input).not.toBeInTheDocument();
+});
+
 it('validates folder renames before posting, then allows retry after a host conflict', async () => {
   render(<Sidebar />);
   fireEvent.keyDown(row('docs'), { key: 'F2', shiftKey: true });

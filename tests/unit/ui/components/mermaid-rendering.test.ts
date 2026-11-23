@@ -89,6 +89,27 @@ describe('Mermaid rendering', () => {
     expect(options.runIdRef.current).toBe(0);
   });
 
+  it.each([
+    ['sequence', 'sequenceDiagram\nA->>B: Ping'],
+    ['packet', 'packet-beta\n0-7: "Header"'],
+    ['kanban', 'kanban\n  todo[Todo]'],
+    ['sankey', 'sankey-beta\nA,B,1'],
+  ])('prepares %s SVGs without cropping native diagram dimensions', async (kind, source) => {
+    const { root, node } = wrapper(source);
+    const { initialize, run, getLibrary } = renderOptions();
+    await enhanceMermaid(root, { getLibrary, isDark: true, isCancelled: () => false, runIdRef: { current: 0 } });
+    expect(run).toHaveBeenCalledOnce();
+    expect(root).toHaveAttribute('data-mdn-mermaid-kind', kind);
+    const svg = node.querySelector('svg');
+    expect(svg).toHaveAttribute('viewBox', '0 0 50 25');
+    expect(svg).toHaveAttribute('preserveAspectRatio', 'xMidYMid meet');
+    if (kind === 'sankey') {
+      expect(initialize).toHaveBeenCalledWith(expect.objectContaining({
+        sankey: expect.objectContaining({ useMaxWidth: false }),
+      }));
+    }
+  });
+
   it('restores source and retries an invalid library result once before marking a terminal error', async () => {
     const source = 'flowchart LR\nA --> B';
     const { root, node } = wrapper(source);

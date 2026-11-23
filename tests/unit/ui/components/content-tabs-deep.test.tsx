@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { createElement } from 'react';
+import { createEditableDocumentSession, documentSessionKey } from '../../../../ui/src/editor/documentSession';
+import { createSplitViewState } from '../../../../ui/src/split-view/paneState';
 
 const mockActivateContentTab = vi.fn();
 const mockCloseContentTab = vi.fn();
@@ -42,7 +44,7 @@ function makeTab(filePath: string, fileName: string, title: string, relativePath
   };
 }
 
-function createMockAppState(overrides: Record<string, unknown> = {}) {
+function createMockAppState(overrides: Record<string, unknown> = {}, actions: Record<string, unknown> = {}) {
   return {
     state: {
       fileList: [],
@@ -105,6 +107,7 @@ function createMockAppState(overrides: Record<string, unknown> = {}) {
     setSidebarCollapsed: vi.fn(),
     setSidebarActiveTab: vi.fn(),
     updateSettings: vi.fn(),
+    ...actions,
   };
 }
 
@@ -131,6 +134,7 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     fileTabs: 'File tabs',
+    previewActions: { openError: 'Unable to open file' },
     tooltips: { closeTab: 'Close tab' },
     tabContextMenu: {
       closeThisTab: 'Close',
@@ -174,6 +178,10 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
 
     return (
       <div data-testid="tab-context-menu" data-x={x} data-y={y}>
+        {items?.filter(({ action }: any) => ['toggleHtmlDocumentView', 'openInBrowser', 'openInSplit'].includes(action))
+          .map(({ action }: any) => (
+            <button key={action} data-testid={`ctx-${action}`} disabled={getItemDisabled(action)} onClick={() => handleAction(action)}>{action}</button>
+          ))}
         {hasItem('openLocation') && (
           <button data-testid="ctx-open-location" disabled={getItemDisabled('openLocation')} onClick={() => handleAction('openLocation')}>Open location</button>
         )}
@@ -303,6 +311,66 @@ describe('ContentTabs deep', () => {
         path: '/a.md',
         mode: 'open-parent-directory',
       });
+    });
+
+    it('uses the HTML tab override when switching previews and dispatches an error on invalid local paths', () => {
+      const tab = makeTab('relative.html', 'relative.html', 'Relative');
+      const setContentTabHtmlPreview = vi.fn();
+      mockAppState = createMockAppState({
+        appRuntime: 'desktop',
+        contentTabs: [{ ...tab, htmlPreviewOverride: false }, makeTab('/absolute.html', 'absolute.html', 'Absolute')],
+      }, { setContentTabHtmlPreview });
+      const notice = vi.fn();
+      window.addEventListener('markdown-explorer-action-notice', notice);
+      try {
+        render(createElement(ContentTabs));
+        const choose = (name: RegExp, action: string) => {
+          fireEvent.contextMenu(screen.getByRole('tab', { name }));
+          fireEvent.click(screen.getByTestId(`ctx-${action}`));
+        };
+        choose(/relative/, 'toggleHtmlDocumentView');
+        choose(/absolute/, 'toggleHtmlDocumentView');
+        expect(setContentTabHtmlPreview.mock.calls).toEqual([['relative.html', true], ['/absolute.html', false]]);
+        choose(/relative/, 'openInBrowser');
+        expect(notice).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ detail: 'Unable to open file' }));
+        choose(/absolute/, 'openInBrowser');
+        expect(mockPostMessage).toHaveBeenCalledExactlyOnceWith({ command: 'openExternal', url: 'file:///absolute.html' });
+      } finally {
+        window.removeEventListener('markdown-explorer-action-notice', notice);
+      }
+    });
+
+    it('opens a split directly when empty, but guards replacing a dirty document', () => {
+      const targetPath = '/target.md';
+      const currentPath = '/current.md';
+      const openInSplit = vi.fn();
+      const guardUnsavedChanges = vi.fn<(paths: string[], commit: () => void) => void>();
+      const contentTabs = [makeTab(targetPath, 'target.md', 'Target')];
+      const actions = { openInSplit, guardUnsavedChanges };
+      mockAppState = createMockAppState({ contentTabs }, actions);
+      const { rerender } = render(createElement(ContentTabs));
+      const openTarget = () => {
+        fireEvent.contextMenu(screen.getByRole('tab', { name: /target/ }));
+        fireEvent.click(screen.getByTestId('ctx-openInSplit'));
+      };
+      openTarget();
+      expect(openInSplit).toHaveBeenCalledExactlyOnceWith(targetPath);
+      expect(guardUnsavedChanges).not.toHaveBeenCalled();
+      openInSplit.mockClear();
+      const splitView = createSplitViewState(targetPath);
+      mockAppState = createMockAppState({
+        contentTabs,
+        splitView: { ...splitView, enabled: true, secondary: { ...splitView.secondary, filePath: currentPath } },
+        documentSessions: {
+          [documentSessionKey(currentPath)]: { ...createEditableDocumentSession(currentPath, 'Before', '1'), source: 'Changed' },
+        },
+      }, actions);
+      rerender(createElement(ContentTabs));
+      openTarget();
+      expect(guardUnsavedChanges).toHaveBeenCalledExactlyOnceWith([currentPath], expect.any(Function));
+      expect(openInSplit).not.toHaveBeenCalled();
+      guardUnsavedChanges.mock.calls[0][1]();
+      expect(openInSplit).toHaveBeenCalledExactlyOnceWith(targetPath);
     });
 
     it('opens document history from the tab context menu', () => {

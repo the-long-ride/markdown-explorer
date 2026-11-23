@@ -179,6 +179,45 @@ describe('WorkspaceInsightsPanel', () => {
     });
   });
 
+  it('uses a workspace name as the settings key and keeps global defaults separate from workspace overrides', async () => {
+    const mockAppState = {
+      state: { workspacePath: '', workspaceName: 'Named workspace', settings: { insightsEnabled: true, language: '' }, fileList: [] },
+      navigate: vi.fn(),
+    };
+    const mockPlatform = { onMessage: vi.fn(() => () => {}), postMessage: vi.fn() };
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    const user = userEvent.setup();
+    const onPanelOpenChange = vi.fn();
+    const saved = { ...localStorage };
+    try {
+      render(
+        <AppStateContext.Provider value={mockAppState as any}>
+          <PlatformContext.Provider value={mockPlatform as any}>
+            <div className="body"><WorkspaceInsightsEntry onPanelOpenChange={onPanelOpenChange} /></div>
+          </PlatformContext.Provider>
+        </AppStateContext.Provider>,
+      );
+      expect(onPanelOpenChange).toHaveBeenCalledWith(false);
+      fireEvent(window, new Event(WORKSPACE_INSIGHTS_TOGGLE_EVENT));
+      await user.click(await screen.findByRole('button', { name: `${labels.entry} ${labels.settings}` }));
+      expect(onPanelOpenChange).toHaveBeenLastCalledWith(true);
+      const cap = screen.getByRole('spinbutton', { name: labels.graphNodeCap });
+      const scope = screen.getByRole('combobox', { name: labels.settingsScope });
+      fireEvent.change(cap, { target: { value: '125' } });
+      expect(cap).toHaveValue(125);
+      await user.selectOptions(scope, 'global');
+      fireEvent.change(cap, { target: { value: '175' } });
+      expect(cap).toHaveValue(175);
+      await user.selectOptions(scope, 'workspace');
+      expect(cap).toHaveValue(125);
+      await user.click(screen.getByRole('button', { name: labels.resetWorkspace }));
+      expect(cap).toHaveValue(175);
+    } finally {
+      localStorage.clear();
+      for (const [key, value] of Object.entries(saved)) localStorage.setItem(key, value);
+    }
+  });
+
   it('updates portalTarget when .body is added after initial mount and handles dynamic DOM replacement', async () => {
     const mockAppState = {
       state: {

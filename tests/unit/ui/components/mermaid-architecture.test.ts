@@ -62,6 +62,11 @@ describe('mermaidArchitecture', () => {
       expect(result).toContain('M 0,0');
       expect(result).toContain('100,0');
     });
+
+    it('preserves repeated waypoints without creating invalid coordinates', () => {
+      expect(curveArchitectureEdgePath('M 0 0 L 0 0 L 50 0 L 50 0 L 50 50')).toBe('M 0,0 L 0,0 L 50,0 L 50,0 L 50,50');
+      expect(parseSvgPathPoints('M . . L 10 20')).toEqual([{ cmd: 'L', x: 10, y: 20 }]);
+    });
   });
 
   describe('curveArchitectureEdges and enforceArchitectureGroupBounds', () => {
@@ -158,6 +163,23 @@ describe('mermaidArchitecture', () => {
 
     it('handles empty or malformed SVGs gracefully', () => {
       expect(repairArchitectureLabelCollisions({} as any)).toBe(0);
+    });
+
+    it('styles legacy native labels and foreignObject labels without text children', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.innerHTML = `<g class="service">
+        <text>Legacy service</text>
+        <foreignObject><div xmlns="http://www.w3.org/1999/xhtml">HTML service</div></foreignObject>
+      </g><path class="edge" /><path class="edge" d="M 0 0 L 50 20" />`;
+      repairArchitectureLabelCollisions(svg);
+      for (const label of svg.querySelectorAll<SVGElement>('text, foreignObject')) {
+        expect(label.style.fontFamily).toBe('var(--font-mermaid)');
+        expect(label.style.paintOrder).toBe('stroke fill');
+      }
+      const [incomplete, complete] = svg.querySelectorAll('path');
+      expect(incomplete).not.toHaveAttribute('data-mdn-architecture-edge-curved');
+      expect(complete).toHaveAttribute('data-mdn-architecture-edge-curved', 'true');
+      expect(curveArchitectureEdges(svg)).toBe(0);
     });
   });
 });

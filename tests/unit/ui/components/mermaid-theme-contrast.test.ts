@@ -199,4 +199,35 @@ describe('Mermaid SVG text contrast', () => {
     expect(svg.querySelectorAll(layerSelector)).toHaveLength(0);
     expect(svg.querySelector(defsSelector)).toBeNull();
   });
+
+  it('uses parent backgrounds and repairs nested HTML paint when no SVG geometry is requested', () => {
+    const svg = diagram(`
+      <g style="background-color: #000">
+        <text id="label">Text<title>Tooltip</title></text>
+        <foreignObject>
+          <div xmlns="http://www.w3.org/1999/xhtml">
+            <span id="plain">Plain</span><p style="background-color: #fff"><span id="painted">Painted</span></p>
+          </div>
+        </foreignObject>
+      </g>
+    `);
+    enforceMermaidSvgContrast(svg, tokens, { regionAware: false });
+    expect(svg.querySelector('#label')).toHaveAttribute('fill', '#ffffff');
+    expect(svg.querySelector('title')).not.toHaveAttribute('fill');
+    expect(svg.querySelector('#plain')).toHaveStyle({ color: '#ffffff' });
+    expect(svg.querySelector('#painted')).toHaveStyle({ color: '#111111' });
+    expect(svg.querySelector(defsSelector)).not.toBeInTheDocument();
+  });
+
+  it('falls back to local geometry when browser matrix inversion fails for untransformed sibling artwork', () => {
+    const svg = diagram('<g><rect fill="#000" /><text>Text</text></g>');
+    const matrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+    geometry(svg, 'rect', bounds, matrix);
+    geometry(svg, 'text', bounds, { ...matrix, inverse: () => { throw new Error('Singular matrix'); } });
+    enforceMermaidSvgContrast(svg, tokens);
+    const clip = svg.querySelector('clipPath rect');
+    expect(clip).not.toBeNull();
+    expect(clip).not.toHaveAttribute('transform');
+    expect(svg.querySelector(layerSelector)).toHaveAttribute('fill', '#ffffff');
+  });
 });

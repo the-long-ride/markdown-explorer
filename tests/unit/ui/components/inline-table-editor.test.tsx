@@ -58,6 +58,28 @@ describe('InlineTableEditor', () => {
     expect(props.onChange).toHaveBeenLastCalledWith(expect.stringContaining('| After |'));
   });
 
+  it('formats visual cell selections and restores the text through undo and redo', () => {
+    const { container, editor } = setup('| Label |\n| --- |\n| Draft |');
+    const focusCell = () => act(() => container.querySelector<HTMLElement>('tbody .cm-table-cell')!.focus());
+    focusCell();
+    act(() => editor.runFormat('bullet-list'));
+    act(() => editor.commitPendingEdit());
+    expect(editor.getCurrentDoc()).toContain('<ul><li>Draft</li></ul>');
+    focusCell();
+    act(() => editor.undo());
+    expect(editor.getCurrentDoc()).toContain('| Draft |');
+    focusCell();
+    act(() => editor.redo());
+    expect(editor.getCurrentDoc()).toContain('<ul><li>Draft</li></ul>');
+  });
+
+  it('applies the save chord without an optional save or history callback or imperative ref', () => {
+    const onApply = vi.fn();
+    render(<InlineTableEditor initialSource="Draft" ariaLabel={ariaLabel} wordWrap={false} onApply={onApply} onCancel={vi.fn()} onChange={vi.fn()} />);
+    fireEvent.keyDown(screen.getByRole('textbox', { name: ariaLabel }), { key: 's', ctrlKey: true });
+    expect(onApply).toHaveBeenCalledOnce();
+  });
+
   it('applies, saves, and cancels by keyboard using the latest callbacks, and reconfigures line wrapping', () => {
     const { content, props, rerender } = setup('Draft');
     expect(content).not.toHaveClass('cm-lineWrapping');

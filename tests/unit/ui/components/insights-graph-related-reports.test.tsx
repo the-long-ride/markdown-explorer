@@ -32,6 +32,36 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(screen.getByTestId('graph-node-b.md')).toHaveAttribute('data-selected', 'true');
   });
 
+  it('selects tag and heading nodes without opening a document and highlights only matching links', () => {
+    const index = new WorkspaceInsightsIndex();
+    index.applyDocument(doc('guide.md', '---\ntags: [documentation]\n---\n# Guide\n## Setup\n[[reference.md]]'));
+    index.applyDocument(doc('reference.md', '# Reference\n[[other.md]]'));
+    index.applyDocument(doc('other.md', '# Other'));
+    const onSelectPath = vi.fn();
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    const { container } = render(<GraphView snapshot={index.snapshot()} centerPath="guide.md" showTags showHeadings onSelectPath={onSelectPath} />);
+    const tag = screen.getByTestId('graph-node-tag:documentation');
+    const heading = container.querySelector('[data-node-kind="heading"]')!;
+    expect(tag.querySelector('circle')).toHaveAttribute('r', '14');
+    expect(heading).toBeInTheDocument();
+    fireEvent.click(tag);
+    expect(tag).toHaveAttribute('data-selected', 'true');
+    expect(tag.querySelector('circle')).toHaveAttribute('r', '16');
+    fireEvent.click(heading);
+    expect(heading).toHaveAttribute('data-selected', 'true');
+    expect(heading.querySelector('circle')).toHaveAttribute('r', '14');
+    expect(onSelectPath).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole('searchbox', { name: labels.searchNodesPlaceholder }), {
+      target: { value: 'documentation' },
+    });
+    const guide = screen.getByTestId('graph-node-guide.md');
+    expect(guide).toHaveClass('is-highlighted');
+    expect(container.querySelector('.insights-graph__edge.is-dimmed')).toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole('listbox'));
+    fireEvent.click(screen.getByRole('option', { name: /Guide\s*tag/i }));
+    expect(onSelectPath).toHaveBeenCalledExactlyOnceWith('guide.md');
+  });
+
   it('renders an empty graph, then exposes the number of documents hidden by the node cap', () => {
     const labels = INSIGHTS_TRANSLATIONS.en;
     const empty = new WorkspaceInsightsIndex().snapshot();

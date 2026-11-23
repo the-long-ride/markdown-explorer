@@ -18,7 +18,7 @@ const html = '/docs/c.html';
 const last = '/docs/d.md';
 const t = getTranslations('en');
 
-function fixture(activePrimary = second, dirtyPath?: string) {
+function fixture(activePrimary = second, dirtyPath?: string, overrides: Partial<AppState> = {}) {
   const split = createSplitViewState(first);
   const state: AppState = {
     ...initialState,
@@ -35,6 +35,7 @@ function fixture(activePrimary = second, dirtyPath?: string) {
       primary: { ...split.primary, tabs: [first, second, html], activeTabPath: activePrimary, filePath: activePrimary },
       secondary: { ...split.secondary, tabs: [last], activeTabPath: last, filePath: last },
     },
+    ...overrides,
   };
   const app = {
     state, dispatch: vi.fn(), openInSplit: vi.fn(), swapSplitPanes: vi.fn(),
@@ -62,6 +63,26 @@ describe('split content tab actions', () => {
       { type: 'ACTIVATE_SPLIT_PANE', paneId: 'primary' },
       { type: 'ACTIVATE_SPLIT_PANE_TAB', paneId: 'primary', filePath: first },
       { type: 'ACTIVATE_CONTENT_TAB', filePath: first },
+    ]);
+    expect(context.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'navigate', path: first });
+  });
+
+  it('uses file-list labels for uncached pane tabs and navigates without activating a cached document', () => {
+    const fileList: AppState['fileList'] = [
+      { fsPath: first, relativePath: 'a.md', fileName: 'a.md', title: 'Listed A', parts: ['a.md'], extension: '.md', modifiedAt: 0 },
+      { fsPath: second, relativePath: 'b.md', fileName: 'b.md', title: '', parts: ['b.md'], extension: '.md', modifiedAt: 0 },
+    ];
+    const { dispatch } = fixture(second, undefined, {
+      contentTabs: [{ filePath: html, fileName: 'c.html', relativePath: 'c.html', title: '' }],
+      fileList,
+      settings: { ...initialState.settings, fileTabs: true, showTitle: true },
+    });
+    expect(tab('b.md')).toBeInTheDocument();
+    expect(tab('c.html')).toBeInTheDocument();
+    fireEvent.click(tab('Listed A'));
+    expect(dispatch.mock.calls.flat()).toEqual([
+      { type: 'ACTIVATE_SPLIT_PANE', paneId: 'primary' },
+      { type: 'ACTIVATE_SPLIT_PANE_TAB', paneId: 'primary', filePath: first },
     ]);
     expect(context.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'navigate', path: first });
   });

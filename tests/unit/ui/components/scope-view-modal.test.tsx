@@ -180,6 +180,16 @@ describe('ScopeViewModal', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('uses the English close label and generic error for a non-Error initial failure', async () => {
+    mocks.appState.settings.language = '';
+    mocks.loadDocumentSnapshot.mockRejectedValueOnce('Host unavailable');
+    const onClose = vi.fn();
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={onClose} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent(getExportScopeTranslations('en').scopeView.unableOpen);
+    fireEvent.click(screen.getByRole('button', { name: 'Close scope view' }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it('publishes history availability, supports navigation requests, and opens the scoped file only on command', async () => {
     const listener = vi.fn();
     const onClose = vi.fn();

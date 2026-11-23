@@ -352,6 +352,22 @@ describe('DesktopTabBar interactions', () => {
     expect(onFullscreenToggle).toHaveBeenCalledTimes(1);
   });
 
+  it('exits non-maximized Tauri fullscreen from Restore instead of maximizing', () => {
+    mockAppState = createMockAppState({ appRuntime: 'tauri' });
+    const onFullscreenToggle = vi.fn();
+    render(<DesktopTabBar {...props} isFullscreen onFullscreenToggle={onFullscreenToggle} />);
+    fireEvent.click(screen.getByLabelText('Restore'));
+    expect(onFullscreenToggle).toHaveBeenCalledOnce();
+    expect(mockPostMessage).not.toHaveBeenCalledWith({ command: 'window-maximize' });
+  });
+
+  it('does not ask the native editor to open a document from a web workspace', () => {
+    mockAppState = createMockAppState({ appRuntime: 'web' });
+    renderTabBar();
+    fireEvent.click(screen.getByTestId('menu-edit'));
+    expect(mockOpenInEditor).not.toHaveBeenCalled();
+  });
+
   it('closes a tab when its close button is clicked', () => {
     renderTabBar();
     const closeButtons = screen.getAllByLabelText('Close tab');

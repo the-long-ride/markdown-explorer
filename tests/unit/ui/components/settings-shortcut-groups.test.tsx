@@ -244,6 +244,21 @@ describe('Settings shortcut groups', () => {
     expect(screen.getByText(/"Ctrl\+I" is already assigned/i)).toBeInTheDocument();
   });
 
+  it.each([
+    { name: 'disabled binding', key: 'i', modifiers: { metaKey: true }, expected: 'Ctrl+I' },
+    { name: 'Space chord', key: ' ', modifiers: { metaKey: true, shiftKey: true, altKey: true }, expected: 'Ctrl+Shift+Alt+Space' },
+  ])('records a $name when there is no active conflict', ({ key, modifiers, expected }) => {
+    mockState.settings.disabledKeybindings = { editorItalic: true };
+    renderModal();
+    fireEvent.click(screen.getByRole('button', { name: getTranslations('en').shortcuts }));
+    const input = getShortcutInputForAction('Bold');
+    fireEvent.focus(input);
+    fireEvent.keyDown(input, { key, ...modifiers });
+    expect(mockUpdateSettings).toHaveBeenCalledExactlyOnceWith({
+      keybindings: expect.objectContaining({ editorBold: expected }),
+    });
+  });
+
   it('opens the language chooser, dismisses it without changing settings, and applies a selection', () => {
     const t = getTranslations('en');
     renderModal();
