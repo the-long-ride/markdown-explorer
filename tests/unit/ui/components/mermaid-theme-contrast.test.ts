@@ -156,6 +156,17 @@ describe('Mermaid SVG text contrast', () => {
     }
   });
 
+  it('keeps base label paint when an overlapping label cannot be cloned', () => {
+    const svg = diagram('<rect id="background" fill="#000"/><text id="label">Text</text>');
+    geometry(svg, '#background');
+    const label = geometry(svg, '#label');
+    vi.spyOn(label, 'cloneNode').mockImplementation(() => { throw new DOMException('Cannot copy label'); });
+    enforceMermaidSvgContrast(svg, tokens);
+    expect(label.cloneNode).toHaveBeenCalledOnce();
+    expect(svg.querySelector(layerSelector)).toBeNull();
+    expect(label).toHaveAttribute('fill', '#111111');
+  });
+
   it('uses relative geometry for transformed paint and skips unknown coordinate spaces', () => {
     const svg = diagram(`<g><rect id="dark" fill="#000"/><rect id="unknown" transform="translate(1)" fill="#000"/></g><g><text id="label">text</text></g>`);
     const shapeMatrix = { a: 1, b: 0, c: 0, d: 1, e: 10, f: 0 };

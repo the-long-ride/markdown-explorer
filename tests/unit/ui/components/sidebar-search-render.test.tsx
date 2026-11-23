@@ -158,6 +158,44 @@ describe('SidebarSearch', () => {
     vi.useRealTimers();
   });
 
+  it('searches the current revision without the host and opens the result by its relative path', async () => {
+    const match = {
+      fsPath: '/repo/guide.md', relativePath: 'guide.md', fileName: 'guide.md', title: 'Guide',
+      excerpt: 'needle', matchIndex: 0, matchOrdinal: 0, matchLength: 6,
+    };
+    const run = vi.fn().mockResolvedValue([match]);
+    const openPath = vi.fn();
+    const onStatusChange = vi.fn();
+    vi.useFakeTimers();
+    try {
+      render(<SidebarSearch isVisible revisionSearch={{ oid: 'a1b2c3', run, openPath }} onStatusChange={onStatusChange} />);
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'needle' } });
+      await act(async () => { await vi.advanceTimersByTimeAsync(250); });
+      expect(run).toHaveBeenCalledExactlyOnceWith('needle', false, expect.any(AbortSignal));
+      expect(mockPostMessage).not.toHaveBeenCalled();
+      expect(onStatusChange).toHaveBeenLastCalledWith({ isSearching: false, resultCount: 1, showCount: true });
+      fireEvent.click(screen.getByRole('button', { name: 'needle' }));
+      expect(openPath).toHaveBeenCalledExactlyOnceWith('guide.md');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears searching when a revision query fails', async () => {
+    const run = vi.fn().mockRejectedValue(new Error('Revision unavailable'));
+    const onStatusChange = vi.fn();
+    vi.useFakeTimers();
+    try {
+      render(<SidebarSearch isVisible revisionSearch={{ oid: 'a1b2c3', run }} onStatusChange={onStatusChange} />);
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'needle' } });
+      await act(async () => { await vi.advanceTimersByTimeAsync(250); });
+      expect(screen.getByText('No matches found.')).toBeVisible();
+      expect(onStatusChange).toHaveBeenLastCalledWith({ isSearching: false, resultCount: 0, showCount: false });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('streams result batches and keeps the sidebar render window bounded', () => {
     vi.useFakeTimers();
     const results = Array.from({ length: 150 }, (_, index) => ({

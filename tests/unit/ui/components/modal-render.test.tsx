@@ -259,6 +259,25 @@ describe('MediaModal', () => {
     responsiveRectSpy.mockRestore();
   });
 
+  it('skips unloaded media and selects a nested standalone diagram with fallback metadata', () => {
+    const root = document.createElement('main');
+    root.innerHTML = '<div class="mdn-body"><img aria-label="Unloaded"><div class="mermaid">Rendering</div></div>';
+    expect(createMediaGallery(root, root)).toBeNull();
+    root.firstElementChild!.insertAdjacentHTML('beforeend', `
+      <img src="https://example.test/loaded.png">
+      <div class="mermaid" data-mdn-mermaid-source="%"><svg data-mdn-mermaid-kind="flowchart"><g><text>Example</text></g></svg></div>
+      <div class="mdn-mermaid-wrap" data-mdn-mermaid-source="%"><div class="mermaid" data-original-code="flowchart LR"><svg><text>Wrapped</text></svg></div></div>
+    `);
+    const gallery = createMediaGallery(root.querySelector('g')!, root);
+    expect(gallery?.currentIndex).toBe(1);
+    expect(gallery?.items).toMatchObject([
+      { type: 'img', src: 'https://example.test/loaded.png' },
+      { type: 'svg', kind: 'flowchart', source: undefined },
+      { type: 'svg', source: 'flowchart LR' },
+    ]);
+    expect(createMediaGallery(document.createElement('p'), root)?.currentIndex).toBe(0);
+  });
+
   it('dispatches the Image saved success toast when Save as image (.PNG) succeeds', async () => {
     copyImageMocks.saveElementImageAsPng.mockReset();
     copyImageMocks.saveElementImageAsPng.mockResolvedValue(true);

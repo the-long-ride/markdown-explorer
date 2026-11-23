@@ -6,6 +6,7 @@ import { initialState, type AppState } from '../../../../ui/src/contexts/appStat
 import { getTranslations } from '../../../../ui/src/contexts/translations';
 import { createEditableDocumentSession, documentSessionKey } from '../../../../ui/src/editor/documentSession';
 import { createSplitViewState } from '../../../../ui/src/split-view/paneState';
+import { beginSplitPointerDrag } from '../../../../ui/src/split-view/splitPointerDrag';
 
 const context = vi.hoisted(() => ({ current: {} as Record<string, unknown>, postMessage: vi.fn() }));
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({ useAppState: () => context.current }));
@@ -181,5 +182,32 @@ describe('split content tab actions', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: /close split/i }));
     expect(swapSplitPanes).toHaveBeenCalledOnce();
     expect(closeSplitView).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ['a cached file with a fragment', '/DOCS/A.md#start', first, { type: 'ACTIVATE_CONTENT_TAB', filePath: first }],
+    ['an uncached file', '/docs/new.md', '/docs/new.md', { type: 'SET_LOADING' }],
+  ])('opens %s dropped onto the secondary pane', (_name, filePath, resolvedPath, action) => {
+    const { dispatch } = fixture();
+    const target = screen.getByTestId('split-pane-scroll-secondary');
+    const original = Object.getOwnPropertyDescriptor(document, 'elementFromPoint');
+    Object.defineProperty(document, 'elementFromPoint', { configurable: true, value: () => target });
+    const source = document.createElement('div');
+    document.body.appendChild(source);
+    try {
+      beginSplitPointerDrag({ button: 0, clientX: 0, clientY: 5 }, { kind: 'document', filePath }, { label: filePath, source });
+      window.dispatchEvent(new MouseEvent('pointermove', { clientX: 90, clientY: 5, bubbles: true }));
+      window.dispatchEvent(new MouseEvent('pointerup', { clientX: 90, clientY: 5, bubbles: true }));
+      expect(dispatch.mock.calls.flat()).toEqual([
+        { type: 'ACTIVATE_SPLIT_PANE', paneId: 'secondary' },
+        { type: 'SET_SPLIT_PANE_FILE', paneId: 'secondary', filePath: resolvedPath, targetIndex: undefined },
+        action,
+      ]);
+      expect(context.postMessage).toHaveBeenLastCalledWith({ command: 'navigate', path: resolvedPath });
+    } finally {
+      source.remove();
+      if (original) Object.defineProperty(document, 'elementFromPoint', original);
+      else Reflect.deleteProperty(document, 'elementFromPoint');
+    }
   });
 });

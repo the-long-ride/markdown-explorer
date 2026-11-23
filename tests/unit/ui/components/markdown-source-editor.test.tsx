@@ -53,6 +53,22 @@ describe('MarkdownSourceEditor', () => {
     expect(editor).toHaveAttribute('contenteditable', 'false');
   });
 
+  it('blocks editor shortcuts while read-only and respects the disabled shortcut settings after enabling', () => {
+    const onSave = vi.fn();
+    const onChange = vi.fn();
+    const { props, rerender } = renderEditor({ disabled: true, onSave, onChange });
+    const editor = screen.getByRole('textbox', { name: 'Markdown source' });
+    fireEvent.keyDown(editor, { key: 's', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'b', ctrlKey: true });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+    rerender(<MarkdownSourceEditor {...props} disabled={false} disabledKeybindings={{ editorBold: true }} />);
+    fireEvent.keyDown(editor, { key: 'b', ctrlKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.keyDown(editor, { key: 's', ctrlKey: true });
+    expect(onSave).toHaveBeenCalledOnce();
+  });
+
   it('binds link and inline-code shortcuts', () => {
     const onChange = vi.fn();
     renderEditor({ value: '', onChange });
@@ -241,6 +257,27 @@ it('preserves undo and redo history across unmount and remount with the same ses
     fireEvent.click(undoButton);
     expect(onChange).toHaveBeenLastCalledWith('initial text');
     expect(undoButton).toBeDisabled();
+  });
+
+  it('restores scroll for the same session but drops its undo stack after the source changes', () => {
+    const sessionKey = 'editor-scroll-restore.md';
+    const first = renderEditor({ sessionKey });
+    const editor = screen.getByRole('textbox', { name: 'Markdown source' });
+    fireEvent.keyDown(editor, { key: 'b', ctrlKey: true });
+    const source = vi.mocked(first.props.onChange).mock.lastCall![0];
+    const scroll = first.container.querySelector('.cm-scroller')!;
+    scroll.scrollTop = 120;
+    scroll.scrollLeft = 40;
+    first.unmount();
+
+    const reopened = renderEditor({ sessionKey, value: source });
+    expect(reopened.container.querySelector('.cm-scroller')).toMatchObject({ scrollTop: 120, scrollLeft: 40 });
+    expect(screen.getByRole('button', { name: 'Undo' })).not.toBeDisabled();
+    reopened.unmount();
+
+    renderEditor({ sessionKey, value: 'Updated outside the editor' });
+    expect(screen.getByRole('textbox', { name: 'Markdown source' })).toHaveTextContent('Updated outside the editor');
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
   });
 
   it('does not leak undo history across different session keys', () => {

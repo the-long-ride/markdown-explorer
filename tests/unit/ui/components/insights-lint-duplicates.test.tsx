@@ -69,6 +69,28 @@ describe('Insights Lint and Duplicates views', () => {
     expect(screen.getByText(INSIGHTS_TRANSLATIONS.en.suppressed)).toBeVisible();
   });
 
+  it('reports sufficiently long repeated sections and restores a controlled suppression', () => {
+    const body = 'First verify the requested resource is available. Then record the expected outcome before making changes, repeat the verification afterward, and document the result for the next reviewer.';
+    const documents = [
+      doc('a.md', `# Install\n\nPlatform notes.\n\n## Verification\n\n${body}`),
+      doc('b.md', `# Update\n\nMigration notes.\n\n## Verification\n\n${body}`),
+    ];
+    const onSuppressionsChange = vi.fn();
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    const view = (suppressions: string[]) => <DuplicatesView documents={documents} threshold={1} suppressions={suppressions} onSuppressionsChange={onSuppressionsChange} />;
+    const { rerender } = render(view([]));
+    expect(screen.getByText(labels.repeatedSection)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: `${labels.suppress} ${labels.duplicates}` }));
+    expect(onSuppressionsChange).toHaveBeenLastCalledWith([expect.stringMatching(/^section:/)]);
+    rerender(view(onSuppressionsChange.mock.lastCall![0]));
+    expect(screen.getByText(labels.noDuplicateGroups)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: labels.showSuppressed }));
+    fireEvent.click(screen.getByRole('button', { name: labels.restoreGroup }));
+    expect(onSuppressionsChange).toHaveBeenLastCalledWith([]);
+    fireEvent.click(screen.getByRole('button', { name: labels.hideSuppressed }));
+    expect(screen.getByText(labels.noDuplicateGroups)).toBeVisible();
+  });
+
   it('calls onSelectFinding with location when a lint finding target is clicked', async () => {
     const document = doc('guide.md', '# A  \n### C\n# A\n');
     const onSelectFinding = vi.fn();

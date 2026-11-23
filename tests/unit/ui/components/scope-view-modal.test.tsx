@@ -390,7 +390,7 @@ describe('ScopeViewModal', () => {
     mocks.loadDocumentSnapshot.mockResolvedValue({
       file: files[0],
       markdownSource: '# Doc 1',
-      html: '<div class="mdn-table-wrap" id="sales-wrap"><div class="mdn-table-view-dropdown" id="sales-view-dropdown"><button class="mdn-table-view-select">Area Chart</button><div class="mdn-table-view-menu"><button class="mdn-table-view-menu__option" data-value="line">Line Chart</button></div></div></div>',
+      html: '<div class="mdn-table-wrap" id="sales-wrap"><div class="mdn-table-view-dropdown" id="sales-view-dropdown"><button class="mdn-table-view-select">Area Chart</button><div class="mdn-table-view-menu"><button class="mdn-table-view-menu__option" data-value="line">Line Chart</button><button class="mdn-table-view-menu__option">Missing view</button></div></div><div class="mdn-table-view-dropdown"><button class="mdn-table-view-select">Missing table</button></div></div>',
     });
     render(<ScopeViewModal initialFile={files[0]} files={files} onClose={() => {}} />);
     await screen.findByText('Area Chart');
@@ -402,6 +402,10 @@ describe('ScopeViewModal', () => {
     fireEvent.click(screen.getByText('Line Chart'));
     expect(mocks.switchView).toHaveBeenCalledWith('sales', 'line');
     expect(mocks.closeViewDropdown).toHaveBeenCalledWith('sales');
+    fireEvent.click(screen.getByText('Missing view'));
+    fireEvent.click(screen.getByText('Missing table'));
+    expect(mocks.switchView).toHaveBeenCalledOnce();
+    expect(mocks.toggleViewDropdown).toHaveBeenCalledOnce();
   });
 
   it('opens Mermaid diagrams in the shared media viewer from Scope View', async () => {
@@ -447,7 +451,10 @@ describe('ScopeViewModal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('keeps the current scope and clears loading when a nested document fails to open', async () => {
+  it.each([
+    ['Host unavailable', getExportScopeTranslations('en').scopeView.unableOpen],
+    [new Error('Document moved'), 'Document moved'],
+  ])('keeps the current scope and clears loading when a nested document fails with %s', async (reason, message) => {
     let fail: (reason: unknown) => void;
     mocks.loadDocumentSnapshot
       .mockResolvedValueOnce(snapshot(files[0]))
@@ -456,8 +463,8 @@ describe('ScopeViewModal', () => {
     fireEvent.click(await screen.findByRole('link', { name: 'Open 2' }));
     expect(baseElement.querySelector('.scope-view__loading-overlay')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: files[0].title })).toBeInTheDocument();
-    await act(async () => fail!('Host unavailable'));
-    expect(screen.getByRole('alert')).toHaveTextContent(getExportScopeTranslations('en').scopeView.unableOpen);
+    await act(async () => fail!(reason));
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
     expect(baseElement.querySelector('.scope-view__loading-overlay')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: files[0].title })).toBeInTheDocument();
   });

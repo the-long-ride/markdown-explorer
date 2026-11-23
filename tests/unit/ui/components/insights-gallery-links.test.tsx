@@ -70,6 +70,22 @@ describe('Insights Gallery and Links views', () => {
     }));
   });
 
+  it('continues showing available resources when an individual metadata probe fails', async () => {
+    const media = doc('guide.md', '![Good](good.png)\n\n![Unavailable](offline.png)');
+    const probeResource = vi.fn(async (_path: string, target: string) => {
+      if (target === 'offline.png') throw new Error('Offline');
+      return { status: 'exists' as const, kind: 'file' as const };
+    });
+    const onOpenMedia = vi.fn();
+    const { rerender } = render(<GalleryView documents={[media]} labels={labels} probeResource={probeResource} onOpenMedia={onOpenMedia} />);
+    const good = screen.getByText('good.png').closest('article')!;
+    const offline = screen.getByText('offline.png').closest('article')!;
+    await waitFor(() => expect(good).toHaveTextContent(labels.presentation.statuses.exists));
+    expect(offline).toHaveTextContent('…');
+    rerender(<GalleryView documents={[doc('remote.md', '![Remote](https://example.test/remote.jpg)')]} labels={labels} probeResource={probeResource} onOpenMedia={onOpenMedia} />);
+    expect(probeResource).toHaveBeenCalledTimes(2);
+  });
+
   it('distinguishes missing, invalid anchor, outside, dynamic, and unchecked external links and supports position navigation', async () => {
     const index = new WorkspaceInsightsIndex();
     const source = doc('docs/source.md', ['# Source', '[[Missing]]', '[[Target#Nope]]', '[outside](file:///tmp/secret.md)', '[remote](https://example.test)', '<a href={dynamicTarget}>Dynamic</a>'].join('\n'));

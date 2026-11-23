@@ -2,8 +2,10 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsShortcutsPanel } from '../../../../ui/src/components/Settings/SettingsShortcutsPanel';
 import { SettingsModal } from '../../../../ui/src/components/Settings/SettingsModal';
+import { SettingsUpdateBackupPanel } from '../../../../ui/src/components/Settings/SettingsUpdateBackupPanel';
 import { ACTIONS_LIST } from '../../../../ui/src/components/Settings/settingsActions';
 import { getDefaultKeybindingsForRuntime } from '../../../../ui/src/contexts/appStateConstants';
+import { initialState } from '../../../../ui/src/contexts/appStateModel';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
 
 const mockUpdateSettings = vi.fn();
@@ -77,6 +79,73 @@ function getShortcutInputForAction(actionTitle: string): HTMLInputElement {
 
 const defaultUpdateCheck = { status: 'idle' as const, currentVersion: '1.0.0', latestVersion: '1.0.0', hasUpdate: false, changelogUrl: '' };
 const defaultHostUpdateState = { status: 'idle' as const };
+
+describe('SettingsUpdateBackupPanel', () => {
+  const t = getTranslations('en');
+
+  it('shows availability, checks for updates, and displays installer progress through completion', () => {
+    const onDownloadUpdate = vi.fn();
+    const onOpenChangelog = vi.fn();
+    const checkNow = vi.fn();
+    const props = {
+      state: { ...initialState, appRuntime: 'desktop' as const, appVersion: '1.0.0' },
+      t,
+      updateCheck: {
+        status: 'available' as const, hasUpdate: true, currentVersion: '', latestVersion: '2.0.0', checkNow,
+        changelogUrl: '', releaseUrl: '', downloadUrl: '', canInstallUpdate: true,
+      },
+      hostUpdateState: { status: 'idle' as const },
+      settingsDataStatus: '',
+      onImport: vi.fn(), onExport: vi.fn(), onOpenChangelog, onDownloadUpdate,
+    };
+    const { rerender } = render(<SettingsUpdateBackupPanel {...props} />);
+    expect(screen.getByText(t.newerVersionStatus.replace('{current}', '1.0.0').replace('{latest}', '2.0.0'))).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: t.checkForUpdate }));
+    fireEvent.click(screen.getByRole('button', { name: t.update.viewChangelog }));
+    fireEvent.click(screen.getByRole('button', { name: t.update.downloadButton }));
+    expect(checkNow).toHaveBeenCalledOnce();
+    expect(onOpenChangelog).toHaveBeenCalledOnce();
+    expect(onDownloadUpdate).toHaveBeenCalledOnce();
+
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'downloading', progressPercent: 25 }} />);
+    expect(screen.getByText(t.update.downloading.replace('{progress}', '25'))).toBeVisible();
+    expect(screen.queryByRole('button', { name: t.update.downloadButton })).not.toBeInTheDocument();
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'applying' }} />);
+    expect(screen.getByText(t.update.applying)).toBeVisible();
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'scheduled-on-exit' }} />);
+    expect(screen.getByText(t.update.scheduled)).toBeVisible();
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'downloaded' }} />);
+    expect(screen.queryByRole('button', { name: t.update.downloadButton })).not.toBeInTheDocument();
+    rerender(<SettingsUpdateBackupPanel {...props} hostUpdateState={{ status: 'error', error: 'Update unavailable' }} />);
+    expect(screen.getByText('Update unavailable')).toBeVisible();
+    expect(screen.getByRole('button', { name: t.update.downloadButton })).toBeVisible();
+  });
+
+  it.each(['web', 'vscode'] as const)('hides the installer in the %s runtime', (appRuntime) => {
+    const panel = (status: 'available' | 'checking') => <SettingsUpdateBackupPanel
+      state={{ ...initialState, appRuntime, appVersion: '1.0.0' }}
+      t={t}
+      updateCheck={{
+        status, hasUpdate: true, currentVersion: '', latestVersion: '2.0.0', checkNow: vi.fn(),
+        changelogUrl: '', releaseUrl: '', downloadUrl: '', canInstallUpdate: false,
+      }}
+      hostUpdateState={{ status: 'error' }}
+      settingsDataStatus=""
+      onImport={vi.fn()} onExport={vi.fn()} onOpenChangelog={vi.fn()} onDownloadUpdate={vi.fn()}
+    />;
+    const { rerender } = render(panel('available'));
+    expect(screen.queryByRole('button', { name: t.update.downloadButton })).not.toBeInTheDocument();
+    if (appRuntime === 'web') {
+      expect(screen.getByText(t.webVersionStatus.replace('{current}', '1.0.0'))).toBeVisible();
+      expect(screen.queryByRole('button', { name: t.checkForUpdate })).not.toBeInTheDocument();
+    } else {
+      expect(screen.getByText(t.newerVersionStatus.replace('{current}', '1.0.0').replace('{latest}', '2.0.0'))).toBeVisible();
+      rerender(panel('checking'));
+      expect(screen.getByText(t.updateChecking)).toBeVisible();
+      expect(screen.getByRole('button', { name: t.checkForUpdate })).toBeVisible();
+    }
+  });
+});
 
 function renderModal() {
   return render(

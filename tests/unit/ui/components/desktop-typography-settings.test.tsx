@@ -281,6 +281,27 @@ describe('DesktopTypographySettings', () => {
     );
   });
 
+  it('uses the default size for a missing binding size and steps from an empty input', () => {
+    const state = createMockState();
+    const binding = DEFAULT_DESKTOP_FONT_BINDINGS.body;
+    const fallback = binding.size ?? 13;
+    renderComponent({ ...state, settings: {
+      ...state.settings, fontBindings: { ...DEFAULT_DESKTOP_FONT_BINDINGS, body: { ...binding, size: undefined } },
+    } });
+    const field = screen.getByRole('spinbutton', { name: `${t.bodyFont} ${t.fontSize}` });
+    expect(field).toHaveValue(fallback);
+    fireEvent.change(field, { target: { value: '' } });
+    fireEvent.keyDown(field, { key: 'ArrowUp' });
+    expect(field).toHaveValue(fallback + 1);
+    fireEvent.keyDown(field, { key: 'ArrowDown' });
+    expect(field).toHaveValue(fallback);
+    fireEvent.keyDown(field, { key: 'Tab' });
+    expect(field).toHaveValue(fallback);
+    fireEvent.change(field, { target: { value: '' } });
+    fireEvent.blur(field);
+    expect(field).toHaveValue(fallback);
+  });
+
   it('clamps font size on blur to minimum 7 and maximum 49', () => {
     const state = createMockState();
     renderComponent(state);

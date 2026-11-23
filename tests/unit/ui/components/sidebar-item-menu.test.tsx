@@ -299,4 +299,41 @@ describe('SidebarItemMenu', () => {
       else Reflect.deleteProperty(navigator, 'clipboard');
     }
   });
+
+  it('uses the HTML preview default for an inactive file and copies its workspace-relative path without an index entry', () => {
+    const copyToClipboard = vi.fn();
+    const navigate = vi.fn();
+    const notice = vi.fn();
+    const translations = getTranslations('en');
+    const options: Parameters<typeof buildSidebarItemMenuItems>[0] = {
+      state: {
+        ...initialState,
+        workspacePath: '/repo',
+        currentFile: '/repo/other.html',
+        currentHtmlPreviewOverride: false,
+        settings: { ...initialState.settings, defaultHtmlPreview: true },
+      },
+      target: { kind: 'file', path: '/repo/docs/index.html', anchor: createConnectedElement() },
+      canOpenHtmlInBrowser: true,
+      canOpenItemLocations: false,
+      translations,
+      bridge: { copyToClipboard } as Parameters<typeof buildSidebarItemMenuItems>[0]['bridge'],
+      navigate, isPinned: false, pinLimitReached: false, onTogglePin: vi.fn(),
+    };
+    const items = buildSidebarItemMenuItems(options);
+    const preview = items.find((item) => item.id === 'toggle-html-preview')!;
+    expect(preview.label).toBe(translations.showMarkdownView);
+    preview.onSelect();
+    expect(navigate).toHaveBeenCalledWith('/repo/docs/index.html', { htmlPreviewOverride: false });
+    items.find((item) => item.id === 'copy-relative-path')!.onSelect();
+    expect(copyToClipboard).toHaveBeenCalledWith('docs/index.html');
+    window.addEventListener('markdown-explorer-action-notice', notice);
+    try {
+      const relative = buildSidebarItemMenuItems({ ...options, target: { ...options.target!, path: 'relative.html' } });
+      relative.find((item) => item.id === 'open-in-browser')!.onSelect();
+      expect(notice).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ detail: translations.previewActions.openError }));
+    } finally {
+      window.removeEventListener('markdown-explorer-action-notice', notice);
+    }
+  });
 });

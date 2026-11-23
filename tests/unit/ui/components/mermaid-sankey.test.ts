@@ -152,6 +152,18 @@ describe('mermaidSankey', () => {
       expect(shiftVal).toBeGreaterThan(0);
     });
 
+    it.each([undefined, '0 0 0 20'])('repairs overlap without rewriting an unusable viewBox (%s)', (viewBox) => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      if (viewBox !== undefined) svg.setAttribute('viewBox', viewBox);
+      svg.innerHTML = '<g class="node-labels"><text x="10" y="0">First</text><text x="10" y="2">Second</text></g>';
+      const [first, second] = svg.querySelectorAll('text');
+      first.getBBox = () => ({ x: 10, y: 0, width: 50, height: 12 } as DOMRect);
+      second.getBBox = () => ({ x: 10, y: 2, width: 50, height: 12 } as DOMRect);
+      expect(repairSankeyLabelCollisions(svg, { gap: -1, columnTolerance: 0, viewBoxPadding: 1 })).toBe(1);
+      expect(second).toHaveAttribute('y', '12');
+      expect(svg.getAttribute('viewBox')).toBe(viewBox ?? null);
+    });
+
     it('moves duplicate label layers together and expands the viewBox for overflowing labels', () => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('viewBox', '0,0,150,40');

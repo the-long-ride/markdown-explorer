@@ -85,6 +85,13 @@ describe('WorkspaceInsightsPanel', () => {
     expect(panel).toHaveAttribute('inert');
   });
 
+  it.each(['paused', 'error', 'indexing'] as const)('shows %s without a provisional label when indexing is not provisional', (status) => {
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    render(<WorkspaceInsightsPanel session={session({ status, progress: { completed: 6, total: 5, provisional: false } })} />);
+    const statusLabel = status === 'paused' ? labels.paused : status === 'error' ? labels.errorState : labels.indexing.replace('{done}', '6').replace('{total}', '6');
+    expect(screen.getByText(statusLabel)).toHaveAttribute('role', 'status');
+  });
+
   it('closes panel when Escape is pressed while panel is open', () => {
     const value = session({ panelOpen: true });
     render(<WorkspaceInsightsPanel session={value} />);

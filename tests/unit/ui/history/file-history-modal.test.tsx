@@ -235,6 +235,17 @@ describe('FileHistoryModal', () => {
     expect(screen.getByRole('button', { name: 'Compare' })).toBeDisabled();
   });
 
+  it('falls back to raw inline history with no persisted state and stores a new view', async () => {
+    const client = createClient([entry(0)]);
+    const bridge = createBridge();
+    vi.mocked(bridge.getState).mockReturnValue(undefined);
+    render(<PlatformProvider bridge={bridge}><FileHistoryModal filePath="C:\\docs\\a.md" client={client} currentSource={() => ''} onClose={vi.fn()} bridge={bridge} /></PlatformProvider>);
+    expect(screen.getByRole('dialog', { name: /file history.*a\.md/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Inline' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Split' }));
+    expect(bridge.setState).toHaveBeenLastCalledWith({ fileHistoryView: 'raw-split' });
+  });
+
   it.each([
     [['old', 'new'], 'older', ['new', 'older']],
     [['new', 'old'], 'newer', ['newer', 'old']],

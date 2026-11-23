@@ -606,6 +606,22 @@ describe('RepositorySnapshotContent', () => {
     expect(container.querySelector('article')).toHaveAttribute('data-mdn-source-document-path', 'docs/offline.mdx');
   });
 
+  it('shows empty and populated snapshot properties without exposing a collapsed contents panel', () => {
+    mocks.appState.tocCollapsed = true;
+    const source = '# Contents\n\n## Section\n\nDetails.';
+    mocks.snapshotContext = makeSnapshotContext({ oid: OID, path: 'README.md', source }, {
+      activeRendered: {
+        ...renderMarkdownClientSide(source, 'README.md'),
+        frontmatter: { status: 'ready', owner: '' },
+      },
+    });
+    const { container } = render(<RepositorySnapshotContent />);
+    expect(screen.getByText('2 properties')).toBeInTheDocument();
+    expect(screen.getByText('ready')).toBeInTheDocument();
+    expect(screen.getByText('owner').nextElementSibling).toHaveClass('is-empty');
+    expect(container.querySelector('.toc-compact')).not.toBeInTheDocument();
+  });
+
   it.each([
     [' Jane Doe ', '', 'Authored by Jane Doe'],
     ['', '2026-01-15', 'Authored on 15 Jan 2026'],

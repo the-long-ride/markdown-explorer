@@ -679,5 +679,36 @@ describe("WelcomePage rendering", () => {
       delete (window as any).PlatformBridge;
       window.location = origLocation;
     });
+
+    it("uses the web bus when no bridge is provided in Web Mode", () => {
+      const bus = new EventTarget();
+      const onMessage = vi.fn();
+      bus.addEventListener("webview-message", onMessage);
+      (window as any).__webBus = bus;
+      try {
+        render(<WelcomeLaunchpad language="en" isDesktop={false} workspaceName="active" />);
+        expect(screen.queryByRole("button", { name: /workspace selection/i })).not.toBeInTheDocument();
+        fireEvent.click(screen.getByTestId("welcome-create-virtual-workspace-btn"));
+        expect(onMessage).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+          detail: { command: "createVirtualWorkspace", type: "createVirtualWorkspace" },
+        }));
+        fireEvent.click(screen.getByRole("button", { name: /Open File/i }));
+        expect(onMessage).toHaveBeenCalledOnce();
+      } finally {
+        delete (window as any).__webBus;
+      }
+    });
+
+    it("derives names from recent paths and enables workspace selection without an active workspace", () => {
+      render(<WelcomeLaunchpad language="en" isDesktop={false} recentWorkspaces={[
+        { name: "", path: "C:\\repos\\docs" },
+        { name: "", path: "/root/" },
+      ]} />);
+      expect(screen.getByRole("button", { name: /workspace selection/i })).toBeVisible();
+      expect(screen.getByRole("button", { name: "docs" })).toBeVisible();
+      expect(screen.getByRole("button", { name: "/root/" })).toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: "docs" }));
+      expect(screen.queryByRole("button", { name: /Open File/i })).not.toBeInTheDocument();
+    });
   });
 });

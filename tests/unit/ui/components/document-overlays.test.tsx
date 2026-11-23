@@ -1,26 +1,38 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useEffect, useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { initialState } from '../../../../ui/src/contexts/appStateModel';
+import { initialState, type AppState } from '../../../../ui/src/contexts/appStateModel';
 import { useDocumentOverlays } from '../../../../ui/src/components/Content/useDocumentOverlays';
+import { getExportScopeTranslations } from '../../../../ui/src/contexts/exportScopeTranslations';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
 import { copyElementImageToClipboard, saveElementImageAsPng } from '../../../../ui/src/dom/copyImage';
 import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
 import type { LinkContextMenuState } from '../../../../ui/src/components/shared/LinkContextMenu';
+import type { MdFile } from '../../../../ui/src/types';
 
-vi.mock('../../../../ui/src/components/Modal/ScopeViewModal', () => ({ ScopeViewModal: () => null }));
+vi.mock('../../../../ui/src/components/Modal/ScopeViewModal', () => ({
+  ScopeViewModal: ({ initialFile }: { initialFile: MdFile | null }) => initialFile ? <div role="dialog">{initialFile.title}</div> : null,
+}));
 vi.mock('../../../../ui/src/components/Bookmarks/BookmarkSelectionMenu', () => ({ BookmarkSelectionMenu: () => null }));
 vi.mock('../../../../ui/src/dom/copyImage', () => ({ copyElementImageToClipboard: vi.fn(), saveElementImageAsPng: vi.fn() }));
 
-function Harness({ bridge, onReady }: { bridge: any; onReady: (open: (menu: LinkContextMenuState) => void) => void }) {
+function Harness({ bridge, onReady, fileList = [], renderVersion = 1, disableScope, language = 'en' }: {
+  bridge: any;
+  onReady: (open: (menu: LinkContextMenuState) => void) => void;
+  fileList?: AppState['fileList'];
+  renderVersion?: number;
+  disableScope?: boolean;
+  language?: string;
+}) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const overlays = useDocumentOverlays({
-    state: { ...initialState, settings: { ...initialState.settings, language: 'en' } },
+    state: { ...initialState, fileList, settings: { ...initialState.settings, language } },
     bridge,
     bodyRef,
     onImageClick: vi.fn(),
+    disableScope,
     document: {
-      filePath: '/docs/b.md', relativePath: 'b.md', contentHtml: '<p>b</p>', renderVersion: 1,
+      filePath: '/docs/b.md', relativePath: 'b.md', contentHtml: '<p>b</p>', renderVersion,
       markdownSource: 'b', sourceDocumentText: null, isFullHtmlPreview: false,
     },
   });
@@ -29,6 +41,31 @@ function Harness({ bridge, onReady }: { bridge: any; onReady: (open: (menu: Link
 }
 
 describe('useDocumentOverlays', () => {
+  it('opens an indexed linked document as a scope, clears it after render changes, and hides the action when disabled', () => {
+    const target: MdFile = {
+      fsPath: '/docs/guide.md', relativePath: 'guide.md', parts: ['guide.md'],
+      fileName: 'guide.md', title: 'Guide scope',
+    };
+    const bridge = { postMessage: vi.fn() };
+    let open: (menu: LinkContextMenuState) => void;
+    const onReady = (fn: typeof open) => { open = fn; };
+    const menu: LinkContextMenuState = {
+      x: 10, y: 10, link: { kind: 'relative', raw: 'guide.md', resolved: target.fsPath, openable: true, copyable: true },
+    };
+    const scopeLabel = getExportScopeTranslations('en').scopeView.openAsScope;
+    const { rerender } = render(<Harness bridge={bridge} onReady={onReady} fileList={[target]} language="" />);
+    act(() => open(menu));
+    fireEvent.click(screen.getByRole('menuitem', { name: scopeLabel }));
+    expect(screen.getByRole('dialog')).toHaveTextContent(target.title);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(bridge.postMessage).not.toHaveBeenCalled();
+    rerender(<Harness bridge={bridge} onReady={onReady} fileList={[target]} renderVersion={2} disableScope />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    act(() => open(menu));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: scopeLabel })).not.toBeInTheDocument();
+  });
+
   it('renders its own link menu and copies the resolved link', async () => {
     const bridge = { postMessage: vi.fn(), copyToClipboard: vi.fn().mockResolvedValue(undefined) };
     let open: ((menu: LinkContextMenuState) => void) | null = null;
