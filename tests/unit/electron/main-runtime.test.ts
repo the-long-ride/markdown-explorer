@@ -266,6 +266,101 @@ describe('createDesktopRuntime', () => {
     expect(WORKSPACE_SCAN_BATCH_SIZE).toBe(32);
   });
 
+  describe('desktop font commands', () => {
+    const fonts = [{ id: 'font_one', family: 'Sample' }];
+
+    function withFonts() {
+      const fontService = {
+        listFonts: vi.fn().mockResolvedValue(fonts),
+        importFontFiles: vi.fn().mockResolvedValue(fonts[0]),
+        removeImportedFont: vi.fn().mockResolvedValue(undefined),
+      };
+      runtime = createDesktopRuntime({ ...ctx.deps, fontService });
+      return fontService;
+    }
+
+    test('lists fonts and refreshes the list after import and removal', async () => {
+      const service = withFonts();
+      await runtime.handleListDesktopFonts();
+      await runtime.handleImportDesktopFonts();
+      expect(service.importFontFiles).not.toHaveBeenCalled();
+      ctx.deps.dialog.showOpenDialogSync.mockReturnValue(['/fonts/sample.ttf']);
+      await runtime.handleImportDesktopFonts({ requestId: 'import' });
+      await runtime.handleRemoveImportedDesktopFont({ requestId: 'remove', id: 'font_one' });
+      expect(service.importFontFiles).toHaveBeenCalledExactlyOnceWith(['/fonts/sample.ttf']);
+      expect(service.removeImportedFont).toHaveBeenCalledExactlyOnceWith('font_one');
+      expect(ctx.sentMessages).toEqual([
+        { command: 'desktopFontsResult', requestId: '', fonts },
+        { command: 'desktopFontsResult', requestId: '', fonts },
+        { command: 'desktopFontsResult', requestId: 'import', fonts, importedId: 'font_one' },
+        { command: 'desktopFontsResult', requestId: 'remove', fonts },
+      ]);
+    });
+
+    test.each([new Error('font I/O failed'), 'font I/O failed'])('reports font operation failures (%s)', async (error) => {
+      const service = withFonts();
+      ctx.deps.dialog.showOpenDialogSync.mockReturnValue(['/fonts/sample.ttf']);
+      service.listFonts.mockRejectedValue(error);
+      service.importFontFiles.mockRejectedValue(error);
+      service.removeImportedFont.mockRejectedValue(error);
+      await runtime.handleListDesktopFonts({ requestId: 'list' });
+      await runtime.handleImportDesktopFonts({ requestId: 'import' });
+      await runtime.handleRemoveImportedDesktopFont();
+      expect(ctx.sentMessages).toEqual(['list', 'import', ''].map(requestId => ({
+        command: 'desktopFontsResult', requestId, fonts: [], error: 'font I/O failed',
+      })));
+    });
+  });
+
+  test('skips native zoom operations without a window', () => {
+    ctx.deps.getMainWindow.mockReturnValue(null);
+    runtime.handleZoomIn();
+    runtime.handleZoomOut();
+    runtime.handleZoomReset();
+    runtime.clampAppZoom();
+    expect(ctx.mockWindow.webContents.setZoomLevel).not.toHaveBeenCalled();
+  });
+
+  test('accepts a blank navigation as a request to return to the welcome view', async () => {
+    setWorkspaceActive('/workspace');
+    runtime.state.currentFile = '/workspace/file.md';
+    await runtime.handleNavigate(undefined);
+    expect(runtime.state.currentFile).toBeNull();
+    expect(ctx.mockDocumentConverter.readMarkdown).not.toHaveBeenCalled();
+  });
+
+  test('resolves workspace-root and document-relative links before opening them', async () => {
+    const pathApi = ctx.deps.path;
+    const workspace = pathApi.resolve('workspace');
+    const child = pathApi.join(workspace, 'docs', 'child.md');
+    const root = pathApi.join(workspace, 'root.md');
+    setWorkspaceActive(workspace);
+    runtime.state.currentFile = pathApi.join(workspace, 'docs', 'index.md');
+    ctx.deps.fs.statSync.mockImplementation((file: string) => ({ isFile: () => file !== workspace }));
+    await runtime.handleNavigate('./child.md#heading');
+    expect(runtime.state.currentFile).toBe(child);
+    await runtime.handleNavigate('/root.md#raw');
+    expect(runtime.state.currentFile).toBe(root);
+  });
+
+  test('leaves update commands inert when no updater is supplied', async () => {
+    runtime = createDesktopRuntime({ ...ctx.deps, updateManager: null });
+    await runtime.handleReady();
+    await runtime.handleDownloadUpdate();
+    await runtime.handleScheduleDownloadedUpdate();
+    await runtime.handleRestartAndApplyUpdate();
+    expect(ctx.deps.appQuit).not.toHaveBeenCalled();
+    expect(ctx.mockUpdateManager.startDownload).not.toHaveBeenCalled();
+  });
+
+  test('normalizes empty update metadata and allows a runtime with no app quit callback', async () => {
+    runtime = createDesktopRuntime({ ...ctx.deps, appQuit: null });
+    await runtime.handleDownloadUpdate();
+    await runtime.handleRestartAndApplyUpdate();
+    expect(ctx.mockUpdateManager.startDownload).toHaveBeenCalledExactlyOnceWith({ version: '', url: '' });
+    expect(ctx.mockUpdateManager.restartAndApplyUpdate).toHaveBeenCalledOnce();
+  });
+
   describe('handleReady', () => {
     test('sends readyAck on first call', async () => {
       await runtime.handleReady({ documentConversionEnabled: true });
@@ -922,6 +1017,26 @@ describe('createDesktopRuntime', () => {
       ctx.deps.getMainWindow.mockReturnValue(null);
       runtime.clampAppZoom();
       expect(ctx.mockWindow.webContents.setZoomLevel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleSaveDocument', () => {
+    test('reports no workspace when a save request names a document before a workspace opens', async () => {
+      runtime.state.workspaceOperationId = 'active-scan';
+      runtime.state.workspaceTabId = 'active-tab';
+      await runtime.handleSaveDocument({ filePath: 'notes.md', source: '# Notes', requestId: 'save-1', force: true });
+      expect(ctx.sentMessages).toEqual([{
+        command: 'saveDocumentResult', requestId: 'save-1', filePath: 'notes.md',
+        workspaceOperationId: 'active-scan', workspaceTabId: 'active-tab', ok: false, reason: 'missing',
+      }]);
+    });
+
+    test('reports a malformed save without echoing a non-string request ID or path', async () => {
+      await runtime.handleSaveDocument({ filePath: 12, requestId: 34 });
+      expect(ctx.sentMessages).toEqual([{
+        command: 'saveDocumentResult', requestId: '', filePath: '', ok: false, reason: 'write-failed',
+        error: 'Invalid document write request',
+      }]);
     });
   });
 

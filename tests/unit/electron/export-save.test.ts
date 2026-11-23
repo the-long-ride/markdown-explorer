@@ -57,4 +57,17 @@ describe('Electron export save handler', () => {
     expect(sent[0]).toMatchObject({ command: 'exportFileSaveResult', requestId: 'save-3', ok: false });
     expect(sent[0].error).toMatch(/export data/i);
   });
+
+  it.each([
+    [undefined, new Error('disk full'), 'disk full'],
+    ['  ', 'native error', 'Unable to save export file'],
+  ])('uses a safe default filename and reports save errors (%s)', async (fileName, error, expected) => {
+    const sendHostMessage = vi.fn();
+    const showSaveDialog = vi.fn().mockResolvedValue({ filePath: '/tmp/export.bin' });
+    const writeFileSync = vi.fn(() => { throw error; });
+    const handler = createExportSaveHandler({ dialog: { showSaveDialog }, fs: { writeFileSync }, pathApi: require('node:path'), sendHostMessage });
+    await handler({ fileName, dataBase64: 'AQ==' });
+    expect(showSaveDialog).toHaveBeenCalledExactlyOnceWith({ title: 'Save export', defaultPath: 'export.bin' });
+    expect(sendHostMessage).toHaveBeenCalledExactlyOnceWith({ command: 'exportFileSaveResult', requestId: '', ok: false, error: expected });
+  });
 });

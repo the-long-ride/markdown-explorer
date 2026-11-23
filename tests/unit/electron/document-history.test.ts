@@ -284,6 +284,82 @@ describe('Electron local Git document history', () => {
     await handlers.handleReadRevisionFile({ requestId: 'file-1', oid: fixture.mergeOid, path: 'a.md' });
     expect(sent[2]).toMatchObject({ command: 'revisionFileResult', requestId: 'file-1', ok: true, snapshot: { path: 'a.md' } });
   });
+
+  it('correlates file history, revision snapshots, and comparisons with renderer requests', async () => {
+    const repo = await createTempGitRepo();
+    const oid = await commitFile(repo, 'doc.md', '# saved', 'snapshot');
+    const filePath = path.join(repo, 'doc.md');
+    await writeFile(filePath, '# current');
+    const sent: unknown[] = [];
+    const handlers = createGitHistoryMessageHandlers({ getWorkspacePath: () => repo, sendHostMessage: (message: unknown) => sent.push(message) });
+    await handlers.handleListDocumentHistory({ requestId: 'list', filePath: 'doc.md' });
+    await handlers.handleReadGitRevision({ requestId: 'read', oid, path: 'doc.md' });
+    await handlers.handleCompareGitRevisions({
+      requestId: 'compare', left: { kind: 'revision', oid, path: 'doc.md' }, right: { kind: 'current', path: filePath },
+    });
+    expect(sent).toMatchObject([
+      { command: 'documentHistoryResult', requestId: 'list', ok: true, revisions: [{ oid, path: 'doc.md' }] },
+      { command: 'gitRevisionResult', requestId: 'read', ok: true, snapshot: { oid, path: 'doc.md', source: '# saved' } },
+      { command: 'gitComparisonResult', requestId: 'compare', ok: true, leftSource: '# saved', rightSource: '# current' },
+    ]);
+  });
+
+  it('answers every history request with a protocol failure when the workspace is unavailable', async () => {
+    const sent: unknown[] = [];
+    const handlers = createGitHistoryMessageHandlers({ sendHostMessage: (message: unknown) => sent.push(message) });
+    await handlers.handleListDocumentHistory();
+    await handlers.handleListRepositoryHistory();
+    await handlers.handleListRevisionFiles();
+    await handlers.handleReadRevisionFile();
+    await handlers.handleReadGitRevision();
+    await handlers.handleCompareGitRevisions();
+    expect(sent).toMatchObject([
+      { command: 'documentHistoryResult', revisions: [], requestId: '', ok: false, reason: expect.any(String) },
+      { command: 'repositoryHistoryResult', commits: [], requestId: '', ok: false, reason: expect.any(String) },
+      { command: 'revisionFilesResult', files: [], requestId: '', ok: false, reason: expect.any(String) },
+      { command: 'revisionFileResult', requestId: '', ok: false, reason: expect.any(String) },
+      { command: 'gitRevisionResult', requestId: '', ok: false, reason: expect.any(String) },
+      { command: 'gitComparisonResult', requestId: '', ok: false, reason: expect.any(String) },
+    ]);
+  });
+
+  it('reads repository-scoped snapshots from a workspace opened as a file', async () => {
+    const repo = await createTempGitRepo();
+    const oid = await commitFile(repo, 'note.md', '# note', 'initial');
+    const workspacePath = path.join(repo, 'note.md');
+    await expect(listRevisionFiles({ workspacePath, oid })).resolves.toEqual([{ path: 'note.md' }]);
+    await expect(listDocumentHistory({ workspacePath, filePath: 'note.md' })).resolves.toMatchObject([{ oid }]);
+    await expect(listRepositoryHistory({ workspacePath })).resolves.toMatchObject([{ oid }]);
+  });
+
+  it('rejects invalid, missing, and directory working trees in comparisons', async () => {
+    const repo = await createTempGitRepo();
+    const oid = await commitFile(repo, 'dir/a.md', 'original', 'snapshot');
+    const left = { kind: 'revision', oid, path: 'dir/a.md' };
+    for (const [right, reason] of [
+      [null, 'invalid-comparison'], [{ kind: 'invalid' }, 'invalid-comparison'],
+      [{ kind: 'current', path: 'missing.md' }, 'missing'], [{ kind: 'current', path: 'dir' }, 'missing'],
+    ]) {
+      await expect(compareGitSources({ workspacePath: repo, left, right })).rejects.toMatchObject({ reason });
+    }
+    await expect(listDocumentHistory({ workspacePath: repo })).rejects.toThrow(/document path/i);
+    await expect(listDocumentHistory({ workspacePath: repo, filePath: repo })).rejects.toThrow(/file/i);
+    await expect(readRevisionFile({ workspacePath: repo, oid, path: '.' })).rejects.toMatchObject({ reason: 'outside-workspace' });
+    await expect(readRevisionFile({ workspacePath: repo, oid, path: path.join(repo, 'dir/a.md') })).rejects.toMatchObject({ reason: 'outside-workspace' });
+    await expect(readGitRevision({ workspacePath: repo, oid, path: path.join(repo, 'dir/a.md') })).rejects.toThrow(/path/i);
+  });
+
+  it('honors offset only when provided for a cursor outside the requested refs', async () => {
+    const fixture = await createRepositorySnapshotFixture();
+    const branch = (await git(fixture.repo, 'rev-parse', '--abbrev-ref', 'HEAD')).trim();
+    await git(fixture.repo, 'switch', '-c', 'unmerged');
+    const unmerged = await commitFile(fixture.repo, 'unmerged.md', 'not on HEAD', 'unmerged');
+    await git(fixture.repo, 'switch', branch);
+    await expect(listRepositoryHistory({ workspacePath: fixture.repo, before: unmerged })).resolves.toEqual([]);
+    await expect(listRepositoryHistory({ workspacePath: fixture.repo, before: unmerged, offset: 0, limit: 1 })).resolves.toMatchObject([
+      { oid: fixture.mergeOid },
+    ]);
+  });
 });
 
 describe('Electron repository history paging', () => {
