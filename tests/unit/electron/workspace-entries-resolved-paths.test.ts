@@ -6,7 +6,7 @@ import nameRules from '../../../electron/workspace/workspace-entry-name.js';
 import entries from '../../../electron/workspace/workspace-entries.js';
 
 const { hasProtectedSegment, hasStreamSegment } = nameRules;
-const { createWorkspaceEntry, deleteWorkspaceEntries, createWorkspaceEntryHandlers } = entries;
+const { createWorkspaceEntry, deleteWorkspaceEntries, renameWorkspaceEntry, createWorkspaceEntryHandlers } = entries;
 const roots: string[] = [];
 function temp(prefix = 'mdx-resolved-'): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -136,6 +136,17 @@ describe('deleteWorkspaceEntries resolved-path protection', () => {
 });
 
 describe('non-string input guards', () => {
+  it('rejects an unsupported entry kind or a protected parent without creating anything', async () => {
+    const root = gitRepo();
+    const create = (parentPath: string, kind: string) => createWorkspaceEntry({
+      workspacePath: root, parentPath, name: 'note.md', kind,
+    });
+    await expect(create('', 'shortcut')).resolves.toEqual({ ok: false, reason: 'invalid-name' });
+    await expect(create('.git', 'file')).resolves.toEqual({ ok: false, reason: 'protected' });
+    expect(fs.readdirSync(root)).toEqual(['.git']);
+    expect(fs.readdirSync(path.join(root, '.git'))).toEqual(['config']);
+  });
+
   it.each([123, null, undefined, {}, ['a.md'], true])('createWorkspaceEntry rejects name %j as invalid-name without throwing', async (name) => {
     const root = temp();
     await expect(createWorkspaceEntry({ workspacePath: root, parentPath: '', name: name as any, kind: 'file' }))
@@ -176,5 +187,57 @@ describe('non-string input guards', () => {
     });
     await handlers.handleCreateWorkspaceEntry({ requestId: 'n2', parentPath: '', name: 'a.md', kind: 'file' });
     expect(sendHostMessage).toHaveBeenCalledWith({ command: 'createWorkspaceEntryResult', requestId: 'n2', ok: false, reason: 'failed', error: 'state gone' });
+  });
+});
+
+describe('renameWorkspaceEntry resolved-path protection', () => {
+  it('refuses to create entries under a parent that resolves outside the workspace', async () => {
+    const root = temp();
+    const outside = temp();
+    const note = path.join(outside, 'note.md');
+    fs.writeFileSync(note, '# Outside');
+    const realpath = (target: string) => fs.promises.realpath(path.relative(root, target) === 'linked' ? outside : target);
+    const fsApi = { ...fs, promises: { ...fs.promises, realpath } };
+    await expect(createWorkspaceEntry({
+      workspacePath: root, parentPath: 'linked', name: 'created.md', kind: 'file', fsApi,
+    })).resolves.toEqual({ ok: false, reason: 'outside-workspace' });
+    expect(fs.readdirSync(outside)).toEqual(['note.md']);
+    expect(fs.readFileSync(note, 'utf8')).toBe('# Outside');
+  });
+
+  it('does not rename a file as a folder or accept a path with an empty segment', async () => {
+    const root = temp();
+    fs.writeFileSync(path.join(root, 'note.md'), '# Note');
+    const rename = (entryPath: string, kind: string) => renameWorkspaceEntry({
+      workspacePath: root, path: entryPath, name: 'new.md', kind,
+    });
+    await expect(rename('note.md', 'folder')).resolves.toEqual({ ok: false, reason: 'missing' });
+    await expect(rename('docs//note.md', 'file')).resolves.toEqual({ ok: false, reason: 'outside-workspace' });
+    expect(fs.readdirSync(root)).toEqual(['note.md']);
+  });
+
+  it('refuses an aliased Git parent and leaves the original file untouched', async () => {
+    const root = gitRepo();
+    await expect(renameWorkspaceEntry({
+      workspacePath: root, path: 'GIT~1/config', name: 'new.md', kind: 'file', fsApi: aliasFs,
+    })).resolves.toEqual({ ok: false, reason: 'protected' });
+    expect(fs.readFileSync(path.join(root, '.git', 'config'), 'utf8')).toBe('keep');
+    expect(fs.readdirSync(path.join(root, '.git'))).toEqual(['config']);
+  });
+
+  it('returns a permission error instead of assuming the destination is absent', async () => {
+    const root = temp();
+    const source = path.join(root, 'note.md');
+    fs.writeFileSync(source, '# Note');
+    const lstat = async (target: string) => {
+      if (path.basename(target) === 'new.md') throw Object.assign(new Error('not readable'), { code: 'EACCES' });
+      return fs.promises.lstat(target);
+    };
+    const fsApi = { ...fs, promises: { ...fs.promises, lstat } };
+    await expect(renameWorkspaceEntry({
+      workspacePath: root, path: 'note.md', name: 'new.md', kind: 'file', fsApi,
+    })).resolves.toEqual({ ok: false, reason: 'permission-denied', error: 'not readable' });
+    expect(fs.readFileSync(source, 'utf8')).toBe('# Note');
+    expect(fs.readdirSync(root)).toEqual(['note.md']);
   });
 });

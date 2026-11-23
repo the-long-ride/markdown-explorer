@@ -15,6 +15,59 @@ function writeFile(filePath: string, content: string) {
 }
 
 describe('createSearchIndex', () => {
+  test('uses the requested letter case for content and filename matches', async () => {
+    const root = makeTempDir('search-case-');
+    try {
+      const guide = path.join(root, 'guide.md');
+      const note = path.join(root, 'Needle.txt');
+      const content = 'needle\nNeedle\nNEEDLE';
+      writeFile(guide, content);
+      writeFile(note, 'unrelated');
+      const index = createSearchIndex();
+      const items = [{ fsPath: guide }, { fsPath: note }];
+      const sync = index.search('Needle', items, undefined, { matchCase: true });
+      expect(sync).toMatchObject([{ fsPath: note, excerpt: '' }, { fsPath: guide, matchIndex: 7, lineNumber: 2 }]);
+      const onBatch = vi.fn();
+      await expect(index.searchIncremental('NEEDLE', items, { matchCase: true, onBatch })).resolves.toMatchObject({
+        total: 1, cancelled: false,
+      });
+      expect(onBatch).toHaveBeenCalledExactlyOnceWith([expect.objectContaining({ fsPath: guide, matchIndex: 14, lineNumber: 3 })]);
+      expect(index.read(guide)).toBe(content);
+      expect(index.read(path.join(root, 'missing.md'))).toBeNull();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('evicts the least recently read file once the cache fills', () => {
+    const root = makeTempDir('search-cache-');
+    try {
+      const files = Array.from({ length: 257 }, (_, index) => path.join(root, `doc-${index}.md`));
+      files.forEach((file, index) => writeFile(file, `# ${index}`));
+      const index = createSearchIndex();
+      const readFile = vi.spyOn(fs, 'readFileSync');
+      files.slice(0, 256).forEach((file, number) => expect(index.read(file)).toBe(`# ${number}`));
+      index.read(files[0]);
+      index.read(files[256]);
+      readFile.mockClear();
+      expect(index.read(files[0])).toBe('# 0');
+      expect(index.read(files[1])).toBe('# 1');
+      expect(readFile).toHaveBeenCalledExactlyOnceWith(files[1], 'utf8');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('does not touch the index when cancellation is already requested', async () => {
+    const getEntry = vi.fn();
+    const onBatch = vi.fn();
+    await expect(searchItemsIncremental('needle', [{ fsPath: 'note.md' }], getEntry, {
+      shouldCancel: () => true, onBatch,
+    })).resolves.toEqual({ total: 0, truncated: false, cancelled: true });
+    expect(getEntry).not.toHaveBeenCalled();
+    expect(onBatch).not.toHaveBeenCalled();
+  });
+
   test('search returns empty results for short queries', () => {
     const index = createSearchIndex();
     const results = index.search('a', [{ fsPath: 'missing.md' }]);
