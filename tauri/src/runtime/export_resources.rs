@@ -150,10 +150,8 @@ pub fn read_workspace_resource(
     })
 }
 
-#[cfg(not(test))]
 #[path = "export_resources_host.rs"]
 mod host;
-#[cfg(not(test))]
 pub use host::handle_command;
 
 #[cfg(test)]

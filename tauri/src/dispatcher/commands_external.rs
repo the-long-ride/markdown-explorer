@@ -63,12 +63,7 @@ impl Dispatcher {
                     .get("requestId")
                     .and_then(Value::as_str)
                     .map(|s| s.to_string());
-                let selected_path = tauri_plugin_dialog::DialogExt::dialog(&self.app)
-                    .file()
-                    .add_filter("PNG", &["png"])
-                    .set_file_name(file_name)
-                    .blocking_save_file()
-                    .and_then(|path| path.into_path().ok());
+                let selected_path = self.pick_export_path(file_name, true);
                 let mut extra = serde_json::Map::new();
                 if let Some(id) = &request_id {
                     extra.insert("requestId".into(), id.clone().into());
@@ -120,11 +115,7 @@ impl Dispatcher {
 
                 match result {
                     Ok(bytes) => {
-                        let selected_path = tauri_plugin_dialog::DialogExt::dialog(&self.app)
-                            .file()
-                            .set_file_name(file_name)
-                            .blocking_save_file()
-                            .and_then(|path| path.into_path().ok());
+                        let selected_path = self.pick_export_path(file_name, false);
                         match selected_path {
                             Some(path) => match std::fs::write(&path, bytes) {
                                 Ok(()) => {
@@ -156,7 +147,7 @@ impl Dispatcher {
             "openInEditor" => {
                 if let Some(path_str) = msg.get("path").and_then(Value::as_str) {
                     if Path::new(path_str).exists() {
-                        let _ = self.app.opener().open_path(path_str, None::<&str>);
+                        self.open_native_path(Path::new(path_str));
                     }
                 }
             }
@@ -262,43 +253,14 @@ impl Dispatcher {
                     if source.exists() {
                         match mode {
                             "open-directory" => {
-                                let _ = self
-                                    .app
-                                    .opener()
-                                    .open_path(source.to_string_lossy().into_owned(), None::<&str>);
+                                self.open_native_path(source);
                             }
                             "open-parent-directory" => {
                                 if let Some(parent) = source.parent() {
-                                    let _ = self.app.opener().open_path(
-                                        parent.to_string_lossy().into_owned(),
-                                        None::<&str>,
-                                    );
+                                    self.open_native_path(parent);
                                 }
                             }
-                            "reveal-file" => {
-                                #[cfg(target_os = "windows")]
-                                {
-                                    let _ = std::process::Command::new("explorer")
-                                        .arg(format!("/select,{}", source.display()))
-                                        .spawn();
-                                }
-                                #[cfg(target_os = "macos")]
-                                {
-                                    let _ = std::process::Command::new("open")
-                                        .arg("-R")
-                                        .arg(source)
-                                        .spawn();
-                                }
-                                #[cfg(target_os = "linux")]
-                                {
-                                    if let Some(parent) = source.parent() {
-                                        let _ = self.app.opener().open_path(
-                                            parent.to_string_lossy().into_owned(),
-                                            None::<&str>,
-                                        );
-                                    }
-                                }
-                            }
+                            "reveal-file" => self.reveal_native_file(source),
                             _ => {}
                         }
                     }
@@ -306,7 +268,7 @@ impl Dispatcher {
             }
             "copyCode" => {
                 let text = msg.get("text").and_then(Value::as_str).unwrap_or("");
-                let _ = self.app.clipboard().write_text(text);
+                self.copy_native_text(text);
             }
             "openExternal" => {
                 if let Some(url) = msg.get("url").and_then(Value::as_str) {
@@ -315,7 +277,7 @@ impl Dispatcher {
                         || url_lower.starts_with("https://")
                         || url_lower.starts_with("file://")
                     {
-                        let _ = self.app.opener().open_url(url, None::<&str>);
+                        self.open_native_url(url);
                     }
                 }
             }

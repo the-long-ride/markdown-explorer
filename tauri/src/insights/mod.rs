@@ -1,19 +1,12 @@
 pub mod scan;
 
-#[cfg(not(test))]
 use crate::app_state::AppState;
-#[cfg(not(test))]
 use crate::host_message;
-#[cfg(not(test))]
 use crate::workspace::watch::WorkspaceWatchController;
-#[cfg(not(test))]
+use crate::HostApp;
 use serde_json::{json, Map, Value};
-#[cfg(not(test))]
 use std::path::PathBuf;
-#[cfg(not(test))]
-use tauri::AppHandle;
 
-#[cfg(not(test))]
 fn workspace_root(state: &AppState) -> Option<PathBuf> {
     let workspace = state.inner.read().workspace_path.clone()?;
     if !workspace.exists() {
@@ -27,15 +20,13 @@ fn workspace_root(state: &AppState) -> Option<PathBuf> {
     std::fs::canonicalize(base).ok()
 }
 
-#[cfg(not(test))]
-fn emit_value(app: &AppHandle, command: &str, value: Value) {
+fn emit_value(app: &HostApp, command: &str, value: Value) {
     let extra = value.as_object().cloned().unwrap_or_else(Map::new);
     host_message::emit(app, command, extra);
 }
 
-#[cfg(not(test))]
 pub async fn handle_command(
-    app: &AppHandle,
+    app: &HostApp,
     state: &AppState,
     command: &str,
     message: &Value,

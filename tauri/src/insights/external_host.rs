@@ -3,20 +3,20 @@ use crate::host_message;
 use crate::insights_external::{
     check_url, origin_for_url, DEFAULT_TIMEOUT_MS, GLOBAL_CONCURRENCY, ORIGIN_CONCURRENCY,
 };
+use crate::HostApp;
 use serde_json::{json, Map, Value};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use tauri::AppHandle;
 use tokio::sync::Semaphore;
 use tokio::task::JoinSet;
 
-fn emit_value(app: &AppHandle, command: &str, value: Value) {
+fn emit_value(app: &HostApp, command: &str, value: Value) {
     let extra = value.as_object().cloned().unwrap_or_else(Map::new);
     host_message::emit(app, command, extra);
 }
 
 pub async fn handle_command(
-    app: &AppHandle,
+    app: &HostApp,
     state: &AppState,
     command: &str,
     message: &Value,

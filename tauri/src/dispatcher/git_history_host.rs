@@ -1,7 +1,7 @@
 use super::{empty_list_field, execute_command, result_command};
 
 pub(crate) async fn handle_command(
-    app: &tauri::AppHandle,
+    app: &crate::HostApp,
     state: &crate::app_state::AppState,
     cmd: &str,
     msg: &serde_json::Value,

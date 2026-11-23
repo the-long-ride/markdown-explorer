@@ -18,13 +18,17 @@ test('Tauri initializes official updater and process plugins', () => {
 });
 
 test('Tauri updater uses signed plugin download and install APIs with progress', () => {
+  const native = read('tauri/src/update/manager/native.rs');
   assert.match(manager, /tauri_plugin_updater::[^;]*UpdaterExt/);
   assert.match(manager, /\.updater\(\)/);
   assert.match(manager, /\.check\(\)\s*\.await/);
   assert.match(manager, /\.download\(/);
-  assert.match(manager, /\.install\(/);
+  assert.match(manager, /native::install\(/);
+  assert.match(manager, /native::restart\(/);
+  assert.match(native, /update\.install\(bytes\)/);
+  assert.match(native, /app\.restart\(\)/);
   assert.match(manager, /progress_percent/);
-  assert.doesNotMatch(manager, /ureq::|std::process::Command|cmd\.exe|create_windows_installer_update_script/);
+  assert.doesNotMatch(manager + native, /ureq::|std::process::Command|cmd\.exe|create_windows_installer_update_script/);
   assert.match(youtubeProxy, /ureq::get/);
   assert.match(cargo, /^ureq\s*=\s*"2"/m);
 });

@@ -229,7 +229,10 @@ async fn ensure_server() -> anyhow::Result<(String, Arc<RwLock<HashMap<String, P
     Ok((origin, sessions))
 }
 
-pub async fn open(app: &AppHandle, document_html: &str) -> anyhow::Result<String> {
+pub async fn open<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    document_html: &str,
+) -> anyhow::Result<String> {
     open_with(document_html, |url| {
         app.opener().open_url(url, None::<&str>)?;
         Ok(())

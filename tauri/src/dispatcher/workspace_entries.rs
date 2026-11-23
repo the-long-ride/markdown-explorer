@@ -1,8 +1,8 @@
+use crate::dispatcher::native::os_trash;
 use crate::workspace_entry_operations::*;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-#[cfg(not(test))]
 fn os_permanent(path: &Path) -> Result<(), &'static str> {
     let meta = fs::symlink_metadata(path).map_err(|e| error_reason(&e))?;
     let outcome = if meta.is_dir() && !meta.file_type().is_symlink() {
@@ -13,12 +13,6 @@ fn os_permanent(path: &Path) -> Result<(), &'static str> {
     outcome.map_err(|e| error_reason(&e))
 }
 
-#[cfg(not(test))]
-fn os_trash(path: &Path) -> Result<(), &'static str> {
-    trash::delete(path).map_err(|_| "failed")
-}
-
-#[cfg(not(test))]
 impl super::Dispatcher {
     /// Returns true when `cmd` was a workspace-entry command. Refreshes before emitting a successful result.
     pub(in crate::dispatcher) async fn handle_workspace_entry_command(

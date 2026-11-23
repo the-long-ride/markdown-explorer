@@ -73,13 +73,14 @@ test('chart viewer reuses media modal controls with icon-only Fit and fixed inte
 
 
 test('Tauri chart PNG save stays in the app adapter while portable table runtime uses a host-neutral hook', async () => {
-  const [viewer, imageActions, nativeSave, globalHandlers, messages, dispatcher, pngExport, runtime] = await Promise.all([
+  const [viewer, imageActions, nativeSave, globalHandlers, messages, dispatcher, dialogs, pngExport, runtime] = await Promise.all([
     read('ui/src/dom/tableChartViewer.ts'),
     read('ui/src/dom/tableChartImageActions.ts'),
     read('ui/src/dom/nativeChartPngSave.ts'),
     read('ui/src/dom/globalHandlers.ts'),
     read('ui/src/types/webviewMessages.ts'),
     read('tauri/src/dispatcher/commands_external.rs'),
+    read('tauri/src/dispatcher/native.rs'),
     read('tauri/src/runtime/png_export.rs'),
     read('tauri/src/runtime/mod.rs'),
   ]);
@@ -93,9 +94,10 @@ test('Tauri chart PNG save stays in the app adapter while portable table runtime
   assert.match(nativeSave, /canvas\.toDataURL\(['"]image\/png['"]\)/);
   assert.match(globalHandlers, /registerNativeChartPngSave\(win\)/);
   assert.match(dispatcher, /['"]saveChartPng['"]\s*=>/);
-  assert.match(dispatcher, /add_filter\(['"]PNG['"],\s*&\[['"]png['"]\]\)/);
-  assert.match(dispatcher, /set_file_name/);
-  assert.match(dispatcher, /blocking_save_file/);
+  assert.match(dispatcher, /self\.pick_export_path\(file_name,\s*true\)/);
+  assert.match(dialogs, /add_filter\(['"]PNG['"],\s*&\[['"]png['"]\]\)/);
+  assert.match(dialogs, /set_file_name/);
+  assert.match(dialogs, /blocking_save_file/);
   assert.match(dispatcher, /std::fs::write/);
   assert.match(pngExport, /decode_png_data_url/);
   assert.match(pngExport, /PNG_DATA_URL_PREFIX/);

@@ -82,11 +82,12 @@ test('font search dropdown supports keyboard navigation through filtered options
 test('desktop font import pickers accept one file per import action', async () => {
   const [electron, tauri] = await Promise.all([
     read('electron/core/runtime-command-handlers.js'),
-    read('tauri/src/dispatcher/handlers.rs'),
+    read('tauri/src/dispatcher/native.rs'),
   ]);
   assert.doesNotMatch(electron, /properties:\s*\[['"]openFile['"],\s*['"]multiSelections['"]\][\s\S]*?import_font/i);
-  assert.match(tauri, /blocking_pick_file\(\)/);
-  assert.doesNotMatch(tauri, /blocking_pick_files\(\)/);
+  const fontPicker = tauri.match(/fn pick_font_file\b[^{]*\{([^}]*)\}/)?.[1] ?? '';
+  assert.match(fontPicker, /blocking_pick_file\(\)/);
+  assert.doesNotMatch(fontPicker, /blocking_pick_files\(\)/);
 });
 
 

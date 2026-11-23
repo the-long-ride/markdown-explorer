@@ -226,10 +226,8 @@ fn compare_side_from_value(value: &serde_json::Value) -> Result<GitCompareSide, 
     }
 }
 
-#[cfg(not(test))]
 #[path = "git_history_host.rs"]
 mod git_history_host;
-#[cfg(not(test))]
 pub(crate) use git_history_host::handle_command;
 
 fn result_command(cmd: &str) -> Option<&'static str> {

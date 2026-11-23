@@ -8,7 +8,7 @@ const WORKSPACE_SCAN_REVEAL_DELAY: Duration = Duration::from_secs(3);
 const WORKSPACE_SCAN_BATCH_SIZE: usize = 32;
 
 fn publish_incremental_workspace_snapshot(
-    app: &AppHandle,
+    app: &HostApp,
     state: &AppState,
     workspace_path: &Path,
     scan_generation: u64,
@@ -270,5 +270,55 @@ impl Dispatcher {
                 content.await;
             });
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tauri::test::mock_app;
+
+    #[test]
+    fn snapshot_publication_skips_stale_empty_and_duplicate_batches() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path();
+        std::fs::write(path.join("note.md"), "# Note").unwrap();
+        let app = mock_app();
+        let state = AppState::new();
+        state.inner.write().workspace_path = Some(path.to_owned());
+        state.inner.write().workspace_scan_generation = 2;
+        let events = Arc::new(Mutex::new(Vec::<Value>::new()));
+        let listener = events.clone();
+        app.listen("host-message", move |event| {
+            listener
+                .lock()
+                .unwrap()
+                .push(serde_json::from_str(event.payload()).unwrap());
+        });
+        let operation = WorkspaceOperationMetadata::from_parts(Some("operation"), Some("tab"));
+        let discovered = Arc::new(Mutex::new(Vec::new()));
+        let last_published = AtomicUsize::new(0);
+        let publish = |generation| {
+            publish_incremental_workspace_snapshot(
+                app.handle(),
+                &state,
+                path,
+                generation,
+                &discovered,
+                &last_published,
+                operation.as_ref(),
+            )
+        };
+        assert!(!publish(2));
+        *discovered.lock().unwrap() = scan(path, ScanOptions::default()).unwrap().flat;
+        assert!(!publish(1));
+        assert!(events.lock().unwrap().is_empty());
+        assert!(publish(2));
+        assert!(!publish(2));
+        let events = events.lock().unwrap();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0]["command"], "workspaceFilesChanged");
+        assert_eq!(events[0]["workspaceTabId"], "tab");
+        assert_eq!(events[0]["fileList"][0]["fileName"], "note.md");
     }
 }

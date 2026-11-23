@@ -28,12 +28,16 @@ test('VS Code adapters accept native Thenable results without requiring Promise 
 });
 
 test('Tauri opener receives owned strings instead of Path references', async () => {
-  const commands = await read('tauri/src/dispatcher/commands.rs');
+  const [commands, native] = await Promise.all([
+    read('tauri/src/dispatcher/commands.rs'),
+    read('tauri/src/dispatcher/native.rs'),
+  ]);
   const shellBlock = commands.match(/"openShellLocation"\s*=>\s*\{([\s\S]*?)\r?\n\s*\}\r?\n\s*"copyCode"/)?.[1] ?? '';
 
-  assert.match(shellBlock, /path_to_opener_string|to_string_lossy\(\)\.into_owned\(\)/);
+  assert.match(shellBlock, /self\.open_native_path\(/);
   assert.doesNotMatch(shellBlock, /open_path\(source\s*,/);
   assert.doesNotMatch(shellBlock, /open_path\(parent\s*,/);
+  assert.match(native, /\.open_path\(path\.to_string_lossy\(\)\.into_owned\(\),/);
 });
 
 test('View Preferences tooltip portals into body with high z-index stacking context', async () => {
