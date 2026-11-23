@@ -1,5 +1,6 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 import { createRequire } from 'node:module';
+import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 const {
@@ -1041,6 +1042,39 @@ describe('createDesktopRuntime', () => {
   });
 
   describe('refreshActiveWorkspace', () => {
+    test.each([false, true])('does not publish a cancelled workspace refresh (preserve content: %s)', async (preserveCurrentContent) => {
+      setWorkspaceActive('/my/project');
+      runtime.state.workspaceOperationId = 'refresh';
+      ctx.deps.scanWorkspaceData.mockImplementation(async () => {
+        runtime.handleCancelWorkspaceScan('refresh');
+        return { tree: null, flat: [] };
+      });
+      await runtime.refreshActiveWorkspace({ preserveCurrentContent });
+      expect(ctx.deps.scanWorkspaceData).toHaveBeenCalledOnce();
+      expect(ctx.sentMessages).toEqual([]);
+    });
+
+    test('re-renders a still available file after a full refresh', async () => {
+      const project = path.resolve('project');
+      const file = path.join(project, 'readme.md');
+      setWorkspaceActive(project, [{ fsPath: file }]);
+      runtime.state.currentFile = file;
+      ctx.deps.fs.statSync.mockImplementation((target: string) => ({ isFile: () => target === file }));
+      await runtime.refreshActiveWorkspace();
+      expect(ctx.sentMessages).toContainEqual(expect.objectContaining({ command: 'renderContent', filePath: file }));
+      expect(runtime.state.currentFile).toBe(file);
+    });
+
+    test('ignores an unrelated watch event before rescanning', async () => {
+      setWorkspaceActive('/my/project');
+      ctx.deps.isWatchChangeRelevant.mockReturnValue(false);
+      await runtime.refreshActiveWorkspaceFromWatch('/my/project');
+      expect(ctx.deps.isWatchChangeRelevant).toHaveBeenCalledWith({
+        changedPath: '', documentConversionEnabled: false,
+      });
+      expect(ctx.deps.scanWorkspaceData).not.toHaveBeenCalled();
+    });
+
     test('does nothing when no workspace', async () => {
       await runtime.refreshActiveWorkspace({ showLoading: true });
       expect(ctx.deps.scanWorkspaceData).not.toHaveBeenCalled();

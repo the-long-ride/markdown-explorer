@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
@@ -478,6 +478,44 @@ describe('Electron Git history hardening', () => {
     expect(files).toEqual([{ path: 'blåbær.md' }, { path: 'notater/ø ved.md' }]);
   });
 
+  it('can resolve a workspace after Git is initialized following an earlier lookup failure', async () => {
+    const noRepository = await mkdtemp(path.join(tmpdir(), 'md-explorer-no-repo-'));
+    roots.push(noRepository);
+    const firstLookup = resolveGitContext(noRepository);
+    clearGitContextCache();
+    const secondLookup = resolveGitContext(noRepository);
+    expect(secondLookup).not.toBe(firstLookup);
+    await Promise.all([
+      expect(firstLookup).rejects.toThrow(),
+      expect(secondLookup).rejects.toThrow(),
+    ]);
+    await git(noRepository, 'init');
+    await expect(resolveGitContext(noRepository)).resolves.toMatchObject({ workspaceRoot: await realpath(noRepository) });
+  });
+
+  it('evicts the least recently accessed Git context when the cache is full', async () => {
+    const repo = await createTempGitRepo();
+    const workspaces = Array.from({ length: 257 }, (_, index) => path.join(repo, `docs-${index}`));
+    clearGitContextCache();
+    try {
+      await Promise.all(workspaces.map(workspace => mkdir(workspace)));
+      const contexts: ReturnType<typeof resolveGitContext>[] = [];
+      for (let start = 0; start < 256; start += 16) {
+        const batch = workspaces.slice(start, start + 16).map(workspace => resolveGitContext(workspace));
+        contexts.push(...batch);
+        await Promise.all(batch);
+      }
+      expect(resolveGitContext(workspaces[0])).toBe(contexts[0]);
+      await resolveGitContext(workspaces[256]);
+      expect(resolveGitContext(workspaces[0])).toBe(contexts[0]);
+      const reloaded = resolveGitContext(workspaces[1]);
+      expect(reloaded).not.toBe(contexts[1]);
+      await expect(reloaded).resolves.toEqual(await contexts[1]);
+    } finally {
+      clearGitContextCache();
+    }
+  });
+
   it('lists only document files for a revision', async () => {
     const repo = await createTempGitRepo();
     await commitFile(repo, 'a.md', '# a\n', 'md');
@@ -547,5 +585,18 @@ describe('Electron Git history hardening', () => {
       left: { kind: 'current', path: 'big.md' },
       right: { kind: 'current', path: 'a.md' },
     })).rejects.toMatchObject({ reason: 'output-too-large' });
+  });
+
+  it('distinguishes a missing current file or a directory from a valid comparison document', async () => {
+    const repo = await createTempGitRepo();
+    const oid = await commitFile(repo, 'docs/a.md', '# base\n', 'base');
+    const compare = (filePath: string) => compareGitSources({
+      workspacePath: repo,
+      left: { kind: 'current', path: path.join(repo, filePath) },
+      right: { kind: 'revision', oid, path: 'docs/a.md' },
+    });
+    await expect(compare('docs/absent.md')).rejects.toMatchObject({ reason: 'missing' });
+    await expect(compare('docs')).rejects.toMatchObject({ reason: 'missing' });
+    await expect(compare('docs/a.md')).resolves.toMatchObject({ leftSource: '# base\n', rightSource: '# base\n' });
   });
 });

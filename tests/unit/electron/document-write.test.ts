@@ -398,4 +398,53 @@ describe('Electron Markdown document writes', () => {
     expect(await readFile(file, 'utf8')).toBe('# Direct');
     expect(await readdir(root)).toEqual(['a.md']);
   });
+
+  it('writes a relative document in a single-file workspace when the directory will not allow temporary files', async () => {
+    const { root, file } = await createWorkspace();
+    const open = vi.fn().mockRejectedValue(errorWithCode('EACCES')());
+    const fsApi = { ...fs, promises: { ...fs.promises, open } };
+    const result = await saveWorkspaceDocument({
+      workspacePath: file, filePath: 'a.md', source: '# Direct', expectedRevision: await revisionFor(file), fsApi,
+    });
+    expect(result).toEqual({ ok: true, revision: await revisionFor(file) });
+    expect(open).toHaveBeenCalledExactlyOnceWith(expect.stringMatching(/\.tmp$/), 'wx', 0o600);
+    expect(await readFile(file, 'utf8')).toBe('# Direct');
+    expect(await readdir(root)).toEqual(['a.md']);
+  });
+
+  it.each([
+    ['EACCES', 'write-failed'],
+    ['ENOENT', 'missing'],
+  ])('distinguishes %s when the file cannot be read after path resolution', async (code, reason) => {
+    const { root, file } = await createWorkspace();
+    const fsApi = {
+      ...fs, promises: { ...fs.promises, readFile: vi.fn().mockRejectedValue(errorWithCode(code)()) },
+    };
+    await expect(saveWorkspaceDocument({ workspacePath: root, filePath: file, source: '# New', force: true, fsApi }))
+      .resolves.toMatchObject({ ok: false, reason });
+    expect(await readFile(file, 'utf8')).toBe('# A');
+  });
+
+  it('closes and removes an incomplete temporary document after a write failure', async () => {
+    const { root, file } = await createWorkspace();
+    const close = vi.fn();
+    const fsApi = {
+      ...fs,
+      promises: {
+        ...fs.promises,
+        open: async (...args: Parameters<typeof fs.promises.open>) => {
+          const fd = await fs.promises.open(...args);
+          return {
+            writeFile: vi.fn().mockRejectedValue(errorWithCode('ENOSPC')()),
+            close: close.mockImplementation(() => fd.close()),
+          };
+        },
+      },
+    };
+    await expect(saveWorkspaceDocument({ workspacePath: root, filePath: file, source: '# New', force: true, fsApi }))
+      .resolves.toMatchObject({ ok: false, reason: 'write-failed', error: 'ENOSPC' });
+    expect(close).toHaveBeenCalledOnce();
+    expect(await readFile(file, 'utf8')).toBe('# A');
+    expect(await readdir(root)).toEqual(['a.md']);
+  });
 });

@@ -343,6 +343,44 @@ describe('Electron Insights workspace host', () => {
     }
   });
 
+  it('emits extensionless changes without an operation ID and avoids duplicate directory watches', async () => {
+    vi.useFakeTimers();
+    try {
+      const ws = makeWorkspace();
+      ws.write('docs/README', 'details');
+      const docs = nodeFs.realpathSync(nodePath.join(ws.root, 'docs'));
+      const outside = nodeFs.realpathSync(makeWorkspace().root);
+      mkdirSync(nodePath.join(docs, 'docs-alias'));
+      mkdirSync(nodePath.join(ws.root, 'outside-alias'));
+      const handlers = new Map<string, Function>();
+      const fsImpl = {
+        ...nodeFs,
+        realpathSync: (target: string) => {
+          if (nodePath.basename(target) === 'docs-alias') return docs;
+          if (nodePath.basename(target) === 'outside-alias') return outside;
+          return nodeFs.realpathSync(target);
+        },
+        watch: (target: string, _: unknown, handler: Function) => {
+          handlers.set(target, handler);
+          return { close: vi.fn() };
+        },
+      } as typeof nodeFs;
+      const { host, sent } = harness(ws.root, fsImpl);
+      host.setInsightsWatchState({ requestId: 'unscoped', active: true });
+      expect([...handlers.keys()]).toEqual([nodeFs.realpathSync(ws.root), docs]);
+      handlers.get(docs)!('change', 'README');
+      await vi.runAllTimersAsync();
+      expect(sent.at(-1)).toMatchObject({
+        command: 'insightsFsDelta', requestId: 'unscoped',
+        deltas: [{ kind: 'update', entry: { relativePath: 'docs/README', extension: undefined } }],
+      });
+      expect(sent.at(-1)).not.toHaveProperty('workspaceOperationId');
+      host.setInsightsWatchState();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('reports watcher setup failures and tolerates inaccessible children and disposal errors', () => {
     const ws = makeWorkspace();
     ws.write('nested/exists', 'file');
