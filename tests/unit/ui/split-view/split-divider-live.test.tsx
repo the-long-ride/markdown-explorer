@@ -65,6 +65,32 @@ describe('SplitDivider live drag', () => {
     expect(onRatioChange).not.toHaveBeenCalled();
   });
 
+  it('ignores a second pointer and leaves a live drag active through an unrelated keypress', () => {
+    const { root, divider, onRatioChange } = setup();
+    fireEvent.pointerDown(divider, { pointerId: 1, clientX: 500 });
+    fireEvent.pointerMove(window, { pointerId: 2, clientX: 700 });
+    fireEvent.pointerUp(window, { pointerId: 2, clientX: 700 });
+    fireEvent.keyDown(window, { key: 'Shift' });
+    expect(root).toHaveClass('is-split-resizing');
+    expect(frames).toHaveLength(0);
+    expect(onRatioChange).not.toHaveBeenCalled();
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 700 });
+    fireEvent.blur(window);
+    expect(window.cancelAnimationFrame).toHaveBeenCalledOnce();
+    expect(root).not.toHaveClass('is-split-resizing');
+    expect(divider).toHaveAttribute('aria-valuenow', '50');
+    expect(onRatioChange).not.toHaveBeenCalled();
+  });
+
+  it('ignores pointer resizing on an unmeasurable pane and unrelated separator keys', () => {
+    const { root, divider, onRatioChange } = setup();
+    vi.mocked(root.getBoundingClientRect).mockReturnValue({ width: 0 } as DOMRect);
+    fireEvent.pointerDown(divider, { pointerId: 1 });
+    fireEvent.keyDown(divider, { key: 'ArrowUp' });
+    expect(root).not.toHaveClass('is-split-resizing');
+    expect(onRatioChange).not.toHaveBeenCalled();
+  });
+
   it('defers HTML preview iframe heights while resizing and flushes them on release', () => {
     const { root, divider } = setup();
     const iframe = document.createElement('iframe');

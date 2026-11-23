@@ -34,16 +34,9 @@ type OpenGroup = "themes" | "pets" | "custom" | null;
 
 const MAX_VISIBLE_THEME_MENU_ITEMS = 7;
 
-function getThemeMenuDesiredHeight(group: Exclude<OpenGroup, null>, itemCount?: number) {
+function getThemeMenuDesiredHeight(group: Exclude<OpenGroup, null>, itemCount: number) {
   const rowHeight = group === 'themes' ? 48 : 36;
-  const count = typeof itemCount === 'number'
-    ? itemCount
-    : group === 'themes'
-      ? THEME_STYLE_OPTIONS.length
-      : group === 'pets'
-        ? PET_THEME_STYLE_OPTIONS.length
-        : 1;
-  const items = Math.min(MAX_VISIBLE_THEME_MENU_ITEMS, Math.max(1, count));
+  const items = Math.min(MAX_VISIBLE_THEME_MENU_ITEMS, Math.max(1, itemCount));
   return rowHeight * items + 10;
 }
 

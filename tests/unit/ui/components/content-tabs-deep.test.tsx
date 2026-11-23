@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { createElement } from 'react';
+import { createEditableDocumentSession, documentSessionKey } from '../../../../ui/src/editor/documentSession';
+import { createSplitViewState } from '../../../../ui/src/split-view/paneState';
 
 const mockActivateContentTab = vi.fn();
 const mockCloseContentTab = vi.fn();
@@ -42,7 +44,7 @@ function makeTab(filePath: string, fileName: string, title: string, relativePath
   };
 }
 
-function createMockAppState(overrides: Record<string, unknown> = {}) {
+function createMockAppState(overrides: Record<string, unknown> = {}, actions: Record<string, unknown> = {}) {
   return {
     state: {
       fileList: [],
@@ -105,6 +107,7 @@ function createMockAppState(overrides: Record<string, unknown> = {}) {
     setSidebarCollapsed: vi.fn(),
     setSidebarActiveTab: vi.fn(),
     updateSettings: vi.fn(),
+    ...actions,
   };
 }
 
@@ -131,6 +134,7 @@ vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({
 vi.mock('../../../../ui/src/contexts/translations', () => ({
   getTranslations: () => ({
     fileTabs: 'File tabs',
+    previewActions: { openError: 'Unable to open file' },
     tooltips: { closeTab: 'Close tab' },
     tabContextMenu: {
       closeThisTab: 'Close',
@@ -174,6 +178,10 @@ vi.mock('../../../../ui/src/components/shared/TabContextMenu', () => ({
 
     return (
       <div data-testid="tab-context-menu" data-x={x} data-y={y}>
+        {items?.filter(({ action }: any) => ['toggleHtmlDocumentView', 'openInBrowser', 'openInSplit'].includes(action))
+          .map(({ action }: any) => (
+            <button key={action} data-testid={`ctx-${action}`} disabled={getItemDisabled(action)} onClick={() => handleAction(action)}>{action}</button>
+          ))}
         {hasItem('openLocation') && (
           <button data-testid="ctx-open-location" disabled={getItemDisabled('openLocation')} onClick={() => handleAction('openLocation')}>Open location</button>
         )}
@@ -199,7 +207,8 @@ vi.mock('../../../../ui/src/components/shared/icons', async (importOriginal) => 
   };
 });
 
-import { ContentTabs } from '../../../../ui/src/components/Content/ContentTabs';
+import { ContentTabs, CONTENT_TAB_CLOSE_COLLAPSE_MS, CONTENT_TAB_CLOSE_FADE_MS } from '../../../../ui/src/components/Content/ContentTabs';
+import { CONTENT_TAB_CLOSE_REQUEST_EVENT, requestAnimatedContentTabClose } from '../../../../ui/src/components/Content/contentTabCloseEvents';
 
 describe('ContentTabs deep', () => {
   beforeEach(() => {
@@ -207,6 +216,69 @@ describe('ContentTabs deep', () => {
     mockAppState = createMockAppState();
     capturedOnAction = null;
     capturedOnClose = null;
+  });
+
+  it('handles keyboard close requests for tabs in the current workspace', () => {
+    mockAppState = createMockAppState({
+      contentTabs: [makeTab('/a.md', 'a.md', 'A'), makeTab('/b.md', 'b.md', 'B'), makeTab('/c.md', 'c.md', 'C')],
+    });
+    const { unmount } = render(createElement(ContentTabs));
+    expect(window.dispatchEvent(new Event(CONTENT_TAB_CLOSE_REQUEST_EVENT, { cancelable: true }))).toBe(true);
+    act(() => {
+      expect(requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath: '/missing.md' })).toBe(true);
+      expect(requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath: '/c.md' })).toBe(true);
+    });
+    expect(mockCloseContentTabsToRight).not.toHaveBeenCalled();
+    act(() => {
+      expect(requestAnimatedContentTabClose({ action: 'closeThisTab', filePath: '/b.md' })).toBe(true);
+      expect(requestAnimatedContentTabClose({ action: 'closeTabsToRight', filePath: '/b.md' })).toBe(true);
+      expect(requestAnimatedContentTabClose({ action: 'closeOtherTabs', filePath: '/b.md' })).toBe(true);
+      expect(requestAnimatedContentTabClose({ action: 'closeAllTabs' })).toBe(true);
+    });
+    expect(mockCloseContentTab).toHaveBeenCalledExactlyOnceWith('/b.md');
+    expect(mockCloseContentTabsToRight).toHaveBeenCalledExactlyOnceWith('/b.md');
+    expect(mockCloseOtherContentTabs).toHaveBeenCalledExactlyOnceWith('/b.md');
+    expect(mockCloseAllContentTabs).toHaveBeenCalledOnce();
+    unmount();
+    expect(requestAnimatedContentTabClose({ action: 'closeAllTabs' })).toBe(false);
+  });
+
+  it('animates measured tabs before closing, blocks duplicate requests, and clears pending closes on unmount', () => {
+    vi.useFakeTimers();
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    try {
+      mockAppState = createMockAppState({
+        contentTabs: [makeTab('/a.md', 'a.md', 'A'), makeTab('/b.md', 'b.md', 'B')],
+      });
+      const { unmount } = render(createElement(ContentTabs));
+      const a = screen.getByRole('tab', { name: /a\.md/ });
+      const b = screen.getByRole('tab', { name: /b\.md/ });
+      a.getBoundingClientRect = () => new DOMRect(0, 0, 125, 25);
+      act(() => requestAnimatedContentTabClose({ action: 'closeThisTab', filePath: '/b.md' }));
+      expect(mockCloseContentTab).toHaveBeenCalledExactlyOnceWith('/b.md');
+      act(() => requestAnimatedContentTabClose({ action: 'closeThisTab', filePath: '/a.md' }));
+      expect(a).toHaveClass('is-closing--fade');
+      expect(a.style.getPropertyValue('--content-tab-close-width')).toBe('125px');
+      act(() => requestAnimatedContentTabClose({ action: 'closeAllTabs' }));
+      expect(b).not.toHaveClass('is-closing--fade');
+      act(() => vi.advanceTimersByTime(CONTENT_TAB_CLOSE_FADE_MS));
+      expect(a).toHaveClass('is-closing--collapse');
+      expect(mockCloseContentTab).toHaveBeenCalledTimes(1);
+      act(() => vi.advanceTimersByTime(CONTENT_TAB_CLOSE_COLLAPSE_MS));
+      expect(mockCloseContentTab).toHaveBeenLastCalledWith('/a.md');
+      expect(a).not.toHaveClass('is-closing--collapse');
+      expect(mockCloseAllContentTabs).not.toHaveBeenCalled();
+
+      act(() => requestAnimatedContentTabClose({ action: 'closeThisTab', filePath: '/a.md' }));
+      unmount();
+      act(() => vi.runOnlyPendingTimers());
+      expect(mockCloseContentTab).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+      vi.useRealTimers();
+    }
   });
 
   describe('context menu', () => {
@@ -239,6 +311,66 @@ describe('ContentTabs deep', () => {
         path: '/a.md',
         mode: 'open-parent-directory',
       });
+    });
+
+    it('uses the HTML tab override when switching previews and dispatches an error on invalid local paths', () => {
+      const tab = makeTab('relative.html', 'relative.html', 'Relative');
+      const setContentTabHtmlPreview = vi.fn();
+      mockAppState = createMockAppState({
+        appRuntime: 'desktop',
+        contentTabs: [{ ...tab, htmlPreviewOverride: false }, makeTab('/absolute.html', 'absolute.html', 'Absolute')],
+      }, { setContentTabHtmlPreview });
+      const notice = vi.fn();
+      window.addEventListener('markdown-explorer-action-notice', notice);
+      try {
+        render(createElement(ContentTabs));
+        const choose = (name: RegExp, action: string) => {
+          fireEvent.contextMenu(screen.getByRole('tab', { name }));
+          fireEvent.click(screen.getByTestId(`ctx-${action}`));
+        };
+        choose(/relative/, 'toggleHtmlDocumentView');
+        choose(/absolute/, 'toggleHtmlDocumentView');
+        expect(setContentTabHtmlPreview.mock.calls).toEqual([['relative.html', true], ['/absolute.html', false]]);
+        choose(/relative/, 'openInBrowser');
+        expect(notice).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ detail: 'Unable to open file' }));
+        choose(/absolute/, 'openInBrowser');
+        expect(mockPostMessage).toHaveBeenCalledExactlyOnceWith({ command: 'openExternal', url: 'file:///absolute.html' });
+      } finally {
+        window.removeEventListener('markdown-explorer-action-notice', notice);
+      }
+    });
+
+    it('opens a split directly when empty, but guards replacing a dirty document', () => {
+      const targetPath = '/target.md';
+      const currentPath = '/current.md';
+      const openInSplit = vi.fn();
+      const guardUnsavedChanges = vi.fn<(paths: string[], commit: () => void) => void>();
+      const contentTabs = [makeTab(targetPath, 'target.md', 'Target')];
+      const actions = { openInSplit, guardUnsavedChanges };
+      mockAppState = createMockAppState({ contentTabs }, actions);
+      const { rerender } = render(createElement(ContentTabs));
+      const openTarget = () => {
+        fireEvent.contextMenu(screen.getByRole('tab', { name: /target/ }));
+        fireEvent.click(screen.getByTestId('ctx-openInSplit'));
+      };
+      openTarget();
+      expect(openInSplit).toHaveBeenCalledExactlyOnceWith(targetPath);
+      expect(guardUnsavedChanges).not.toHaveBeenCalled();
+      openInSplit.mockClear();
+      const splitView = createSplitViewState(targetPath);
+      mockAppState = createMockAppState({
+        contentTabs,
+        splitView: { ...splitView, enabled: true, secondary: { ...splitView.secondary, filePath: currentPath } },
+        documentSessions: {
+          [documentSessionKey(currentPath)]: { ...createEditableDocumentSession(currentPath, 'Before', '1'), source: 'Changed' },
+        },
+      }, actions);
+      rerender(createElement(ContentTabs));
+      openTarget();
+      expect(guardUnsavedChanges).toHaveBeenCalledExactlyOnceWith([currentPath], expect.any(Function));
+      expect(openInSplit).not.toHaveBeenCalled();
+      guardUnsavedChanges.mock.calls[0][1]();
+      expect(openInSplit).toHaveBeenCalledExactlyOnceWith(targetPath);
     });
 
     it('opens document history from the tab context menu', () => {
@@ -637,6 +769,49 @@ describe('ContentTabs deep', () => {
   });
 
   describe('scrollbar drag', () => {
+    it('seeks on the track, drags from the thumb, and stops scrolling after release', () => {
+      mockAppState = createMockAppState({
+        contentTabs: [makeTab('/a.md', 'a.md', 'A')],
+        activeContentTabPath: '/a.md',
+      });
+      const { container } = render(createElement(ContentTabs));
+      const viewport = screen.getByRole('tablist');
+      let contentWidth = 800;
+      Object.defineProperties(viewport, {
+        clientWidth: { value: 200 },
+        scrollWidth: { get: () => contentWidth },
+      });
+      fireEvent.scroll(viewport);
+      const track = container.querySelector<HTMLElement>('.content-tabs__scrollbar')!;
+      expect(track).toBeInTheDocument();
+      Object.defineProperty(track, 'clientWidth', { value: 180 });
+      track.getBoundingClientRect = () => new DOMRect(20, 0, 180, 10);
+      fireEvent.resize(window);
+      const thumb = track.querySelector<HTMLElement>('.content-tabs__scrollbar-thumb')!;
+      expect(thumb.style.getPropertyValue('--scrollbar-thumb-width')).toBe('45px');
+      const pointer = (target: Element | Window, type: string, clientX: number) =>
+        fireEvent(target, new MouseEvent(type, { clientX, bubbles: true, cancelable: true }));
+      expect(pointer(track, 'pointerdown', 110)).toBe(false);
+      expect(viewport.scrollLeft).toBe(300);
+      expect(thumb.style.getPropertyValue('--scrollbar-thumb-left')).toBe('67.5px');
+      expect(track).toHaveClass('is-dragging');
+      pointer(window, 'pointermove', 400);
+      expect(viewport.scrollLeft).toBe(600);
+      pointer(window, 'pointercancel', 400);
+      expect(track).not.toHaveClass('is-dragging');
+      pointer(window, 'pointermove', 0);
+      expect(viewport.scrollLeft).toBe(600);
+
+      expect(pointer(thumb, 'pointerdown', 150)).toBe(false);
+      pointer(window, 'pointermove', -200);
+      expect(viewport.scrollLeft).toBe(0);
+      pointer(window, 'pointerup', -200);
+      expect(track).not.toHaveClass('is-dragging');
+      contentWidth = 200;
+      fireEvent.resize(window);
+      expect(track).not.toBeInTheDocument();
+    });
+
     it('pointer down on scrollbar thumb starts drag', () => {
       const origRAF = window.requestAnimationFrame;
       window.requestAnimationFrame = (cb) => { cb(); return 0; };

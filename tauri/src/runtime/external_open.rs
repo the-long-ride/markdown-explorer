@@ -82,8 +82,7 @@ pub fn parse_external_open_request(argv: &[String]) -> Option<ExternalOpenReques
     })
 }
 
-#[cfg(not(test))]
-pub fn emit_external_open_request(app: &tauri::AppHandle, request: &ExternalOpenRequest) {
+pub fn emit_external_open_request(app: &crate::HostApp, request: &ExternalOpenRequest) {
     let mut extra = serde_json::Map::new();
     extra.insert("request".into(), request.to_json());
     crate::host_message::emit(app, "externalOpenRequest", extra);

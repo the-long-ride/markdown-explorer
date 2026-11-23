@@ -1,7 +1,7 @@
 use super::read_workspace_resource;
 
 pub fn handle_command(
-    app: &tauri::AppHandle,
+    app: &crate::HostApp,
     state: &crate::app_state::AppState,
     cmd: &str,
     msg: &serde_json::Value,

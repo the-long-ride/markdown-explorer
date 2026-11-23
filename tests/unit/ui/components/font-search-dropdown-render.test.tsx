@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { FontSearchDropdown } from '../../../../ui/src/components/Settings/FontSearchDropdown';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
@@ -13,6 +13,27 @@ const mockFonts: DesktopFontFamily[] = [
 const t = getTranslations('en');
 
 describe('FontSearchDropdown component', () => {
+  it('opens above an imported selection when the settings card has no room below', () => {
+    const value: DesktopFontBinding = { source: 'imported', id: 'custom-sans', family: 'Custom Sans', style: 'normal', weight: 400 };
+    const onChange = vi.fn();
+    const { container } = render(<div className="settings-card--settings"><FontSearchDropdown value={value} fonts={mockFonts} t={t} onChange={onChange} /></div>);
+    const card = container.firstElementChild!;
+    const trigger = screen.getByRole('button', { expanded: false });
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue({ top: 0, left: 0, right: 450, bottom: 300 } as DOMRect);
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({ top: 269, bottom: 299, left: 15, width: 100 } as DOMRect);
+    fireEvent.click(trigger);
+    const option = screen.getByRole('option', { name: /Custom Sans/ });
+    expect(option).toHaveAttribute('aria-selected', 'true');
+    const menu = screen.getByRole('listbox');
+    expect(menu.style.getPropertyValue('--menu-top')).toBe('263px');
+    const search = screen.getByPlaceholderText(t.fontSearchPlaceholder);
+    fireEvent.keyDown(search, { key: 'Tab' });
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.keyDown(search, { key: 'ArrowUp' });
+    expect(search).toHaveAttribute('aria-activedescendant', option.id);
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledWith({ source: 'imported', family: 'Custom Sans', id: 'custom-sans' });
+  });
   it('renders default selection when value source is default', () => {
     const value: DesktopFontBinding = { source: 'default', style: 'normal', weight: 400 };
     render(
@@ -131,6 +152,37 @@ describe('FontSearchDropdown component', () => {
     const searchInput = screen.getByPlaceholderText(t.fontSearchPlaceholder);
     fireEvent.keyDown(searchInput, { key: 'Escape' });
 
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('keeps Default available when no fonts match, then selects an imported font and restores trigger focus', async () => {
+    const onChange = vi.fn();
+    render(<FontSearchDropdown value={{ source: 'default', style: 'normal', weight: 400 }} fonts={mockFonts} t={t} onChange={onChange} />);
+    const trigger = screen.getByRole('button', { expanded: false });
+    fireEvent.click(trigger);
+    const search = screen.getByPlaceholderText(t.fontSearchPlaceholder);
+    fireEvent.change(search, { target: { value: 'no matching font' } });
+    expect(screen.getByText(t.fontNoResults)).toBeVisible();
+    expect(screen.getAllByRole('option')).toEqual([screen.getByRole('option', { name: t.fontDefault })]);
+    fireEvent.keyDown(search, { key: 'ArrowUp' });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ source: 'default' });
+    await waitFor(() => expect(trigger).toHaveFocus());
+    onChange.mockClear();
+
+    fireEvent.click(trigger);
+    const reopenedSearch = screen.getByPlaceholderText(t.fontSearchPlaceholder);
+    fireEvent.change(reopenedSearch, { target: { value: 'Custom Sans' } });
+    fireEvent.pointerDown(reopenedSearch);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    const imported = screen.getByRole('option', { name: /Custom Sans/ });
+    fireEvent.pointerMove(imported);
+    fireEvent.click(imported);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ source: 'imported', family: 'Custom Sans', id: 'custom-sans' });
+    await waitFor(() => expect(trigger).toHaveFocus());
+    fireEvent.click(trigger);
+    expect(screen.getByPlaceholderText(t.fontSearchPlaceholder)).toHaveValue('');
+    fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 });

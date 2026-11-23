@@ -234,6 +234,36 @@ describe('Electron native close guard', () => {
     expect(app.quit).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps requests through same-document navigation in legacy Electron but clears them on reload', () => {
+    const window = makeWindow();
+    const app = { quit: vi.fn() };
+    const guard = createNativeCloseGuard({ app, getMainWindow: () => window, platform: 'win32', responseTimeoutMs: 0 });
+    guard.attachWindow(window);
+    const first = guard.requestWindowClose();
+    window.webContents.trigger('did-start-navigation', 'app://docs#next', true, true);
+    expect(guard.requestWindowClose()).toEqual(first);
+    window.webContents.trigger('did-start-navigation', 'app://docs', false, true);
+    expect(guard.cancel(first)).toBe(false);
+    expect(guard.requestWindowClose().requestId).not.toBe(first.requestId);
+    expect(app.quit).not.toHaveBeenCalled();
+  });
+
+  it('prompts without a parent when the window disappears while a close is pending', async () => {
+    const window = makeWindow();
+    let mainWindow: typeof window | null = window;
+    const app = { quit: vi.fn() };
+    const dialog = { showMessageBox: vi.fn().mockResolvedValue({ response: 1 }) };
+    const guard = createNativeCloseGuard({ app, dialog, getMainWindow: () => mainWindow, platform: 'win32', responseTimeoutMs: 0 });
+    guard.attachWindow(window);
+    const request = guard.requestWindowClose();
+    mainWindow = null;
+    window.trigger('unresponsive');
+    await Promise.resolve();
+    expect(dialog.showMessageBox).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ buttons: ['Quit', 'Cancel'] }));
+    expect(guard.confirm(request)).toBe(false);
+    expect(app.quit).not.toHaveBeenCalled();
+  });
+
   it('allows close immediately when the renderer is crashed, destroyed, or still loading', () => {
     for (const state of ['crashed', 'destroyed', 'loading'] as const) {
       const window = makeWindow();

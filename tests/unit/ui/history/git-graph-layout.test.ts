@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GitRepositoryCommit } from '../../../../ui/src/history/contracts';
 import { layoutGitGraph, rowMaxLanes } from '../../../../ui/src/history/gitGraphLayout';
-import { getRowMaxLane } from '../../../../ui/src/components/History/GitCommitGraph';
+import { getLaneX, getRowMaxLane, getRowY, getSegmentPath } from '../../../../ui/src/components/History/GitCommitGraph';
 
 function commit(oid: string, parentOids: readonly string[]): GitRepositoryCommit {
   return {
@@ -65,6 +65,12 @@ describe('git graph layout', () => {
 });
 
 describe('rowMaxLanes', () => {
+  it('widens an unloaded row when a parent edge continues past the window', () => {
+    const layout = layoutGitGraph([commit('merge', ['unseen-first', 'unseen-second'])]);
+    expect(getRowMaxLane(4, layout)).toBe(1);
+    expect(getRowMaxLane(4, layoutGitGraph([]))).toBe(0);
+  });
+
   it('matches the per-row scan for a branchy 300 commit history', () => {
     let seed = 7;
     const random = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
@@ -79,5 +85,17 @@ describe('rowMaxLanes', () => {
     const layout = layoutGitGraph(commits);
 
     expect(rowMaxLanes(layout)).toEqual(layout.nodes.map((node) => getRowMaxLane(node.row, layout)));
+  });
+});
+
+describe('getSegmentPath', () => {
+  it.each([50, 240])('draws an incoming cross-lane edge to the window boundary at %i', (height) => {
+    const x = getLaneX(2);
+    const targetX = getLaneX(0);
+    const y = getRowY(0);
+    const path = getSegmentPath({ fromRow: 0, fromLane: 2, toRow: 0, toLane: 0, continuesBeyondWindow: true }, height);
+    expect(path).toMatch(new RegExp(`^M ${x} ${y} C`));
+    expect(path).toMatch(new RegExp(`${targetX} ${height}$`));
+    expect(path.includes(' L ')).toBe(height > getRowY(1));
   });
 });

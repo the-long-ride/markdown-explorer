@@ -1,16 +1,15 @@
 use crate::update::UpdateState;
 #[cfg(test)]
 use crate::update::UpdateStatus;
+use crate::HostApp;
 use serde_json::json;
 use std::path::{Path, PathBuf};
-use tauri::AppHandle;
 use tauri_plugin_updater::Update;
-#[cfg(not(test))]
 use {crate::app_state::AppState, std::fs, tauri::Manager, tauri_plugin_updater::UpdaterExt};
 
+mod native;
 mod store;
 pub use store::can_install_updates;
-#[cfg(not(test))]
 use store::{file_name_for_update, percent};
 
 pub struct PendingUpdate {
@@ -23,23 +22,19 @@ pub struct UpdateManager {
     config_dir: PathBuf,
 }
 
-#[cfg(not(test))]
-fn set_state(app: &AppHandle, app_state: &AppState, state: UpdateState) {
+fn set_state(app: &HostApp, app_state: &AppState, state: UpdateState) {
     app_state.inner.write().update_state = state.clone();
     UpdateManager::emit_state(app, &state);
 }
 
 impl UpdateManager {
-    pub fn emit_state(app: &AppHandle, state: &UpdateState) {
+    pub fn emit_state(app: &HostApp, state: &UpdateState) {
         let mut extra = serde_json::Map::new();
         extra.insert("state".into(), json!(state));
-        #[cfg(not(test))]
         crate::host_message::emit(app, "updateStateChanged", extra);
-        #[cfg(test)]
-        let _ = (app, extra);
     }
 
-    pub fn restore_and_emit(app: &AppHandle, config_dir: &Path) -> UpdateState {
+    pub fn restore_and_emit(app: &HostApp, config_dir: &Path) -> UpdateState {
         let manager = Self::new(config_dir.to_path_buf());
         let state = manager
             .load_persisted_state()
@@ -50,8 +45,7 @@ impl UpdateManager {
         state
     }
 
-    #[cfg(not(test))]
-    pub fn start_download(app: AppHandle, app_state: AppState, requested_version: String) {
+    pub fn start_download(app: HostApp, app_state: AppState, requested_version: String) {
         tauri::async_runtime::spawn(async move {
             if requested_version.is_empty() {
                 set_state(
@@ -160,8 +154,7 @@ impl UpdateManager {
         });
     }
 
-    #[cfg(not(test))]
-    pub fn schedule_downloaded_update(app: &AppHandle, app_state: &AppState) -> Result<(), String> {
+    pub fn schedule_downloaded_update(app: &HostApp, app_state: &AppState) -> Result<(), String> {
         let current = app_state.inner.read().update_state.clone();
         if !matches!(
             current.status,
@@ -188,9 +181,8 @@ impl UpdateManager {
         Ok(())
     }
 
-    #[cfg(not(test))]
     async fn restore_pending_update(
-        app: &AppHandle,
+        app: &HostApp,
         app_state: &AppState,
         persisted: &UpdateState,
     ) -> Result<(), String> {
@@ -227,9 +219,8 @@ impl UpdateManager {
         Ok(())
     }
 
-    #[cfg(not(test))]
     async fn install_pending_update(
-        app: AppHandle,
+        app: HostApp,
         app_state: AppState,
         allow_downloaded: bool,
     ) -> Result<bool, String> {
@@ -277,7 +268,7 @@ impl UpdateManager {
         let manager = Self::new(config_dir);
         manager.clear_persisted_state();
 
-        if let Err(error) = pending.update.install(&pending.bytes) {
+        if let Err(error) = native::install(&pending.update, &pending.bytes) {
             let message = format!("failed to install update: {error}");
             let restored_state = UpdateState::scheduled(
                 &version,
@@ -303,25 +294,19 @@ impl UpdateManager {
         }
 
         let _ = fs::remove_file(pending.staged_file_path);
-        app.restart();
+        native::restart(&app);
     }
 
-    #[cfg(not(test))]
-    pub fn restart_and_apply_update(app: AppHandle, app_state: AppState) {
+    pub fn restart_and_apply_update(app: HostApp, app_state: AppState) {
         tauri::async_runtime::spawn(async move {
             let _ = Self::install_pending_update(app, app_state, true).await;
         });
     }
 
-    #[cfg(not(test))]
-    pub async fn apply_scheduled_update(
-        app: AppHandle,
-        app_state: AppState,
-    ) -> Result<bool, String> {
+    pub async fn apply_scheduled_update(app: HostApp, app_state: AppState) -> Result<bool, String> {
         Self::install_pending_update(app, app_state, false).await
     }
 
-    #[cfg(not(test))]
     pub fn should_apply_on_close(app_state: &AppState) -> bool {
         matches!(
             app_state.inner.read().update_state.status,

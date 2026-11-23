@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use crate::app_state::{AppState, FullscreenTransition, RuntimeState};
-use crate::host_message;
 use crate::runtime::navigation;
 use crate::runtime::refresh::{is_watch_change_relevant, should_notify_current_file_changed};
 use crate::search::index::SearchIndex;
@@ -15,6 +14,7 @@ use crate::workspace::scanner::{
     build_tree, scan, scan_with_callbacks_and_cancel, DocumentKind, MdFile, ScanOptions,
 };
 use crate::workspace::watch::{WatchChange, WorkspaceWatchController};
+use crate::{host_message, HostApp};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::sync::{
@@ -22,12 +22,10 @@ use std::sync::{
     Arc, Mutex,
 };
 use std::time::Duration;
-use tauri::{AppHandle, Listener, Manager, Url};
-use tauri_plugin_clipboard_manager::ClipboardExt;
-use tauri_plugin_opener::OpenerExt;
+use tauri::{Listener, Manager, Url};
 
 pub struct Dispatcher {
-    pub app: AppHandle,
+    pub app: HostApp,
     pub state: AppState,
 }
 
@@ -123,6 +121,7 @@ mod commands_workspace;
 mod content_handlers;
 mod handlers;
 mod incremental_scan;
+mod native;
 #[path = "dispatcher/navigation.rs"]
 mod navigation_handlers;
 mod ready;
@@ -148,7 +147,7 @@ mod settings;
 // "zoom-in" =>
 
 impl Dispatcher {
-    pub fn mount(app: &AppHandle, state: AppState) {
+    pub fn mount(app: &HostApp, state: AppState) {
         let app_clone = app.clone();
         let state_clone = state.clone();
         app.listen("webview-message", move |event| {
@@ -164,6 +163,10 @@ impl Dispatcher {
         });
     }
 }
+
+#[cfg(test)]
+#[path = "dispatcher/mock_tests.rs"]
+mod mock_tests;
 
 #[cfg(test)]
 mod tests {
@@ -251,7 +254,7 @@ mod tests {
             parts: vec!["file.md".into()],
             file_name: "file.md".into(),
             title: "My Title".into(),
-            extension: Some(".md".into()),
+            extension: ".md".into(),
             document_kind: crate::workspace::scanner::DocumentKind::Markdown,
             modified_at: 0,
             tab_id: None,
@@ -324,7 +327,7 @@ mod tests {
             parts: vec!["file.md".into()],
             file_name: "file.md".into(),
             title: "My Title".into(),
-            extension: Some(".md".into()),
+            extension: ".md".into(),
             document_kind: crate::workspace::scanner::DocumentKind::Markdown,
             modified_at: 0,
             tab_id: None,

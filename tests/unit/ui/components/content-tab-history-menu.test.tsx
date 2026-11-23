@@ -15,4 +15,23 @@ describe('document tab Revision (Git) action', () => {
     expect(item).toMatchObject({ label: 'Revision (Git)' });
     expect(item?.disabled).toBeFalsy();
   });
+
+  it('offers revision and HTML actions for an uncached split tab, including in web mode', () => {
+    const path = '/workspace/archive.html';
+    const translations = getTranslations('en');
+    const items = buildContentTabContextMenuItems({ ...initialState, appRuntime: 'web' }, translations, -1, {
+      paneId: 'secondary', paneTabs: [path], targetFilePath: path,
+    });
+    expect(items.map(item => item.action)).toContain('history');
+    expect(items.map(item => item.action)).toContain('toggleHtmlDocumentView');
+    expect(items.map(item => item.action)).not.toContain('openInBrowser');
+    expect(items.map(item => item.action)).not.toContain('openLocation');
+    expect(items.find(item => item.action === 'closeThisTab')?.disabled).toBe(false);
+  });
+
+  it('has no actions for a missing indexed tab or an absent split target', () => {
+    const translations = getTranslations('en');
+    expect(buildContentTabContextMenuItems(initialState, translations, 4)).toEqual([]);
+    expect(buildContentTabContextMenuItems(initialState, translations, -1)).toEqual([]);
+  });
 });

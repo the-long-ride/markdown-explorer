@@ -510,6 +510,27 @@ describe('handleWorkerMessage', () => {
     expect(errMsg).toBeTruthy();
     expect(errMsg!.message).toBe('string error');
   });
+
+  test('filters items by tab and drops a batch if a newer search has started', async () => {
+    const selected = { tabId: '42', fsPath: 'selected.md' };
+    const activeRequestId = { value: '' };
+    const postMessage = vi.fn();
+    const searchIncremental = vi.fn(async (_query, _items, options) => {
+      activeRequestId.value = 'new';
+      expect(options.shouldCancel()).toBe(true);
+      options.onBatch([{ fsPath: 'selected.md' }]);
+      return { cancelled: true };
+    });
+    const state = {
+      searchIndex: { searchIncremental }, items: { value: [null, {}, selected] }, activeRequestId, postMessage,
+    };
+
+    handleWorkerMessage({ type: 'search', requestId: 'old', query: 'test', tabIds: [42], matchCase: true }, state);
+    await settleTimers();
+
+    expect(searchIncremental).toHaveBeenCalledExactlyOnceWith('test', [selected], expect.objectContaining({ matchCase: true }));
+    expect(postMessage).toHaveBeenCalledExactlyOnceWith({ type: 'done', requestId: 'old', cancelled: true });
+  });
 });
 
 describe('resolveMessageItems', () => {

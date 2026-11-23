@@ -57,4 +57,12 @@ describe('mermaidZenUml', () => {
     // Title in source but no matching element in svg
     expect(repairZenUmlTitle(svg, dummyTokens, 'JetBrains Mono', 'title "My Title"\nA->B: Msg')).toBe(false);
   });
+
+  it.each(["'Nested title'", 'Nested title'])('matches %s and applies the title font to nested text', (sourceTitle) => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.innerHTML = '<text>Nested <tspan>title</tspan></text><text>Not the title</text>';
+    expect(repairZenUmlTitle(svg, dummyTokens, 'JetBrains Mono', `zenuml\ntitle ${sourceTitle}`)).toBe(true);
+    expect(svg.querySelector('tspan')).toHaveStyle({ fontFamily: 'JetBrains Mono', color: '#111111' });
+    expect(svg.querySelectorAll('[data-mdn-zenuml-title]')).toHaveLength(1);
+  });
 });

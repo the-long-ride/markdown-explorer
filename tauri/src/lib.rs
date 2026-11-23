@@ -1,8 +1,12 @@
 pub mod app_state;
+
+#[cfg(test)]
+type HostApp = tauri::AppHandle<tauri::test::MockRuntime>;
+#[cfg(not(test))]
+type HostApp = tauri::AppHandle;
 #[cfg(not(test))]
 pub mod core;
 pub mod debug_tools;
-#[cfg(not(test))]
 pub mod dispatcher;
 #[path = "dispatcher/document_write.rs"]
 mod document_write;
@@ -10,12 +14,10 @@ pub mod error;
 pub mod fonts;
 #[path = "dispatcher/git_history.rs"]
 mod git_history;
-#[cfg(not(test))]
 pub mod host_message;
 pub mod insights;
 #[path = "insights/external.rs"]
 pub mod insights_external;
-#[cfg(not(test))]
 #[path = "insights/external_host.rs"]
 pub mod insights_external_host;
 pub mod local_file;
