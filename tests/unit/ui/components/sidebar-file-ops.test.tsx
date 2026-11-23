@@ -20,6 +20,9 @@ const emptyOnlyTree = { name: 'ws', path: WS, files: [], children: [{ name: 'voi
 const spies = {
   navigate: vi.fn(), updateSettings: vi.fn(), closeContentTab: vi.fn(), discardDocumentChanges: vi.fn(), setDocumentEditMode: vi.fn(), dispatch: vi.fn(),
 };
+const openSnapshotFile = vi.fn();
+const searchRevision = vi.fn();
+let snapshot: { state: { activePath: string | null }; repositoryView: { mode: 'live' | 'revision'; oid?: string }; revisionWorkspace: { tree: typeof tree; fileList: ReturnType<typeof file>[] } | null };
 let mockState: any;
 const posted: any[] = [];
 const listeners = new Set<(message: any) => void>();
@@ -32,9 +35,7 @@ const emit = (message: unknown) => act(() => { for (const listener of [...listen
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({ usePlatform: () => bridge }));
 vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({ useAppState: () => ({ state: mockState, ...spies }) }));
 vi.mock('../../../../ui/src/contexts/RepositorySnapshotContext', () => ({
-  useRepositorySnapshot: () => ({
-    state: { activePath: null }, repositoryView: { mode: 'live' }, revisionWorkspace: null, openSnapshotFile: vi.fn(), searchRevision: vi.fn(),
-  }),
+  useRepositorySnapshot: () => ({ ...snapshot, openSnapshotFile, searchRevision }),
 }));
 vi.mock('../../../../ui/src/components/Sidebar/SidebarSearch', () => ({ SidebarSearch: () => <div data-testid="sidebar-search" /> }));
 
@@ -57,6 +58,9 @@ const onNotice = (event: Event) => notices.push((event as CustomEvent).detail);
 
 beforeEach(() => {
   mockState = makeState();
+  snapshot = { state: { activePath: null }, repositoryView: { mode: 'live' }, revisionWorkspace: null };
+  openSnapshotFile.mockClear();
+  searchRevision.mockClear();
   posted.length = 0;
   notices.length = 0;
   Object.values(spies).forEach((spy) => spy.mockClear());
@@ -70,6 +74,46 @@ afterEach(() => {
 });
 
 describe('Sidebar file operations', () => {
+  it('shows a read-only revision tree and opens snapshot files rather than live paths', () => {
+    const old = file('Old.md');
+    snapshot = {
+      state: { activePath: old.relativePath },
+      repositoryView: { mode: 'revision', oid: 'abc123' },
+      revisionWorkspace: { tree: { ...tree, files: [old], children: [] }, fileList: [old] },
+    };
+    const { rerender } = render(<Sidebar />);
+    expect(row('Old.md')).toBeInTheDocument();
+    expect(screen.queryByText('Readme.md')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t.sidebar.newFile })).not.toBeInTheDocument();
+    fireEvent.click(row('Old.md'));
+    expect(openSnapshotFile).toHaveBeenCalledExactlyOnceWith('Old.md');
+    expect(spies.navigate).not.toHaveBeenCalled();
+    fireEvent.contextMenu(row('Old.md'));
+    fireEvent.keyDown(row('Old.md'), { key: 'F2' });
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: t.sidebar.renameFile })).not.toBeInTheDocument();
+
+    snapshot = { ...snapshot, revisionWorkspace: null };
+    rerender(<Sidebar />);
+    expect(screen.queryByRole('tree')).not.toBeInTheDocument();
+    snapshot = { ...snapshot, repositoryView: { mode: 'live' } };
+    rerender(<Sidebar />);
+    expect(row('Readme.md')).toBeInTheDocument();
+    expect(btn(t.sidebar.newFile)).toBeInTheDocument();
+  });
+
+  it('ignores editing hotkeys with modifiers or an IME composition', () => {
+    render(<Sidebar />);
+    const target = row('Readme.md');
+    for (const modifier of ['ctrlKey', 'altKey', 'metaKey', 'shiftKey', 'isComposing']) {
+      expect(fireEvent.keyDown(target, { key: 'F2', [modifier]: true })).toBe(true);
+      expect(fireEvent.keyDown(target, { key: 'Delete', [modifier]: true })).toBe(true);
+    }
+    expect(textbox(t.sidebar.renameFile)).toBeNull();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(fireEvent.keyDown(target, { key: 'F2' })).toBe(false);
+    expect(textbox(t.sidebar.renameFile)).toBeInTheDocument();
+  });
   it('renders create and select buttons before the sort group, and hides them without a workspace', () => {
     render(<Sidebar />);
     const sort = btn(t.sidebar.sortFiles);
