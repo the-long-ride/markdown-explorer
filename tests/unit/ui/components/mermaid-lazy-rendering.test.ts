@@ -148,6 +148,31 @@ describe('renderMermaidNodesLazily', () => {
 });
 
 describe('createMermaidRerenderQueue', () => {
+  it('ignores already-delivered idle and frame callbacks from a cancelled generation', async () => {
+    const { scheduler, pending, flush } = manualScheduler();
+    const draw = vi.fn(async () => {});
+    const onComplete = vi.fn();
+    const queue = createMermaidRerenderQueue(draw, scheduler, { onComplete });
+    queue.start([node('cancelled-idle', 0)]);
+    const idle = [...pending.values()][0];
+    queue.cancel();
+    idle();
+    expect(pending.size).toBe(0);
+    queue.start([node('cancelled-frame', 0)]);
+    const [id, nextIdle] = [...pending][0];
+    pending.delete(id);
+    nextIdle();
+    const frame = [...pending.values()][0];
+    queue.cancel();
+    frame();
+    expect(draw).not.toHaveBeenCalled();
+    const live = node('live', 0);
+    queue.start([live]);
+    await flush();
+    expect(draw).toHaveBeenCalledExactlyOnceWith(live, expect.any(Function));
+    expect(onComplete).toHaveBeenCalledOnce();
+  });
+
   it('cancels pending idle and frame work when started again or explicitly stopped', async () => {
     const { scheduler, pending, flush } = manualScheduler();
     const rendered: string[] = [];

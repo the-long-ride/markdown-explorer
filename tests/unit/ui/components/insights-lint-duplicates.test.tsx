@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
@@ -10,6 +10,31 @@ import { INSIGHTS_UI_TRANSLATIONS } from '../../../../ui/src/contexts/insightsUi
 function doc(path: string, source: string) { return analyzeDocument({ path, source, revision: `${path}-1` }); }
 
 describe('Insights Lint and Duplicates views', () => {
+  it('displays findings with no line and briefly confirms a successful clipboard copy', async () => {
+    const document = doc('guide.md', '# A\n### C\n');
+    const finding = { ...document.lint[0], line: undefined };
+    const oldClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    vi.useFakeTimers();
+    try {
+      render(<LintView documents={[{ ...document, lint: [finding] }]} />);
+      const row = screen.getByRole('button', { name: / - guide\.md$/ });
+      expect(row).toHaveAttribute('data-hover-tooltip', 'guide.md');
+      fireEvent.click(row);
+      const copy = screen.getByRole('button', { name: /copy prompt for ai agent to fix markdown lint/i });
+      await act(async () => { fireEvent.click(copy); });
+      expect(writeText).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('guide.md'));
+      expect(screen.getByRole('button', { name: 'Copied AI prompt!' })).toBeVisible();
+      act(() => { vi.advanceTimersByTime(2000); });
+      expect(copy).toHaveAccessibleName('Copy prompt for AI agent to fix markdown lint');
+    } finally {
+      vi.useRealTimers();
+      if (oldClipboard) Object.defineProperty(navigator, 'clipboard', oldClipboard);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
+  });
+
   it('filters lint findings and supports reversible finding suppression', async () => {
     const document = doc('guide.md', '# A  \n### C\n# A\n');
     const user = userEvent.setup();

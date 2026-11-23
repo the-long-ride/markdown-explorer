@@ -106,4 +106,17 @@ describe('GitCommitGraph virtualization', () => {
       else Reflect.deleteProperty(navigator, 'clipboard');
     }
   });
+
+  it('keeps a hover card inside the top edge when its commit is near the top left', () => {
+    const [commit] = makeCommits(1);
+    render(<GitCommitGraph commits={[commit]} selectedOid={null} headLabel="HEAD" browseLabel="Browse" onActivateRevision={vi.fn()} onReturnToHead={vi.fn()} />);
+    const node = screen.getByTestId(`repository-history-node-${commit.oid}`);
+    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 20, 20));
+    fireEvent.mouseEnter(node);
+    const card = screen.getByRole('tooltip');
+    expect(card.style.getPropertyValue('--repository-history-card-left')).toBe('30px');
+    expect(card.style.getPropertyValue('--repository-history-card-top')).toBe('12px');
+    fireEvent.mouseLeave(node);
+    expect(card).not.toBeInTheDocument();
+  });
 });

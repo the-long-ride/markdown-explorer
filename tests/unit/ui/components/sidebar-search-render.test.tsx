@@ -196,6 +196,42 @@ describe('SidebarSearch', () => {
     }
   });
 
+  it.each(['resolves', 'rejects'])('ignores a revision result that %s after its query was replaced', async (settlement) => {
+    const match = {
+      fsPath: '/repo/guide.md', relativePath: 'guide.md', fileName: 'guide.md', title: 'Guide',
+      excerpt: 'new needle', matchIndex: 0, matchOrdinal: 0, matchLength: 10,
+    };
+    let resolveOld!: (matches: typeof match[]) => void;
+    let rejectOld!: (error: Error) => void;
+    const oldResult = new Promise<typeof match[]>((resolve, reject) => { resolveOld = resolve; rejectOld = reject; });
+    const run = vi.fn().mockReturnValueOnce(oldResult).mockResolvedValueOnce([match]);
+    const openResult = vi.fn();
+    const openPath = vi.fn();
+    const onStatusChange = vi.fn();
+    vi.useFakeTimers();
+    try {
+      mockState.settings.language = '';
+      render(<SidebarSearch isVisible revisionSearch={{ oid: 'abc', run, openPath, openResult }} onStatusChange={onStatusChange} />);
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: 'old needle' } });
+      await act(async () => { await vi.advanceTimersByTimeAsync(250); });
+      const oldSignal: AbortSignal = run.mock.calls[0][2];
+      fireEvent.change(input, { target: { value: 'new needle' } });
+      await act(async () => {
+        if (settlement === 'resolves') resolveOld([]);
+        else rejectOld(new Error('stale'));
+      });
+      expect(oldSignal.aborted).toBe(true);
+      expect(onStatusChange).toHaveBeenLastCalledWith({ isSearching: true, resultCount: 0, showCount: false });
+      await act(async () => { await vi.advanceTimersByTimeAsync(250); });
+      fireEvent.click(screen.getByRole('button', { name: 'new needle' }));
+      expect(openResult).toHaveBeenCalledExactlyOnceWith(match, 'new needle', false);
+      expect(openPath).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('streams result batches and keeps the sidebar render window bounded', () => {
     vi.useFakeTimers();
     const results = Array.from({ length: 150 }, (_, index) => ({

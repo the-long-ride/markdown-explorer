@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SidebarTabsHeader } from '../../../../ui/src/components/Sidebar/SidebarTabsHeader';
 
@@ -58,5 +58,23 @@ describe('SidebarTabsHeader tooltips', () => {
     expect(bookmarksTip).toHaveTextContent('Alt');
     expect(bookmarksTip).toHaveTextContent('Shift');
     expect(bookmarksTip).toHaveTextContent('B');
+  });
+
+  it('keeps the tab strip usable after the active descriptor is removed', () => {
+    const onSelect = vi.fn();
+    const { rerender } = render(<SidebarTabsHeader activeTab="history" tabs={tabs} searchStatus={idleStatus} onSelect={onSelect} />);
+    rerender(<SidebarTabsHeader activeTab="history" tabs={tabs.slice(0, 3)} searchStatus={idleStatus} onSelect={onSelect} />);
+    fireEvent.resize(window);
+    expect(screen.queryByRole('button', { name: 'History' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Files' }));
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('files');
+  });
+
+  it('does not show the download action or file count ID for a non-files tab with a count', () => {
+    const onDownload = vi.fn();
+    const withCounts = tabs.map((tab: { id: string }) => tab.id === 'bookmarks' ? { ...tab, count: 3 } : tab);
+    render(<SidebarTabsHeader activeTab="bookmarks" tabs={withCounts} searchStatus={idleStatus} onSelect={vi.fn()} onDownloadWorkspaceZip={onDownload} />);
+    expect(screen.getByText('3')).not.toHaveAttribute('id');
+    expect(screen.queryByTestId('sidebar-download-workspace-zip')).not.toBeInTheDocument();
   });
 });

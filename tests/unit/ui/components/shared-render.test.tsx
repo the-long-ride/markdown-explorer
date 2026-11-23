@@ -225,6 +225,23 @@ describe('TabContextMenu', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument();
     expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
   });
+
+  it('keeps actions accessible at the menu margin when the viewport is not measured', () => {
+    const width = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(0);
+    const height = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(0);
+    try {
+      const onAction = vi.fn();
+      render(React.createElement(TabContextMenu, { x: 450, y: 450, labels: defaultLabels, onAction, onClose: vi.fn() }));
+      const menu = screen.getByRole('menu');
+      expect(menu.style.getPropertyValue('--menu-left')).toBe(menu.style.getPropertyValue('--menu-top'));
+      expect(parseInt(menu.style.getPropertyValue('--menu-left'), 10)).toBeGreaterThan(0);
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Close' }));
+      expect(onAction).toHaveBeenCalledExactlyOnceWith('closeThisTab');
+    } finally {
+      width.mockRestore();
+      height.mockRestore();
+    }
+  });
 });
 
 describe('TooltipButton', () => {

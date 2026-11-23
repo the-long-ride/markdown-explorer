@@ -202,6 +202,16 @@ describe('SettingsModal deep', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Close Settings' }));
       expect(onClose).toHaveBeenCalled();
     });
+
+    it('only closes a backdrop click originating outside the settings card', () => {
+      const onClose = vi.fn();
+      renderModal({ onClose });
+      const dialog = screen.getByRole('dialog');
+      fireEvent.click(dialog.querySelector('h2')!);
+      expect(onClose).not.toHaveBeenCalled();
+      fireEvent.click(dialog);
+      expect(onClose).toHaveBeenCalledOnce();
+    });
   });
 
   describe('Features section toggles', () => {

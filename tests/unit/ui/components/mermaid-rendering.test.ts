@@ -24,6 +24,37 @@ function renderOptions() {
 }
 
 describe('Mermaid rendering', () => {
+  it.each([
+    ['zenuml\ntitle Welcome', 'zenuml', '<text>Welcome</text>'],
+    ['architecture-beta\nservice serviceA(server)[Server]', 'architecture', '<text>Server</text>'],
+  ])('preserves the native canvas for %s', async (source, kind, content) => {
+    const { root, node } = wrapper(source);
+    const options = renderOptions();
+    options.run.mockImplementationOnce(async () => {
+      node.innerHTML = `<svg viewBox="0 0 240 100">${content}</svg>`;
+    });
+    await enhanceMermaid(root, options);
+    expect(root).toHaveAttribute('data-mdn-mermaid-kind', kind);
+    expect(node.querySelector('svg')).toHaveAttribute('viewBox', '0 0 240 100');
+    if (kind === 'zenuml') expect(node.querySelector('text')).toHaveAttribute('data-mdn-zenuml-title', 'true');
+  });
+
+  it('skips a diagram hidden during a previous render without skipping later diagrams', async () => {
+    const { root, node } = wrapper('flowchart LR\nA --> B');
+    const hidden = root.appendChild(wrapper('flowchart LR\nC --> D').node);
+    const last = root.appendChild(wrapper('flowchart LR\nE --> F').node);
+    const options = renderOptions();
+    options.run.mockImplementationOnce(async () => {
+      node.innerHTML = '<svg />';
+      hidden.hidden = true;
+    });
+    await enhanceMermaid(root, options);
+    expect(node.dataset.mdnRendered).toBe('true');
+    expect(hidden.dataset.mdnRendered).toBeUndefined();
+    expect(last.dataset.mdnRendered).toBe('true');
+    expect(options.run).toHaveBeenCalledTimes(2);
+  });
+
   it.each(['gantt\nTask : 2026-01-01, 7d', 'sankey-beta\nA,B,1'])('renders bare diagrams without measured wrappers (%s)', async (source) => {
     const { node } = wrapper(source);
     const root = document.createElement('div');

@@ -90,6 +90,15 @@ describe('sidebar cursor navigation', () => {
     expect(onFile).not.toHaveBeenCalled();
   });
 
+  it('does not cancel navigation keys when an open cursor has no visible rows', () => {
+    const onClose = vi.fn();
+    render(<Tree filter="empty" onClose={onClose} />);
+    expect(fireEvent.keyDown(document, { key: 'ArrowDown' })).toBe(true);
+    expect(fireEvent.keyDown(document, { key: 'Enter' })).toBe(true);
+    expect(screen.getByLabelText('Cursor')).toHaveTextContent('None');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('refocuses visible rows when filtering, then clears the cursor in an empty or closed tree', () => {
     const onClose = vi.fn();
     const { rerender } = render(<Tree currentFile="a.md" onClose={onClose} />);

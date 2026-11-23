@@ -473,6 +473,28 @@ describe('ScopeViewModal', () => {
     expect(onMediaClick).toHaveBeenCalledWith(baseElement.querySelector('.mdn-mermaid-wrap'));
   });
 
+  it('opens legacy Mermaid and standalone SVG media without requiring a wrapper', async () => {
+    const onMediaClick = vi.fn();
+    mocks.loadDocumentSnapshot.mockResolvedValue({
+      ...snapshot(files[0]),
+      html: '<div class="mermaid"><svg aria-label="Legacy diagram"></svg></div><svg aria-label="Standalone diagram"></svg>',
+    });
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={vi.fn()} onMediaClick={onMediaClick} />);
+    const legacy = await screen.findByLabelText('Legacy diagram');
+    const standalone = screen.getByLabelText('Standalone diagram');
+    fireEvent.click(legacy);
+    fireEvent.click(standalone);
+    expect(onMediaClick.mock.calls).toEqual([[legacy.parentElement], [standalone]]);
+  });
+
+  it('leaves unrelated link schemes to the browser', async () => {
+    const html = '<a href="mailto:docs@example.test">Mail</a>';
+    mocks.loadDocumentSnapshot.mockResolvedValue({ ...snapshot(files[0]), html, toc: [] });
+    render(<ScopeViewModal initialFile={files[0]} files={files} onClose={vi.fn()} />);
+    expect(fireEvent.click(await screen.findByRole('link', { name: 'Mail' }))).toBe(true);
+    expect(mocks.postMessage).not.toHaveBeenCalled();
+  });
+
   it('handles external, fragment, missing workspace, and image links without replacing the scope', async () => {
     const onMediaClick = vi.fn();
     const onClose = vi.fn();

@@ -178,4 +178,25 @@ describe('MermaidThumbnail', () => {
     resolveP2({ svgHtml: '<svg><text>D2</text></svg>' });
     resolveP3({ svgHtml: '<svg><text>D3</text></svg>' });
   });
+
+  it('drops queued work for thumbnails removed before a render slot is free', async () => {
+    const { renderMermaidToSvg } = await import('../../../../ui/src/components/Content/enhancements/mermaidRenderToSvg.ts');
+    const mockRender = vi.mocked(renderMermaidToSvg);
+    mockRender.mockClear();
+    const pending: ((value: { svgHtml: string }) => void)[] = [];
+    mockRender.mockImplementation(() => new Promise(resolve => pending.push(resolve)));
+    vi.stubGlobal('IntersectionObserver', undefined);
+    const first = <MermaidThumbnail key="first" code="graph LR; First-->A;" label="First" />;
+    const second = <MermaidThumbnail key="second" code="graph LR; Second-->B;" label="Second" />;
+    const third = <MermaidThumbnail key="third" code="graph LR; Remove-->C;" label="Removed" />;
+    const { rerender } = render(<>{first}{second}{third}</>);
+    expect(mockRender).toHaveBeenCalledTimes(2);
+    rerender(<>{first}{second}</>);
+    await act(async () => {
+      pending[0]({ svgHtml: '<svg><text>First result</text></svg>' });
+      pending[1]({ svgHtml: '<svg><text>Second result</text></svg>' });
+    });
+    expect(screen.getAllByTestId('mermaid-thumbnail-rendered')).toHaveLength(2);
+    expect(mockRender).toHaveBeenCalledTimes(2);
+  });
 });

@@ -49,6 +49,18 @@ function renderModal(entries = [entry(0), entry(1), entry(2)], bridge = createBr
 const rowFor = (subject: string) => screen.getByRole('button', { name: new RegExp(subject) });
 
 describe('FileHistoryModal', () => {
+  it('orders range endpoints correctly when the older commit is picked first', async () => {
+    const { client } = renderModal();
+    await screen.findByText('commit 0');
+    fireEvent.click(screen.getByRole('button', { name: /compare/i }));
+    fireEvent.click(within(rowFor('commit 2').closest('li')!).getByRole('checkbox'));
+    fireEvent.click(within(rowFor('commit 0').closest('li')!).getByRole('checkbox'));
+    const olderOid = entry(2).oid;
+    const newerOid = entry(0).oid;
+    await waitFor(() => expect(client.compareGitRevisions).toHaveBeenLastCalledWith(
+      expect.objectContaining({ oid: olderOid }), expect.objectContaining({ oid: newerOid }),
+    ));
+  });
   it('shows an invalid authored date and substitutes the short SHA for a missing subject', async () => {
     renderModal([entry(0, { subject: '', shortOid: 'a1b2c3d', authoredAt: 'Archived (date unknown)' })]);
     const row = await screen.findByRole('button', { name: /a1b2c3d.*Archived \(date unknown\)/i });

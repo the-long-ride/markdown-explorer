@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildSearchResultTree } from '../../../../ui/src/components/Sidebar/sidebarSearchResultTree';
-import { getWorkspaceScopeKey } from '../../../../ui/src/components/Sidebar/sidebarTreeFiltering';
-import type { WorkspaceSearchResult } from '../../../../ui/src/types';
+import { folderHasVisibleContent, getWorkspaceScopeKey } from '../../../../ui/src/components/Sidebar/sidebarTreeFiltering';
+import type { FolderNode, WorkspaceSearchResult } from '../../../../ui/src/types';
 
 function result(relativePath: string, overrides: Partial<WorkspaceSearchResult> = {}): WorkspaceSearchResult {
   const normalized = relativePath.replace(/\\/g, '/');
@@ -16,6 +16,20 @@ function result(relativePath: string, overrides: Partial<WorkspaceSearchResult> 
 }
 
 describe('SidebarSearch pure functions', () => {
+  it('keeps folders only when a file anywhere underneath passes both filters', () => {
+    const rootFile = { ...result('readme.md'), title: 'Introduction', parts: ['readme.md'] };
+    const nestedFile = { ...result('guide/setup.md'), title: 'Deployment', parts: ['guide', 'setup.md'] };
+    const root: FolderNode = {
+      name: 'root', path: '', files: [rootFile],
+      children: [{ name: 'guide', path: 'guide', files: [nestedFile], children: [] }],
+    };
+    expect(folderHasVisibleContent(root, '   ', false, new Set())).toBe(true);
+    expect(folderHasVisibleContent(root, ' SETUP ', false, new Set())).toBe(true);
+    expect(folderHasVisibleContent(root, 'setup', true, new Set([rootFile.fsPath]))).toBe(false);
+    expect(folderHasVisibleContent(root, 'deploy', true, new Set([nestedFile.fsPath]))).toBe(true);
+    expect(folderHasVisibleContent(root, '', true, new Set())).toBe(false);
+  });
+
   describe('getWorkspaceScopeKey', () => {
     it('prefers workspacePath', () => {
       expect(getWorkspaceScopeKey('/docs', 'My Docs')).toBe('/docs');

@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Sidebar } from '../../../../ui/src/components/Sidebar/Sidebar';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
+import { WORKSPACE_ENTRY_TIMEOUT_MS } from '../../../../ui/src/workspace/workspaceEntriesClient';
 
 const t = getTranslations('en');
 const WS = 'C:\\ws';
@@ -424,6 +425,56 @@ it('cancels a delete from the keyboard and restores focus to the selected entry'
   await waitFor(() => expect(row('docs')).toHaveFocus());
   expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   expect(posted.some((message) => message.command === 'deleteWorkspaceEntries')).toBe(false);
+});
+
+it('restores focus to the renamed POSIX row after the tree updates', async () => {
+  const before = { ...readme, fsPath: '/ws/Readme.md' };
+  const after = { ...readme, fsPath: '/ws/Guide.md', relativePath: 'Guide.md', fileName: 'Guide.md', title: 'Guide.md', parts: ['Guide.md'] };
+  mockState = makeState({ workspacePath: '/ws', hostPlatform: 'linux', fileList: [before], tree: { ...tree, path: '/ws', files: [before], children: [] } });
+  const { rerender } = render(<Sidebar />);
+  fireEvent.keyDown(row('Readme.md'), { key: 'F2' });
+  const input = screen.getByRole('textbox', { name: t.sidebar.renameFile });
+  fireEvent.change(input, { target: { value: 'Guide.md' } });
+  fireEvent.keyDown(input, { key: 'Enter' });
+  const request = posted.find(message => message.command === 'renameWorkspaceEntry');
+  mockState = { ...mockState, fileList: [after], tree: { ...mockState.tree, files: [after] } };
+  emit({ command: 'renameWorkspaceEntryResult', requestId: request.requestId, ok: true, path: 'Guide.md', oldPath: 'Readme.md', kind: 'file' });
+  await act(async () => rerender(<Sidebar />));
+  await waitFor(() => expect(row('Guide.md')).toHaveFocus());
+  expect(spies.dispatch).toHaveBeenCalledWith(expect.objectContaining({ oldAbsolutePath: before.fsPath, newAbsolutePath: after.fsPath }));
+});
+
+it('clears stale folder focus when the folder disappears without leaving the workspace', () => {
+  const { rerender } = render(<Sidebar />);
+  fireEvent.click(row('docs'));
+  expect(row('docs')).toHaveClass('is-entry-focused');
+  mockState = makeState({ tree: { ...tree, children: [] }, fileList: [readme] });
+  rerender(<Sidebar />);
+  expect(fireEvent.keyDown(treeEl(), { key: 'F2' })).toBe(true);
+  expect(fireEvent.keyDown(treeEl(), { key: 'Delete' })).toBe(true);
+  expect(screen.queryByRole('textbox', { name: t.sidebar.renameFolder })).not.toBeInTheDocument();
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+});
+
+it('keeps the rename pending beyond the initial timeout until the host replies', async () => {
+  vi.useFakeTimers();
+  try {
+    render(<Sidebar />);
+    fireEvent.click(row('Readme.md'));
+    fireEvent.keyDown(row('Readme.md'), { key: 'F2' });
+    const input = screen.getByRole('textbox', { name: t.sidebar.renameFile });
+    fireEvent.change(input, { target: { value: 'Guide.md' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await act(async () => { await vi.advanceTimersByTimeAsync(WORKSPACE_ENTRY_TIMEOUT_MS); });
+    expect(input).toHaveAttribute('aria-busy', 'true');
+    expect(spies.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'RENAME_WORKSPACE_ENTRY' }));
+    const request = posted.find(message => message.command === 'renameWorkspaceEntry');
+    emit({ command: 'renameWorkspaceEntryResult', requestId: request.requestId, ok: false, error: 'Host rejected the rename', reason: 'failed', kind: 'file' });
+    expect(input).not.toHaveAttribute('aria-busy', 'true');
+    expect(notices).toContainEqual(expect.objectContaining({ message: 'Host rejected the rename' }));
+  } finally {
+    vi.useRealTimers();
+  }
 });
 it('restores folder focus and keeps keyboard actions after unchanged-name Enter',async()=>{
   render(<Sidebar />);fireEvent.click(row('docs'));fireEvent.keyDown(row('docs'),{key:'F2'});

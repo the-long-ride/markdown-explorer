@@ -265,4 +265,26 @@ describe('Mermaid SVG text contrast', () => {
     expect(clip).not.toHaveAttribute('transform');
     expect(svg.querySelector(layerSelector)).toHaveAttribute('fill', '#ffffff');
   });
+
+  it('keeps text readable when SVG defs cannot be inserted', () => {
+    const svg = diagram('<g><rect fill="#000"/><text>Text<tspan>nested</tspan></text></g>');
+    geometry(svg, 'rect');
+    const label = geometry(svg, 'text');
+    vi.spyOn(svg, 'insertBefore').mockImplementationOnce(() => { throw new DOMException('Read only'); });
+    enforceMermaidSvgContrast(svg, tokens);
+    expect(label).toHaveAttribute('fill', '#ffffff');
+    expect(label.querySelector('tspan')).toHaveAttribute('fill', '#ffffff');
+    expect(svg.querySelector(defsSelector)).toBeNull();
+  });
+
+  it('uses the parent fill for labels with an empty layout box', () => {
+    const svg = diagram('<g><rect style="fill: #000"/><text id="width">width</text><text id="height">height</text></g>');
+    geometry(svg, 'rect');
+    geometry(svg, '#width', { ...bounds, width: 0 });
+    geometry(svg, '#height', { ...bounds, height: 0 });
+    enforceMermaidSvgContrast(svg, tokens);
+    expect(svg.querySelector('#width')).toHaveAttribute('fill', '#ffffff');
+    expect(svg.querySelector('#height')).toHaveAttribute('fill', '#ffffff');
+    expect(svg.querySelector(layerSelector)).toBeNull();
+  });
 });
