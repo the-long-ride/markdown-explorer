@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { FontSearchDropdown } from '../../../../ui/src/components/Settings/FontSearchDropdown';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
@@ -131,6 +131,37 @@ describe('FontSearchDropdown component', () => {
     const searchInput = screen.getByPlaceholderText(t.fontSearchPlaceholder);
     fireEvent.keyDown(searchInput, { key: 'Escape' });
 
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('keeps Default available when no fonts match, then selects an imported font and restores trigger focus', async () => {
+    const onChange = vi.fn();
+    render(<FontSearchDropdown value={{ source: 'default', style: 'normal', weight: 400 }} fonts={mockFonts} t={t} onChange={onChange} />);
+    const trigger = screen.getByRole('button', { expanded: false });
+    fireEvent.click(trigger);
+    const search = screen.getByPlaceholderText(t.fontSearchPlaceholder);
+    fireEvent.change(search, { target: { value: 'no matching font' } });
+    expect(screen.getByText(t.fontNoResults)).toBeVisible();
+    expect(screen.getAllByRole('option')).toEqual([screen.getByRole('option', { name: t.fontDefault })]);
+    fireEvent.keyDown(search, { key: 'ArrowUp' });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ source: 'default' });
+    await waitFor(() => expect(trigger).toHaveFocus());
+    onChange.mockClear();
+
+    fireEvent.click(trigger);
+    const reopenedSearch = screen.getByPlaceholderText(t.fontSearchPlaceholder);
+    fireEvent.change(reopenedSearch, { target: { value: 'Custom Sans' } });
+    fireEvent.pointerDown(reopenedSearch);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    const imported = screen.getByRole('option', { name: /Custom Sans/ });
+    fireEvent.pointerMove(imported);
+    fireEvent.click(imported);
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ source: 'imported', family: 'Custom Sans', id: 'custom-sans' });
+    await waitFor(() => expect(trigger).toHaveFocus());
+    fireEvent.click(trigger);
+    expect(screen.getByPlaceholderText(t.fontSearchPlaceholder)).toHaveValue('');
+    fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 });

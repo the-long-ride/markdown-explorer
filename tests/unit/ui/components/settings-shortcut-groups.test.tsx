@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsShortcutsPanel } from '../../../../ui/src/components/Settings/SettingsShortcutsPanel';
 import { SettingsModal } from '../../../../ui/src/components/Settings/SettingsModal';
@@ -152,6 +152,46 @@ describe('Settings shortcut groups', () => {
     expect(within(editorGroup).getByText('Bulleted list')).toBeInTheDocument();
     expect(within(editorGroup).getByText('Numbered list')).toBeInTheDocument();
     expect(within(editorGroup).getByText('Task list')).toBeInTheDocument();
+  });
+
+  it('filters and clears shortcut rows, toggles bindings, and lets focus move to a different recording field', () => {
+    vi.useFakeTimers();
+    try {
+      const t = getTranslations('en');
+      const { rerender } = renderModal();
+      fireEvent.click(screen.getByText('Keyboard Shortcuts'));
+      const search = screen.getByRole('textbox', { name: t.ui.shortcutSearchLabel });
+      const clear = screen.getByRole('button', { name: t.ui.shortcutSearchClear });
+      expect(clear).toBeDisabled();
+      fireEvent.change(search, { target: { value: 'Italic' } });
+      expect(getShortcutInputForAction('Italic')).toBeInTheDocument();
+      expect(screen.queryByText('Bold')).not.toBeInTheDocument();
+      fireEvent.click(clear);
+      expect(search).toHaveValue('');
+      const bold = getShortcutInputForAction('Bold');
+      const italic = getShortcutInputForAction('Italic');
+      fireEvent.focus(bold);
+      expect(bold).toHaveValue(t.ui.shortcutPressKeys);
+      fireEvent.blur(bold);
+      fireEvent.focus(italic);
+      act(() => { vi.advanceTimersByTime(250); });
+      expect(italic).toHaveValue(t.ui.shortcutPressKeys);
+      expect(bold).toHaveValue('Ctrl + B');
+      fireEvent.blur(italic);
+      act(() => { vi.advanceTimersByTime(250); });
+      expect(italic).toHaveValue('Ctrl + I');
+      const disable = t.ui.shortcutDisable.replace('{action}', 'Bold');
+      fireEvent.click(screen.getByRole('switch', { name: disable }));
+      expect(mockUpdateSettings).toHaveBeenLastCalledWith({ disabledKeybindings: { editorBold: true } });
+      mockState.settings.disabledKeybindings = { editorBold: true };
+      rerender(<SettingsModal isOpen onClose={vi.fn()} updateCheck={defaultUpdateCheck} hostUpdateState={defaultHostUpdateState}
+        onDownloadUpdate={vi.fn()} onScheduleUpdateOnExit={vi.fn()} onRestartAndApplyUpdate={vi.fn()} onOpenChangelog={vi.fn()} />);
+      expect(bold).toBeDisabled();
+      fireEvent.click(screen.getByRole('switch', { name: t.ui.shortcutEnable.replace('{action}', 'Bold') }));
+      expect(mockUpdateSettings).toHaveBeenLastCalledWith({ disabledKeybindings: { editorBold: false } });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('allows assigning an editor shortcut to the same key combo as a non-editor app shortcut', () => {
