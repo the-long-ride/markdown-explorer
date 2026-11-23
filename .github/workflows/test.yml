@@ -3,48 +3,41 @@ name: test
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'tests/**'
-      - 'electron/**'
-      - 'vscode/src/**'
-      - 'vscode/scripts/**'
-      - 'ui/src/**'
-      - 'ui/vite.config.ts'
-      - 'website-app/src/**'
-      - 'website-app/package.json'
-      - 'website-app/tsconfig.json'
-      - 'website-app/vite.config.ts'
-      - 'tauri/src/**'
-      - 'tauri/tests/**'
-      - 'tauri/Cargo.toml'
-      - 'tauri/Cargo.lock'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'vitest.config.ts'
   pull_request:
     branches: [main]
-    paths:
-      - 'tests/**'
-      - 'electron/**'
-      - 'vscode/src/**'
-      - 'vscode/scripts/**'
-      - 'ui/src/**'
-      - 'ui/vite.config.ts'
-      - 'website-app/src/**'
-      - 'website-app/package.json'
-      - 'website-app/tsconfig.json'
-      - 'website-app/vite.config.ts'
-      - 'tauri/src/**'
-      - 'tauri/tests/**'
-      - 'tauri/Cargo.toml'
-      - 'tauri/Cargo.lock'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'vitest.config.ts'
+  push:
+    branches: [main]
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint:loc
+      - run: pnpm run lint:ui-styles
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+
   contracts:
     runs-on: ubuntu-latest
     steps:
@@ -58,21 +51,14 @@ jobs:
       - run: pnpm run test:contracts
       - run: pnpm run test:node
       - run: pnpm run test:update-contracts
-
-  translations:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
       - run: pnpm run test:translations
 
-  ui:
+  unit:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -81,9 +67,23 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run test:ui
+      - name: Run unit tests
+        run: |
+          VITEST_SKIP_COVERAGE_THRESHOLDS=1 pnpm exec vitest run \
+            --project ui --project electron --project vscode --project website \
+            --shard=${{ matrix.shard }}/4 \
+            --coverage \
+            --coverage.reporter=json \
+            --reporter=blob \
+            --outputFile=blob-reports/shard-${{ matrix.shard }}.json
+      - name: Upload blob report
+        uses: actions/upload-artifact@v6
+        with:
+          name: vitest-blob-${{ matrix.shard }}
+          path: blob-reports/shard-${{ matrix.shard }}.json
 
-  electron:
+  coverage:
+    needs: unit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -93,9 +93,21 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run test:electron
+      - name: Download blob reports
+        uses: actions/download-artifact@v6
+        with:
+          pattern: vitest-blob-*
+          path: blob-reports
+          merge-multiple: true
+      - name: Merge coverage reports
+        run: pnpm exec vitest --merge-reports blob-reports --coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v6
+        with:
+          name: unit-coverage
+          path: coverage
 
-  host-variants:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -105,18 +117,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Test VS Code host
-        run: pnpm run test:vscode
-      - name: Test Web host
-        run: pnpm run test:website
       - name: Build shared UI
         run: pnpm run build:ui
       - name: Build Electron UI variant
         run: pnpm run build:ui:electron
       - name: Build VS Code host
         run: pnpm run build:vscode
-      - name: Typecheck Web app
-        run: pnpm --dir website-app typecheck
       - name: Build Web app
         run: pnpm --dir website-app build
 
@@ -125,7 +131,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -136,18 +142,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build shared UI bundle
         run: pnpm run build:ui:tauri
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri
+          key: ${{ matrix.os }}
       - run: pnpm run test:tauri
 
   tauri-coverage:
     runs-on: ubuntu-latest
+    env:
+      RUST_COVERAGE_MIN: 0
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -165,29 +173,90 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tauri
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
-      - name: Generate coverage and check 85% threshold
+      - name: Generate coverage summary
+        shell: bash
         run: |
+          set -euo pipefail
+
           cargo llvm-cov --manifest-path tauri/Cargo.toml --workspace \
             --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs" \
-            --text -- --test-threads=1 2>&1 | tee coverage.txt
+            --summary-only -- --test-threads=1 2>&1 | tee coverage.txt
 
-          pct=$(grep "^TOTAL" coverage.txt | awk '{print $NF}' | sed 's/%//')
-          echo "=== Total coverage (excluding Tauri-runtime modules): ${pct}% ==="
-
-          if [ "$(echo "$pct < 85" | bc -l)" -eq 1 ]; then
-            echo "FAIL: Coverage ${pct}% is below 85% threshold"
-            tail -30 coverage.txt
+          total_line=$(grep '^TOTAL' coverage.txt | tail -n 1 || true)
+          if [[ -z "$total_line" ]]; then
+            echo "FAIL: Unable to parse coverage: no TOTAL row found"
             exit 1
           fi
-          echo "PASS: Coverage ${pct}% meets 85% threshold"
 
-          cargo llvm-cov --manifest-path tauri/Cargo.toml --workspace \
+          pct=$(awk '{print $10}' <<< "$total_line" | tr -d '%')
+          if ! [[ "$pct" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+            echo "FAIL: Unable to parse line coverage from TOTAL row: $total_line"
+            exit 1
+          fi
+          if ! [[ "$RUST_COVERAGE_MIN" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+            echo "FAIL: RUST_COVERAGE_MIN is not numeric: $RUST_COVERAGE_MIN"
+            exit 1
+          fi
+
+          echo "=== Total line coverage (excluding Tauri-runtime modules): ${pct}% ==="
+          if awk -v pct="$pct" -v min="$RUST_COVERAGE_MIN" 'BEGIN { exit !(pct + 0 < min + 0) }'; then
+            echo "FAIL: Coverage ${pct}% is below ${RUST_COVERAGE_MIN}% threshold"
+            exit 1
+          fi
+          echo "PASS: Coverage ${pct}% meets ${RUST_COVERAGE_MIN}% threshold"
+      - name: Export LCOV report
+        run: |
+          cargo llvm-cov report --manifest-path tauri/Cargo.toml \
             --ignore-filename-regex "dispatcher.rs|host_message.rs|bootstrap.rs|app_state.rs|preload/|main.rs|lib.rs" \
-            --lcov --output-path lcov.info -- --test-threads=1
+            --lcov --output-path lcov.info
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v6
         with:
           name: tauri-coverage
           path: lcov.info
+
+  ci-gate:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - lint
+      - typecheck
+      - contracts
+      - unit
+      - coverage
+      - build
+      - tauri
+      - tauri-coverage
+    steps:
+      - name: Verify required jobs succeeded
+        shell: bash
+        run: |
+          set -euo pipefail
+          statuses=(
+            "lint=${{ needs.lint.result }}"
+            "typecheck=${{ needs.typecheck.result }}"
+            "contracts=${{ needs.contracts.result }}"
+            "unit=${{ needs.unit.result }}"
+            "coverage=${{ needs.coverage.result }}"
+            "build=${{ needs.build.result }}"
+            "tauri=${{ needs.tauri.result }}"
+            "tauri-coverage=${{ needs['tauri-coverage'].result }}"
+          )
+          failed=()
+          for status in "${statuses[@]}"; do
+            if [[ "${status#*=}" != "success" ]]; then
+              failed+=("$status")
+            fi
+          done
+          if (( ${#failed[@]} > 0 )); then
+            printf 'Required jobs did not succeed:\n'
+            printf '  %s\n' "${failed[@]}"
+            exit 1
+          fi
+          echo 'All required jobs succeeded'
