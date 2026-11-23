@@ -2,15 +2,6 @@
 // dom/saveTauriImage.ts — Tauri native save-dialog bridge for blobs
 // =============================================================================
 
-function isTauriRuntime(): boolean {
-  const runtimeWindow = typeof window !== 'undefined' ? (window as any) : {};
-  return typeof runtimeWindow.__TAURI__ !== 'undefined' || typeof runtimeWindow.__TAURI_INTERNALS__ !== 'undefined';
-}
-
-export function tauriSaveAvailable(): boolean {
-  return isTauriRuntime() && Boolean((window as any).PlatformBridge?.postMessage);
-}
-
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();

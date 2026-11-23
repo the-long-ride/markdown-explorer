@@ -5,8 +5,13 @@ use std::time::UNIX_EPOCH;
 
 #[derive(Debug, PartialEq, Eq)]
 pub(super) enum SaveDocumentOutcome {
-    Saved { revision: String },
-    Conflict { disk_source: String, disk_revision: String },
+    Saved {
+        revision: String,
+    },
+    Conflict {
+        disk_source: String,
+        disk_revision: String,
+    },
     OutsideWorkspace,
     Missing,
 }
@@ -51,8 +56,12 @@ fn normalize_lexically(path: &Path) -> PathBuf {
 /// observe a half-written document. `target` must already be canonical, so a symlink is replaced
 /// at its destination instead of being swapped for a regular file.
 fn write_atomically(target: &Path, source: &str) -> Result<(), String> {
-    let directory = target.parent().ok_or_else(|| "Document has no parent directory".to_string())?;
-    let permissions = fs::metadata(target).map_err(|error| error.to_string())?.permissions();
+    let directory = target
+        .parent()
+        .ok_or_else(|| "Document has no parent directory".to_string())?;
+    let permissions = fs::metadata(target)
+        .map_err(|error| error.to_string())?
+        .permissions();
     if permissions.readonly() {
         return Err("Document is read-only".into());
     }
@@ -60,11 +69,17 @@ fn write_atomically(target: &Path, source: &str) -> Result<(), String> {
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_nanos())
         .unwrap_or_default();
-    let file_name = target.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
+    let file_name = target
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_default();
     let temp = directory.join(format!(".{file_name}.{}.{nonce}.tmp", std::process::id()));
 
     let result = (|| -> std::io::Result<()> {
-        let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&temp)?;
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp)?;
         file.write_all(source.as_bytes())?;
         file.sync_all()?;
         drop(file);
@@ -99,7 +114,9 @@ pub(super) fn save_document_to_path(
     };
     let workspace_base = match fs::canonicalize(workspace_base) {
         Ok(base) => base,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(SaveDocumentOutcome::Missing),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(SaveDocumentOutcome::Missing)
+        }
         Err(error) => return Err(error.to_string()),
     };
     if has_git_segment(file_path) {
@@ -117,7 +134,9 @@ pub(super) fn save_document_to_path(
 
     let target = match fs::canonicalize(&requested) {
         Ok(target) => target,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(SaveDocumentOutcome::Missing),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(SaveDocumentOutcome::Missing)
+        }
         Err(error) => return Err(error.to_string()),
     };
     let Ok(relative) = target.strip_prefix(&workspace_base) else {
@@ -133,7 +152,9 @@ pub(super) fn save_document_to_path(
 
     let disk_revision = document_revision(&target)?;
     if !force && expected_revision != Some(disk_revision.as_str()) {
-        let disk_source = String::from_utf8_lossy(&fs::read(&target).map_err(|error| error.to_string())?).into_owned();
+        let disk_source =
+            String::from_utf8_lossy(&fs::read(&target).map_err(|error| error.to_string())?)
+                .into_owned();
         return Ok(SaveDocumentOutcome::Conflict {
             disk_source,
             disk_revision,
@@ -146,61 +167,6 @@ pub(super) fn save_document_to_path(
     })
 }
 
-#[cfg(not(test))]
-impl super::Dispatcher {
-    pub(super) fn handle_save_document(&self, msg: &serde_json::Value) {
-        use serde_json::{json, Value};
-
-        let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or("");
-        let file_path = msg.get("filePath").and_then(Value::as_str).unwrap_or("");
-        let source = msg.get("source").and_then(Value::as_str).unwrap_or("");
-        let expected_revision = msg.get("expectedRevision").and_then(Value::as_str);
-        let force = msg.get("force").and_then(Value::as_bool).unwrap_or(false);
-        let workspace_path = self.state.inner.read().workspace_path.clone();
-
-        let mut extra = serde_json::Map::new();
-        extra.insert("requestId".into(), request_id.into());
-        extra.insert("filePath".into(), file_path.into());
-
-        let outcome = workspace_path
-            .as_deref()
-            .filter(|_| crate::workspace::file_types::is_markdown_file_path(file_path))
-            .map(|workspace| save_document_to_path(workspace, Path::new(file_path), source, expected_revision, force));
-
-        match outcome {
-            None => {
-                extra.insert("ok".into(), false.into());
-                extra.insert("reason".into(), "read-only".into());
-            }
-            Some(Ok(SaveDocumentOutcome::Saved { revision })) => {
-                extra.insert("ok".into(), true.into());
-                extra.insert("revision".into(), revision.into());
-            }
-            Some(Ok(SaveDocumentOutcome::Conflict { disk_source, disk_revision })) => {
-                extra.insert("ok".into(), false.into());
-                extra.insert("reason".into(), "conflict".into());
-                extra.insert("diskSource".into(), disk_source.into());
-                extra.insert("diskRevision".into(), disk_revision.into());
-            }
-            Some(Ok(SaveDocumentOutcome::OutsideWorkspace)) => {
-                extra.insert("ok".into(), false.into());
-                extra.insert("reason".into(), "outside-workspace".into());
-            }
-            Some(Ok(SaveDocumentOutcome::Missing)) => {
-                extra.insert("ok".into(), false.into());
-                extra.insert("reason".into(), "missing".into());
-            }
-            Some(Err(error)) => {
-                extra.insert("ok".into(), false.into());
-                extra.insert("reason".into(), "write-failed".into());
-                extra.insert("error".into(), json!(error));
-            }
-        }
-
-        crate::host_message::emit(&self.app, "saveDocumentResult", extra);
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::{document_revision, save_document_to_path, SaveDocumentOutcome};
@@ -208,7 +174,8 @@ mod tests {
     use std::path::Path;
 
     fn leftover_temp_files(dir: &Path) -> Vec<String> {
-        fs::read_dir(dir).unwrap()
+        fs::read_dir(dir)
+            .unwrap()
             .filter_map(|entry| entry.ok())
             .map(|entry| entry.file_name().to_string_lossy().into_owned())
             .filter(|name| name.ends_with(".tmp"))
@@ -237,7 +204,10 @@ mod tests {
 
         let result = save_document_to_path(dir.path(), &file, "# Mine", None, false).unwrap();
         match result {
-            SaveDocumentOutcome::Conflict { disk_source, disk_revision } => {
+            SaveDocumentOutcome::Conflict {
+                disk_source,
+                disk_revision,
+            } => {
                 assert_eq!(disk_source, "# Disk");
                 assert_eq!(disk_revision, document_revision(&file).unwrap());
             }
@@ -257,9 +227,13 @@ mod tests {
         fs::write(&file, "# A").unwrap();
         let current = document_revision(&file).unwrap();
 
-        let result = save_document_to_path(dir.path(), &file, "# Longer body", Some(&current), false).unwrap();
+        let result =
+            save_document_to_path(dir.path(), &file, "# Longer body", Some(&current), false)
+                .unwrap();
 
-        let SaveDocumentOutcome::Saved { revision } = result else { panic!("expected a save") };
+        let SaveDocumentOutcome::Saved { revision } = result else {
+            panic!("expected a save")
+        };
         assert_eq!(revision, document_revision(&file).unwrap());
         assert_eq!(fs::read_to_string(&file).unwrap(), "# Longer body");
         assert!(leftover_temp_files(dir.path()).is_empty());
@@ -289,7 +263,9 @@ mod tests {
 
         // The process working directory is unrelated to the workspace.
         let relative = Path::new("sub").join("a.md");
-        let result = save_document_to_path(dir.path(), &relative, "# Saved", Some(&revision), false).unwrap();
+        let result =
+            save_document_to_path(dir.path(), &relative, "# Saved", Some(&revision), false)
+                .unwrap();
 
         assert!(matches!(result, SaveDocumentOutcome::Saved { .. }));
         assert_eq!(fs::read_to_string(&file).unwrap(), "# Saved");
@@ -303,7 +279,9 @@ mod tests {
         let outside = root.path().join("outside.md");
         fs::write(&outside, "# A").unwrap();
 
-        let escape = save_document_to_path(&workspace, Path::new("../outside.md"), "# Nope", None, true).unwrap();
+        let escape =
+            save_document_to_path(&workspace, Path::new("../outside.md"), "# Nope", None, true)
+                .unwrap();
         assert!(matches!(escape, SaveDocumentOutcome::OutsideWorkspace));
         let absolute = save_document_to_path(&workspace, &outside, "# Nope", None, true).unwrap();
         assert!(matches!(absolute, SaveDocumentOutcome::OutsideWorkspace));
@@ -319,9 +297,23 @@ mod tests {
 
         let absolute = save_document_to_path(dir.path(), &file, "# Nope", None, true).unwrap();
         assert!(matches!(absolute, SaveDocumentOutcome::OutsideWorkspace));
-        let relative = save_document_to_path(dir.path(), Path::new(".git/nested/notes.md"), "# Nope", None, true).unwrap();
+        let relative = save_document_to_path(
+            dir.path(),
+            Path::new(".git/nested/notes.md"),
+            "# Nope",
+            None,
+            true,
+        )
+        .unwrap();
         assert!(matches!(relative, SaveDocumentOutcome::OutsideWorkspace));
-        let mixed_case = save_document_to_path(dir.path(), Path::new(".GIT/nested/notes.md"), "# Nope", None, true).unwrap();
+        let mixed_case = save_document_to_path(
+            dir.path(),
+            Path::new(".GIT/nested/notes.md"),
+            "# Nope",
+            None,
+            true,
+        )
+        .unwrap();
         assert!(matches!(mixed_case, SaveDocumentOutcome::OutsideWorkspace));
         assert_eq!(fs::read_to_string(&file).unwrap(), "# A");
     }
@@ -348,7 +340,14 @@ mod tests {
 
         assert!(matches!(result, SaveDocumentOutcome::Missing));
         assert!(!file.exists());
-        let relative = save_document_to_path(workspace.path(), Path::new("missing.md"), "# New", None, false).unwrap();
+        let relative = save_document_to_path(
+            workspace.path(),
+            Path::new("missing.md"),
+            "# New",
+            None,
+            false,
+        )
+        .unwrap();
         assert!(matches!(relative, SaveDocumentOutcome::Missing));
         assert!(leftover_temp_files(workspace.path()).is_empty());
     }
@@ -383,6 +382,9 @@ mod tests {
 
         save_document_to_path(dir.path(), &file, "# B", None, true).unwrap();
 
-        assert_eq!(fs::metadata(&file).unwrap().permissions().mode() & 0o777, 0o640);
+        assert_eq!(
+            fs::metadata(&file).unwrap().permissions().mode() & 0o777,
+            0o640
+        );
     }
 }

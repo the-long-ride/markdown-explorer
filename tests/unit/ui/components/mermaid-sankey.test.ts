@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   applySankeyIntrinsicWidth,
   estimateSankeyIntrinsicWidth,
@@ -8,6 +8,13 @@ import {
 
 describe('mermaidSankey', () => {
   describe('estimateSankeyIntrinsicWidth', () => {
+    it('sizes a graph with both a terminating route and a disconnected cycle', () => {
+      const a = 'Long cycle starting label shared between the routes';
+      const flow = 'sankey-beta\nSource,Destination,1';
+      expect(estimateSankeyIntrinsicWidth(`${flow}\n${a},Cycle B,2\nCycle B,Cycle C,2\nCycle C,${a},2`))
+        .toBeGreaterThan(estimateSankeyIntrinsicWidth(flow));
+    });
+
     it('estimates width for simple sankey source', () => {
       const source = `
         sankey-beta
@@ -55,6 +62,12 @@ describe('mermaidSankey', () => {
       const width = estimateSankeyIntrinsicWidth(source);
       expect(width).toBeGreaterThanOrEqual(760);
     });
+
+    it('ignores incomplete rows while sizing a converging flow with escaped CSV quotes', () => {
+      const flow = 'sankey\r\n"Start ""quoted""", Bridge, 10\r\nStart, Bridge, 5\r\nBridge, Staging, 15\r\nStaging, Final, 15';
+      expect(estimateSankeyIntrinsicWidth('sankey\r\n%% empty\r\n, MISSING, 10')).toBe(760);
+      expect(estimateSankeyIntrinsicWidth(flow + '\r\nBridge, , 2\r\nA disconnected source,')).toBe(848);
+    });
   });
 
   describe('applySankeyIntrinsicWidth', () => {
@@ -77,6 +90,19 @@ describe('mermaidSankey', () => {
       const width = applySankeyIntrinsicWidth(svg, null, 'sankey-beta\nA, B, 10', 900);
       expect(width).toBe(900);
       expect(svg.getAttribute('width')).toBe('900');
+    });
+
+    it('uses the largest measured width when no width is requested', () => {
+      const wrapper = document.createElement('div');
+      wrapper.append(document.createElementNS('http://www.w3.org/2000/svg', 'svg'));
+      const svg = wrapper.querySelector('svg')!;
+      const source = 'sankey\nA, B, 10';
+      Object.defineProperty(wrapper, 'clientWidth', { value: 920 });
+      svg.setAttribute('width', 'auto');
+      expect(applySankeyIntrinsicWidth(svg, wrapper, source)).toBe(920);
+      expect(wrapper.style.getPropertyValue('--mdn-mermaid-intrinsic-width')).toBe('920px');
+      svg.setAttribute('width', '1050');
+      expect(applySankeyIntrinsicWidth(svg, wrapper, source)).toBe(1050);
     });
   });
 
@@ -101,6 +127,19 @@ describe('mermaidSankey', () => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       expect(repairSankeyLabelCollisions(svg)).toBe(0);
       expect(repairSankeyLabelCollisions({} as any)).toBe(0);
+    });
+
+    it('expands a tight viewBox when labels have no room to shift upward, using default spacing', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 50 20');
+      svg.innerHTML = '<g class="node-labels"><text y="3">First</text><text y="4">Second</text></g>';
+      const [first, second] = svg.querySelectorAll('text');
+      first.getBBox = () => new DOMRect(0, 3, 12, 10);
+      second.getBBox = () => new DOMRect(0, 4, 12, 10);
+      expect(repairSankeyLabelCollisions(svg)).toBe(1);
+      expect(first).toHaveAttribute('y', '3');
+      expect(second).toHaveAttribute('y', '21');
+      expect(svg).toHaveAttribute('viewBox', '0 -5 50 44');
     });
 
     it('deconflicts overlapping labels vertically in the same column', () => {
@@ -131,6 +170,40 @@ describe('mermaidSankey', () => {
       expect(text2.getAttribute('data-mdn-sankey-label-shift')).toBeDefined();
       const shiftVal = Number(text2.getAttribute('data-mdn-sankey-label-shift'));
       expect(shiftVal).toBeGreaterThan(0);
+    });
+
+    it.each([undefined, '0 0 0 20'])('repairs overlap without rewriting an unusable viewBox (%s)', (viewBox) => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      if (viewBox !== undefined) svg.setAttribute('viewBox', viewBox);
+      svg.innerHTML = '<g class="node-labels"><text x="10" y="0">First</text><text x="10" y="2">Second</text></g>';
+      const [first, second] = svg.querySelectorAll('text');
+      first.getBBox = () => ({ x: 10, y: 0, width: 50, height: 12 } as DOMRect);
+      second.getBBox = () => ({ x: 10, y: 2, width: 50, height: 12 } as DOMRect);
+      expect(repairSankeyLabelCollisions(svg, { gap: -1, columnTolerance: 0, viewBoxPadding: 1 })).toBe(1);
+      expect(second).toHaveAttribute('y', '12');
+      expect(svg.getAttribute('viewBox')).toBe(viewBox ?? null);
+    });
+
+    it('moves duplicate label layers together and expands the viewBox for overflowing labels', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0,0,150,40');
+      svg.innerHTML = '<g class="node-labels"><text>One</text><text>Two</text><text> Two </text><text>Other column</text><text>Hidden</text><text>Invalid</text><text>Empty</text></g>';
+      const [one, two, layer, other, hidden, invalid, empty] = svg.querySelectorAll('text');
+      one.getBBox = () => new DOMRect(0, 18, 25, 20);
+      two.getBBox = () => new DOMRect(0, 20, 25, 20);
+      layer.getBBox = () => new DOMRect(0, 20, 25, 20);
+      other.getBBox = () => new DOMRect(100, 5, 25, 20);
+      hidden.getBBox = () => { throw new Error('No geometry'); };
+      invalid.getBBox = () => new DOMRect(NaN, 0, 2, 2);
+      empty.getBBox = () => new DOMRect(1, 1, 2, 0);
+
+      expect(repairSankeyLabelCollisions(svg, { gap: 5, columnTolerance: 10, viewBoxPadding: 10 })).toBe(2);
+      expect(one).toHaveAttribute('data-mdn-sankey-label-shift', '-8');
+      expect(two).toHaveAttribute('y', '45');
+      expect(layer).toHaveAttribute('y', '45');
+      expect(other).toHaveAttribute('data-mdn-sankey-label-shift', '0');
+      expect(svg).toHaveAttribute('viewBox', '0 -5 150 70');
+      for (const label of [hidden, invalid, empty]) expect(label).not.toHaveAttribute('y');
     });
   });
 });

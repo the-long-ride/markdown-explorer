@@ -70,6 +70,58 @@ describe('registerIpcHandlers', () => {
     expect(ipcMain.on).toHaveBeenCalledWith('webview-message', expect.any(Function));
   });
 
+  test.each([
+    'loadSearchPreview', 'scanInsightsWorkspace', 'cancelInsightsScan', 'readInsightsDocumentSource',
+    'probeWorkspaceResource', 'setInsightsWatchState', 'checkExternalLinks', 'cancelExternalLinkChecks',
+    'readWorkspaceTextResource', 'readWorkspaceExportResource', 'saveExportFile', 'saveDocument',
+    'createWorkspaceEntry', 'renameWorkspaceEntry', 'deleteWorkspaceEntries', 'listDocumentHistory',
+    'readGitRevision', 'compareGitRevisions', 'confirmNativeClose', 'listDesktopFonts',
+    'importDesktopFonts', 'removeImportedDesktopFont',
+  ])('routes %s to its host handler with the original request', async (command) => {
+    const handler = vi.fn();
+    handlers[command] = handler;
+    const message = { command, requestId: 'request' };
+    await registeredHandler(null, message);
+    expect(handler).toHaveBeenCalledExactlyOnceWith(message);
+  });
+
+  test.each([
+    'saveDocument', 'createWorkspaceEntry', 'renameWorkspaceEntry', 'deleteWorkspaceEntries',
+    'listDocumentHistory', 'listRepositoryHistory', 'listRevisionFiles', 'readRevisionFile',
+    'readGitRevision', 'compareGitRevisions', 'confirmNativeClose',
+  ])('tolerates a missing optional %s handler', async (command) => {
+    delete handlers[command];
+    await expect(registeredHandler(null, { command })).resolves.toBeUndefined();
+  });
+
+  test('forwards scan cancellation metadata and invokes the native close guard', async () => {
+    handlers.cancelWorkspaceScan = vi.fn();
+    handlers.cancelAllWorkspaceScans = vi.fn();
+    handlers.windowClose = vi.fn();
+    await registeredHandler(null, { command: 'cancelWorkspaceScan', workspaceOperationId: 'scan' });
+    await registeredHandler(null, { command: 'cancelAllWorkspaceScans' });
+    await registeredHandler(null, { command: 'window-close' });
+    expect(handlers.cancelWorkspaceScan).toHaveBeenCalledExactlyOnceWith('scan');
+    expect(handlers.cancelAllWorkspaceScans).toHaveBeenCalledExactlyOnceWith();
+    expect(handlers.windowClose).toHaveBeenCalledExactlyOnceWith();
+    expect(getMainWindow).not.toHaveBeenCalled();
+  });
+
+  test('ignores window commands when no native window is available', async () => {
+    for (const command of ['window-minimize', 'window-maximize', 'window-close', 'toggle-fullscreen']) {
+      await expect(registeredHandler(null, { command })).resolves.toBeUndefined();
+    }
+    expect(getMainWindow).toHaveBeenCalledTimes(4);
+  });
+
+  test('does not open a missing parent directory', async () => {
+    fs.existsSync.mockReturnValueOnce(true).mockReturnValueOnce(false);
+    const file = path.join('workspace', 'document.md');
+    await registeredHandler(null, { command: 'openShellLocation', mode: 'open-parent-directory', path: file });
+    expect(fs.existsSync.mock.calls).toEqual([[file], [path.dirname(file)]]);
+    expect(shell.openPath).not.toHaveBeenCalled();
+  });
+
   describe('ready', () => {
     test('dispatches to handlers.ready with msg', async () => {
       await registeredHandler(null, { command: 'ready', payload: 'data' });

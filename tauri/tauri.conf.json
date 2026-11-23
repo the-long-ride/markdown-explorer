@@ -35,6 +35,7 @@
     ],
     "windows": {
       "nsis": {
+        "installerIcon": "icons/icon.ico",
         "installerHooks": "./windows/explorer-hooks.nsh"
       }
     },

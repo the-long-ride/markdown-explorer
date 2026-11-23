@@ -5,6 +5,51 @@ const require = createRequire(import.meta.url);
 const { createPreloadApi, exposePreloadApi } = require('../../../electron/preload/preload.js');
 
 describe('createPreloadApi', () => {
+  test.each([
+    [{}, false],
+    [{ defaultApp: true }, true],
+    [{ env: { MARKDOWN_EXPLORER_DEBUG: 'YES' } }, true],
+    [{ env: { MARKDOWN_EXPLORER_DEBUG: 'off' } }, false],
+    [{ argv: ['electron', '--debug'] }, true],
+    [{ argv: ['electron', '--devtools'] }, true],
+    [{ env: { NODE_ENV: 'development' } }, true],
+    [{ argv: undefined, env: undefined }, false],
+  ] as const)('derives debug mode for a packaged preload with %j', (overrides, isDebug) => {
+    const realProcess = process;
+    const packaged = Object.assign(Object.create(realProcess), {
+      resourcesPath: '/resources', defaultApp: false, argv: [], env: {}, ...overrides,
+    });
+    vi.stubGlobal('process', packaged);
+    try {
+      expect(createPreloadApi().isDebug).toBe(isDebug);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  test('handles an inaccessible runtime flag without exposing debug mode', () => {
+    const packaged = Object.create(process, { resourcesPath: { get() { throw new Error('unavailable'); } } });
+    vi.stubGlobal('process', packaged);
+    try {
+      expect(createPreloadApi().isDebug).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  test('unsubscribing twice does not remove another consumer or repeat IPC cleanup', () => {
+    const ipcRenderer = { on: vi.fn(), removeListener: vi.fn() };
+    const api = createPreloadApi({ ipcRenderer });
+    const first = api.onMessage(vi.fn());
+    const second = api.onMessage(vi.fn());
+    first();
+    first();
+    expect(ipcRenderer.removeListener).not.toHaveBeenCalled();
+    second();
+    second();
+    expect(ipcRenderer.removeListener).toHaveBeenCalledOnce();
+  });
+
   test('postMessage calls ipcRenderer.send with webview-message channel', () => {
     const ipcRenderer = { send: vi.fn(), on: vi.fn(), removeListener: vi.fn() };
     const webUtils = { getPathForFile: vi.fn() };

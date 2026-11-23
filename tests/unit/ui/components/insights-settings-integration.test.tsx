@@ -107,6 +107,25 @@ describe('Workspace Insights persisted settings UI', () => {
     expect(lintChange).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ scope: 'finding' })]));
   });
 
+  it('rejects invalid oversized patterns and preserves the default severity of an untouched lint rule', () => {
+    const onSettingsChange = vi.fn();
+    render(<WorkspaceInsightsPanel session={session()} labels={uiLabels} settings={{ ...normalizeInsightsSettings(), lintRules: {} }} onSettingsChange={onSettingsChange} />);
+    fireEvent.click(screen.getByRole('button', { name: `${uiLabels.entry} ${uiLabels.settings}` }));
+    const patterns = screen.getByRole('textbox', { name: uiLabels.oversizedPatterns });
+    fireEvent.change(patterns, { target: { value: 'docs/[' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(uiLabels.oversizedPatterns);
+    expect(onSettingsChange).not.toHaveBeenCalled();
+    fireEvent.change(patterns, { target: { value: 'docs/**' } });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(onSettingsChange).toHaveBeenCalledWith({ oversizedPatterns: ['docs/**'] });
+    const rule = uiLabels.presentation.lintRules['heading/duplicate'];
+    const severity = screen.getByRole('combobox', { name: `${uiLabels.severity}: ${rule}` });
+    fireEvent.click(screen.getByRole('switch', { name: `${uiLabels.rule}: ${rule}` }));
+    expect(onSettingsChange).toHaveBeenLastCalledWith({
+      lintRules: { 'heading/duplicate': { enabled: false, severity: (severity as HTMLSelectElement).value } },
+    });
+  });
+
   it("renders SVG icons for all setting items and lint rules", async () => {
     const user = userEvent.setup();
     const settings = normalizeInsightsSettings({});

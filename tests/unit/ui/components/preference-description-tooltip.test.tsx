@@ -1,9 +1,39 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
 import { PreferenceDescriptionTooltip } from '../../../../ui/src/components/Settings/PreferenceDescriptionTooltip';
 
 describe('PreferenceDescriptionTooltip positioning and bounds flip', () => {
+  it('waits for an anchor outside the settings modal to acquire a layout box', () => {
+    const anchor = document.createElement('button');
+    const props = { id: 'description', description: 'Help', visible: true };
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    let resize: ResizeObserverCallback;
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: ResizeObserverCallback) { resize = callback; }
+      observe = observe;
+      disconnect = disconnect;
+    });
+    try {
+      const { rerender } = render(<PreferenceDescriptionTooltip {...props} anchor={null} />);
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      rerender(<PreferenceDescriptionTooltip {...props} anchor={anchor} />);
+      const tooltip = screen.getByRole('tooltip');
+      expect(tooltip).not.toHaveClass('is-visible');
+      expect(observe).toHaveBeenCalledWith(anchor);
+      expect(observe).toHaveBeenCalledWith(tooltip);
+      anchor.getBoundingClientRect = () => new DOMRect(1, 200, 40, 24);
+      act(() => resize!([], {} as ResizeObserver));
+      expect(tooltip).toHaveClass('is-visible');
+      expect(tooltip.style.getPropertyValue('--preference-tooltip-left')).toBe('12px');
+      rerender(<PreferenceDescriptionTooltip {...props} anchor={anchor} visible={false} />);
+      expect(disconnect).toHaveBeenCalledOnce();
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
   it('renders above anchor when space allows', () => {
     const modal = document.createElement('div');
     modal.className = 'settings-card--settings';

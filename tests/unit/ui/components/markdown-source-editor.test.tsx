@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { EditorView } from '@codemirror/view';
 import { MarkdownSourceEditor } from '../../../../ui/src/components/Content/MarkdownSourceEditor';
-import { EDITOR_FONT_SIZE_EVENT } from '../../../../ui/src/editor/editorUx';
+import { EDITOR_FONT_SIZE_EVENT, EDITOR_FONT_SIZE_STORAGE_KEY } from '../../../../ui/src/editor/editorUx';
 
 function renderEditor(overrides: Partial<React.ComponentProps<typeof MarkdownSourceEditor>> = {}) {
   const props: React.ComponentProps<typeof MarkdownSourceEditor> = {
@@ -51,6 +51,22 @@ describe('MarkdownSourceEditor', () => {
 
     rerender(<MarkdownSourceEditor {...props} disabled />);
     expect(editor).toHaveAttribute('contenteditable', 'false');
+  });
+
+  it('blocks editor shortcuts while read-only and respects the disabled shortcut settings after enabling', () => {
+    const onSave = vi.fn();
+    const onChange = vi.fn();
+    const { props, rerender } = renderEditor({ disabled: true, onSave, onChange });
+    const editor = screen.getByRole('textbox', { name: 'Markdown source' });
+    fireEvent.keyDown(editor, { key: 's', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'b', ctrlKey: true });
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+    rerender(<MarkdownSourceEditor {...props} disabled={false} disabledKeybindings={{ editorBold: true }} />);
+    fireEvent.keyDown(editor, { key: 'b', ctrlKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.keyDown(editor, { key: 's', ctrlKey: true });
+    expect(onSave).toHaveBeenCalledOnce();
   });
 
   it('binds link and inline-code shortcuts', () => {
@@ -129,6 +145,33 @@ describe('MarkdownSourceEditor', () => {
     requestMeasureSpy.mockRestore();
   });
 
+  it('remeasures after a content resize and disconnects the observer on unmount', () => {
+    let notify: ResizeObserverCallback;
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: ResizeObserverCallback) { notify = callback; }
+      observe = observe;
+      disconnect = disconnect;
+    });
+    const measure = vi.spyOn(EditorView.prototype, 'requestMeasure');
+    try {
+      const { unmount } = renderEditor();
+      expect(observe).toHaveBeenCalledWith(screen.getByRole('textbox', { name: 'Markdown source' }));
+      measure.mockClear();
+      act(() => notify!([], {} as ResizeObserver));
+      expect(measure).toHaveBeenCalled();
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+      measure.mockClear();
+      act(() => notify!([], {} as ResizeObserver));
+      expect(measure).not.toHaveBeenCalled();
+    } finally {
+      measure.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('synchronizes font size and requests measure on external font size event', () => {
     const requestMeasureSpy = vi.spyOn(EditorView.prototype, 'requestMeasure');
     const { container } = renderEditor();
@@ -154,6 +197,50 @@ describe('MarkdownSourceEditor', () => {
     expect(requestMeasureSpy).toHaveBeenCalled();
 
     requestMeasureSpy.mockRestore();
+  });
+
+  it('reports the requested font size without overriding a controlled font size', () => {
+    const onFontSizeChange = vi.fn();
+    const previous = localStorage.getItem(EDITOR_FONT_SIZE_STORAGE_KEY);
+    try {
+      const { props, rerender } = renderEditor({ fontSize: 20, onFontSizeChange });
+      const container = screen.getByTestId('markdown-source-editor');
+      fireEvent.keyDown(screen.getByRole('textbox', { name: 'Markdown source' }), { key: '-', ctrlKey: true });
+      expect(onFontSizeChange).toHaveBeenCalledExactlyOnceWith(19);
+      expect(container).toHaveAttribute('data-editor-font-size', '20');
+      rerender(<MarkdownSourceEditor {...props} fontSize={19} />);
+      expect(container).toHaveAttribute('data-editor-font-size', '19');
+    } finally {
+      if (previous === null) localStorage.removeItem(EDITOR_FONT_SIZE_STORAGE_KEY);
+      else localStorage.setItem(EDITOR_FONT_SIZE_STORAGE_KEY, previous);
+    }
+  });
+
+  it('synchronizes font size across windows without accepting unrelated storage events', () => {
+    const { container, unmount } = renderEditor();
+    const editor = container.querySelector('.markdown-source-editor');
+    const measure = vi.spyOn(EditorView.prototype, 'requestMeasure');
+    const storage = (key: string, newValue: string | null) =>
+      fireEvent(window, new StorageEvent('storage', { key, newValue }));
+    try {
+      storage(EDITOR_FONT_SIZE_STORAGE_KEY, '42');
+      expect(editor).toHaveAttribute('data-editor-font-size', '32');
+      expect(measure).toHaveBeenCalled();
+      measure.mockClear();
+      storage('another-setting', '12');
+      storage(EDITOR_FONT_SIZE_STORAGE_KEY, null);
+      fireEvent(window, new CustomEvent(EDITOR_FONT_SIZE_EVENT, { detail: '10' }));
+      expect(editor).toHaveAttribute('data-editor-font-size', '32');
+      expect(measure).not.toHaveBeenCalled();
+      storage(EDITOR_FONT_SIZE_STORAGE_KEY, '2');
+      expect(editor).toHaveAttribute('data-editor-font-size', '8');
+      unmount();
+      measure.mockClear();
+      storage(EDITOR_FONT_SIZE_STORAGE_KEY, '14');
+      expect(measure).not.toHaveBeenCalled();
+    } finally {
+      measure.mockRestore();
+    }
   });
 it('preserves undo and redo history across unmount and remount with the same sessionKey', () => {
     let currentValue = 'initial text';
@@ -197,6 +284,27 @@ it('preserves undo and redo history across unmount and remount with the same ses
     fireEvent.click(undoButton);
     expect(onChange).toHaveBeenLastCalledWith('initial text');
     expect(undoButton).toBeDisabled();
+  });
+
+  it('restores scroll for the same session but drops its undo stack after the source changes', () => {
+    const sessionKey = 'editor-scroll-restore.md';
+    const first = renderEditor({ sessionKey });
+    const editor = screen.getByRole('textbox', { name: 'Markdown source' });
+    fireEvent.keyDown(editor, { key: 'b', ctrlKey: true });
+    const source = vi.mocked(first.props.onChange).mock.lastCall![0];
+    const scroll = first.container.querySelector('.cm-scroller')!;
+    scroll.scrollTop = 120;
+    scroll.scrollLeft = 40;
+    first.unmount();
+
+    const reopened = renderEditor({ sessionKey, value: source });
+    expect(reopened.container.querySelector('.cm-scroller')).toMatchObject({ scrollTop: 120, scrollLeft: 40 });
+    expect(screen.getByRole('button', { name: 'Undo' })).not.toBeDisabled();
+    reopened.unmount();
+
+    renderEditor({ sessionKey, value: 'Updated outside the editor' });
+    expect(screen.getByRole('textbox', { name: 'Markdown source' })).toHaveTextContent('Updated outside the editor');
+    expect(screen.getByRole('button', { name: 'Undo' })).toBeDisabled();
   });
 
   it('does not leak undo history across different session keys', () => {
@@ -368,6 +476,18 @@ it('preserves undo and redo history across unmount and remount with the same ses
     expect(inserted).toContain('| Value 1  | Value 2  |');
   });
 
+  it('separates a new table from both halves of a split line', () => {
+    const onChange = vi.fn();
+    renderEditor({ value: 'beforeafter', onChange });
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Markdown source' }))!;
+    act(() => view.dispatch({ selection: { anchor: 6 } }));
+    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+    fireEvent.click(screen.getByTestId('table-insert-confirm'));
+    const source = onChange.mock.lastCall?.[0];
+    expect(source).toMatch(/^before\n\n\|/);
+    expect(source).toMatch(/\|\n\n\s*after$/);
+  });
+
   it('opens link dialog on toolbar link click and inserts link with custom url and text', () => {
     const onChange = vi.fn();
     renderEditor({ value: '', onChange });
@@ -396,6 +516,33 @@ it('preserves undo and redo history across unmount and remount with the same ses
 
     fireEvent.click(screen.getByText('Cancel'));
     expect(screen.queryByTestId('link-insert-dialog')).toBeNull();
+  });
+
+  it.each([
+    ['Table', 'table-insert-confirm'],
+    ['Link', 'link-insert-confirm'],
+  ])('does not insert a %s from an already open dialog after the document becomes read-only', (button, confirm) => {
+    const { rerender, props } = renderEditor({ value: 'Working draft' });
+    fireEvent.click(screen.getByRole('button', { name: button }));
+    if (button === 'Link') {
+      fireEvent.change(screen.getByTestId('link-insert-url'), { target: { value: 'guide.md' } });
+    }
+    rerender(<MarkdownSourceEditor {...props} disabled />);
+    fireEvent.click(screen.getByTestId(confirm));
+    expect(props.onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'Markdown source' })).toHaveTextContent('Working draft');
+  });
+
+  it('inserts at the end of a line without an extra blank line after the table', () => {
+    const onChange = vi.fn();
+    renderEditor({ value: 'Introduction\nNext section', onChange });
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Markdown source' }))!;
+    act(() => view.dispatch({ selection: { anchor: 'Introduction'.length } }));
+    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+    fireEvent.click(screen.getByTestId('table-insert-confirm'));
+    const source = onChange.mock.lastCall?.[0];
+    expect(source).toMatch(/^Introduction\n\n\|/);
+    expect(source).toMatch(/\|\n\nNext section$/);
   });
 
   it('caps editor sessions to 15 entries and evicts oldest by LRU', async () => {

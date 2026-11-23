@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react';
 import { useRef, type ReactNode } from 'react';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { initialState } from '../../../../ui/src/contexts/appStateModel';
 import { DocumentEnvironmentContext, type DocumentEnvironment } from '../../../../ui/src/components/Content/DocumentEnvironmentContext';
 import { SplitPaneDocument } from '../../../../ui/src/components/Content/SplitPaneDocument';
@@ -43,11 +43,16 @@ beforeAll(() => {
   };
 });
 afterAll(() => { HTMLElement.prototype.getBoundingClientRect = originalRect; });
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
 afterEach(() => {
   resetDocumentRoots();
   mermaidRuns.order.length = 0;
   mermaidRuns.active = 0;
   mermaidRuns.peak = 0;
+  vi.useRealTimers();
 });
 
 const diagram = (id: string, top: number) => (
@@ -93,7 +98,9 @@ function SplitPanes({ theme }: { theme: string }): ReactNode {
 
 async function waitForRuns(count: number) {
   for (let i = 0; i < 200 && mermaidRuns.order.length < count; i += 1) {
-    await act(() => new Promise((resolve) => setTimeout(resolve, 10)));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20);
+    });
   }
 }
 

@@ -264,13 +264,7 @@ pub fn scan_with_callbacks(
     report_progress: impl FnMut(usize),
     report_file: impl FnMut(&MdFile, usize),
 ) -> HostResult<ScanResult> {
-    scan_with_callbacks_and_cancel(
-        root_path,
-        options,
-        report_progress,
-        report_file,
-        || false,
-    )
+    scan_with_callbacks_and_cancel(root_path, options, report_progress, report_file, || false)
 }
 
 pub fn scan_with_callbacks_and_cancel(
@@ -389,6 +383,21 @@ mod tests {
         let file = root.join("sample.mdx");
         write(&file, "Intro\n\n# Visible Heading");
         assert_eq!(extract_title(&file, true).unwrap(), "Visible Heading");
+    }
+
+    #[test]
+    fn mdx_titles_use_exports_metadata_and_jsx_attributes() {
+        for (source, title) in [
+            (
+                "export const title = 'Exported'\n# Ignored heading",
+                "Exported",
+            ),
+            ("export const meta = { title: 'Metadata' }", "Metadata"),
+            ("<Card title=\"Literal\" />", "Literal"),
+            ("<Card title={'Expression'} />", "Expression"),
+        ] {
+            assert_eq!(extract_mdx_title(source).as_deref(), Some(title));
+        }
     }
 
     #[test]
@@ -542,10 +551,20 @@ mod tests {
         write(&root.join("readme.md"), "# Readme");
 
         let result = scan(&root, ScanOptions::default()).unwrap();
-        let mut top: Vec<_> = result.tree.children.iter().map(|c| c.path.clone()).collect();
+        let mut top: Vec<_> = result
+            .tree
+            .children
+            .iter()
+            .map(|c| c.path.clone())
+            .collect();
         top.sort();
         assert_eq!(top, vec!["blank".to_string(), "outer".to_string()]);
-        let outer = result.tree.children.iter().find(|c| c.path == "outer").unwrap();
+        let outer = result
+            .tree
+            .children
+            .iter()
+            .find(|c| c.path == "outer")
+            .unwrap();
         assert_eq!(outer.children[0].path, "outer/inner");
         assert!(outer.children[0].files.is_empty());
     }

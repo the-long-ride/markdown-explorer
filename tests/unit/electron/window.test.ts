@@ -333,6 +333,33 @@ describe('createMainWindow', () => {
     expect(windowMock.show).toHaveBeenCalled();
   });
 
+  test('opens the development server in debug mode and enables renderer debug logging', () => {
+    debugTools.isDebugMode = vi.fn(() => true);
+    const devServerUrl = 'http://localhost:5173/';
+    create({ devServerUrl });
+    expect(windowMock.loadURL).toHaveBeenCalledExactlyOnceWith(`${devServerUrl}?debug=1`);
+    windowMock.webContents._trigger('did-finish-load');
+    expect(windowMock.webContents.executeJavaScript).toHaveBeenCalledWith('window.__DEBUG__ = true;');
+  });
+
+  test('ignores a key event without a key and logs renderer failures with or without crash details', () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const event = { preventDefault: vi.fn() };
+    create();
+    windowMock.webContents._trigger('before-input-event', event, {});
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(debugTools.toggleDevToolsIfDebug).not.toHaveBeenCalled();
+
+    windowMock.webContents._trigger('did-fail-load', {}, -2, 'Failed', 'file:///index.html');
+    windowMock.webContents._trigger('render-process-gone', {}, { reason: 'crashed', exitCode: 5 });
+    windowMock.webContents._trigger('render-process-gone', {}, undefined);
+    expect(log.mock.calls).toEqual([
+      ['[renderer:did-fail-load]', -2, 'Failed', 'file:///index.html'],
+      ['[renderer:gone]', 'crashed', 5],
+      ['[renderer:gone]', undefined, undefined],
+    ]);
+  });
+
   test('returns the mainWindow instance', () => {
     const result = create();
     expect(result).toBe(windowMock);

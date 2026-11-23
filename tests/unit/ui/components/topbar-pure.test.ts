@@ -31,6 +31,20 @@ describe('Topbar pure functions', () => {
   });
 
   describe('getBreadcrumbItems', () => {
+    it.each([
+      ['///', []],
+      [`root/notes/${'middle'.repeat(20)}/daily/a.md`, ['root', 'notes', '...', 'daily', 'a.md']],
+      [`root/${'second'.repeat(20)}/archive/daily/a.md`, ['root', '...', 'daily', 'a.md']],
+      [`${'root'.repeat(30)}/archive/daily/a.md`, ['...', 'daily', 'a.md']],
+      [`${'p'.repeat(100)}/a.md`, ['...', `${'p'.repeat(25)}...`, 'a.md']],
+      [`p/${'f'.repeat(120)}.md`, ['...', `${'f'.repeat(21)}...${'f'.repeat(21)}.md`]],
+      [`${'f'.repeat(120)}.md`, [`${'f'.repeat(21)}...${'f'.repeat(21)}.md`]],
+    ] as const)('fits long paths into the breadcrumb budget: %s', (path, expected) => {
+      const items = getBreadcrumbItems(path, 'Welcome');
+      expect(items.map(({ text }) => text)).toEqual(expected);
+      if (expected.length > 0) expect(items.at(-1)?.isBold).toBe(true);
+    });
+
     it('returns empty for empty relativePath', () => {
       expect(getBreadcrumbItems('', 'Welcome')).toEqual([]);
     });

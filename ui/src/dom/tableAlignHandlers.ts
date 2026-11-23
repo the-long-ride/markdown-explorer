@@ -156,8 +156,6 @@ export function showAlignMenu(id: string, colIdx: number, buttonEl: HTMLElement)
     dropdown.style.left = `${leftPos}px`;
   };
 
-  updatePosition();
-
   const outsideClickListener = (e: MouseEvent) => {
     if (!dropdown.contains(e.target as Node) && e.target !== buttonEl && !buttonEl.contains(e.target as Node)) {
       dropdown.remove();
@@ -176,6 +174,7 @@ export function showAlignMenu(id: string, colIdx: number, buttonEl: HTMLElement)
     window.removeEventListener('scroll', updatePosition, true);
     window.removeEventListener('resize', updatePosition);
   };
+  updatePosition();
   setTimeout(() => {
     document.addEventListener('click', outsideClickListener);
     document.addEventListener('keydown', keydownListener);

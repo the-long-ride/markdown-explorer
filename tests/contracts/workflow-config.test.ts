@@ -23,25 +23,38 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).not.toMatch(/pnpm\/action-setup@v4[\s\S]*version:\s*11/);
   });
 
-  test('test workflow runs UI tests on pull requests', () => {
+  test('test workflow runs sharded runtime unit tests with visible failures and blob coverage', () => {
     const workflow = readWorkflow('test.yml');
-    expect(workflow).toContain('pnpm run test:ui');
+    expect(workflow).toContain(
+      '--project ui --project electron --project vscode --project website',
+    );
+    expect(workflow).toContain('--shard=${{ matrix.shard }}/4');
+    expect(workflow).toContain('--reporter=default');
+    expect(workflow).toContain('--reporter=blob');
+    expect(workflow).toContain(
+      '--outputFile.blob=blob-reports/shard-${{ matrix.shard }}.json',
+    );
+    expect(workflow).toContain('VITEST_SKIP_COVERAGE_THRESHOLDS=1');
+    expect(workflow).toMatch(
+      /- name: Upload blob report\r?\n\s+if: always\(\)\r?\n\s+uses: actions\/upload-artifact@v6/,
+    );
   });
 
-  test('tauri CI jobs avoid restoring cached target artifacts', () => {
+  test('tauri CI jobs restore cached target artifacts', () => {
     const workflow = readWorkflow('test.yml');
-    expect(workflow).not.toContain('Swatinem/rust-cache@v2');
+    const cacheUses = workflow.match(/Swatinem\/rust-cache@v2/g) ?? [];
+    expect(cacheUses).toHaveLength(2);
   });
 
-  test('tauri tests run on Linux, Windows, and macOS', () => {
+  test('tauri tests run on Windows and macOS', () => {
     const workflow = readWorkflow('test.yml');
     const tauriJob = workflow.slice(
       workflow.indexOf('\n  tauri:'),
       workflow.indexOf('\n  tauri-coverage:'),
     );
 
-    expect(tauriJob).toMatch(/os:\s*\[ubuntu-latest, windows-latest, macos-latest\]/);
-    expect(tauriJob).toContain("if: runner.os == 'Linux'");
+    expect(tauriJob).toMatch(/os:\s*\[windows-latest, macos-latest\]/);
+    expect(tauriJob).not.toContain("if: runner.os == 'Linux'");
     expect(tauriJob).toContain('pnpm run build:ui:tauri');
     expect(tauriJob).toContain('pnpm run test:tauri');
   });
@@ -58,11 +71,14 @@ describe('GitHub Actions workflow contracts', () => {
     );
   });
 
-  test('tauri coverage serializes Rust tests like test:tauri', () => {
+  test('tauri coverage runs tests once and exports lcov without rerunning them', () => {
     const workflow = readWorkflow('test.yml');
     const serializedCoverageRuns =
       workflow.match(/cargo llvm-cov[\s\S]*?-- --test-threads=1/g) ?? [];
-    expect(serializedCoverageRuns).toHaveLength(2);
+    expect(serializedCoverageRuns).toHaveLength(1);
+    expect(workflow).toContain(
+      'cargo llvm-cov report --manifest-path tauri/Cargo.toml',
+    );
   });
 
   test('release workflow keeps Electron and Tauri desktop builds separate', () => {

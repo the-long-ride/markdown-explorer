@@ -105,6 +105,39 @@ describe('createWorkspaceWatchController', () => {
     expect(refreshes[0].change.fsPath.replace(/\\/g, '/')).toBe('C:/docs/guide.md');
   });
 
+  test.each([false, true])('coalesces events during a refresh without refreshing after disposal (%s)', async (dispose) => {
+    vi.useFakeTimers();
+    let onEvent!: (event: string, filename: string | null) => void;
+    let finishFirstRefresh!: () => void;
+    const refresh = vi.fn().mockImplementationOnce(() => new Promise<void>(resolve => { finishFirstRefresh = resolve; }));
+    const controller = createWorkspaceWatchController({
+      fs: {
+        watch(_target: string, _options: unknown, handler: typeof onEvent) {
+          onEvent = handler;
+          return { close() {} };
+        },
+      } as any,
+      setTimeout,
+      clearTimeout,
+      debounceMs: 5,
+      onRefresh: refresh,
+    });
+    controller.watchWorkspace('C:/docs');
+    onEvent('change', 'guide.md');
+    await vi.advanceTimersByTimeAsync(5);
+    expect(refresh).toHaveBeenCalledOnce();
+    onEvent('change', '.git/index');
+    onEvent('rename', null);
+    onEvent('change', 'notes.md');
+    await vi.advanceTimersByTimeAsync(5);
+    expect(refresh).toHaveBeenCalledOnce();
+    if (dispose) controller.dispose();
+    finishFirstRefresh();
+    await vi.advanceTimersByTimeAsync(5);
+    if (dispose) expect(refresh).toHaveBeenCalledOnce();
+    else expect(refresh).toHaveBeenNthCalledWith(2, 'C:/docs', { eventType: 'mixed', relativePath: '', fsPath: '' });
+  });
+
   test('dispose resets state and closes watcher', async () => {
     vi.useFakeTimers();
     let watcherClosed = false;
@@ -133,6 +166,27 @@ describe('createWorkspaceWatchController', () => {
 
     await vi.advanceTimersByTimeAsync(20);
     expect(refreshCount).toBe(0);
+  });
+
+  test('supports a manual refresh and stops watching when the workspace is cleared', async () => {
+    vi.useFakeTimers();
+    const close = vi.fn();
+    const watch = vi.fn(() => ({ close }));
+    const onRefresh = vi.fn();
+    const controller = createWorkspaceWatchController({
+      fs: { watch } as any, setTimeout, clearTimeout, debounceMs: 5, onRefresh,
+    });
+    controller.watchWorkspace('C:/docs');
+    controller.scheduleRefresh();
+    await vi.advanceTimersByTimeAsync(5);
+    expect(onRefresh).toHaveBeenCalledExactlyOnceWith('C:/docs', null);
+
+    controller.watchWorkspace(null);
+    controller.scheduleRefresh();
+    await vi.advanceTimersByTimeAsync(5);
+    expect(close).toHaveBeenCalledOnce();
+    expect(watch).toHaveBeenCalledOnce();
+    expect(onRefresh).toHaveBeenCalledOnce();
   });
 });
 

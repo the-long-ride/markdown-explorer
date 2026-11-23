@@ -536,6 +536,137 @@ describe('RepositorySnapshotContent', () => {
     expect(cyberpunkCss).toContain('.content:not(.repository-snapshot-content)');
   });
 
+  it('renders literal source for a non-Markdown snapshot file', () => {
+    const source = '<script type="application/json">{"example":true}</script>';
+    mocks.snapshotContext = makeSnapshotContext({ oid: OID, path: 'config/example.html', source });
+    const { container } = render(<RepositorySnapshotContent />);
+    expect(screen.getByText('config/example.html')).toBeInTheDocument();
+    expect(container.querySelector('pre code')).toHaveTextContent(source);
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.querySelector('article')).toBeNull();
+  });
+
+  it('falls back to the revision ID without commit metadata, and renders nothing in live mode', () => {
+    mocks.snapshotContext = makeSnapshotContext(null);
+    const { rerender } = render(<RepositorySnapshotContent />);
+    const card = screen.getByTestId('repository-snapshot-commit-panel');
+    expect(card).toHaveTextContent(OID.slice(0, 7));
+    expect(card.querySelector('.repository-snapshot-content__commit-meta')).not.toBeInTheDocument();
+    mocks.snapshotContext = makeSnapshotContext(null, { repositoryView: { mode: 'live' } });
+    rerender(<RepositorySnapshotContent />);
+    expect(screen.queryByTestId('repository-snapshot-content')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [undefined, ''],
+    ['2026-13-07', '2026-13-07'],
+    [' invalid date ', 'invalid date'],
+    ['2026-05-07T12:00:00', '7 May 2026'],
+  ])('formats commit date %j as %j', (value, expected) => {
+    expect(formatSnapshotCommitDate(value)).toBe(expected);
+  });
+
+  it('scrolls to fragment targets after the next revision file opens and resets on same-file links', () => {
+    mocks.appState.tocCollapsed = true;
+    const openSnapshotFile = vi.fn().mockResolvedValue(undefined);
+    mocks.snapshotContext = makeSnapshotContext({
+      oid: OID, path: 'README.md', source: '[Same file](./README.md)\n\n[Destination](./manual-tests/test-basic.md#destination)',
+    }, { openSnapshotFile });
+    const scrollIntoView = vi.fn();
+    const { container, rerender } = render(<RepositorySnapshotContent />);
+    const scroll = container.querySelector('.repository-snapshot-content__scroll')!;
+    scroll.scrollTop = 100;
+    fireEvent.click(screen.getByRole('link', { name: 'Same file' }));
+    expect(scroll.scrollTop).toBe(0);
+    expect(openSnapshotFile).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('link', { name: 'Destination' }));
+    expect(openSnapshotFile).toHaveBeenCalledExactlyOnceWith('manual-tests/test-basic.md');
+    const scrollSpy = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    try {
+      mocks.snapshotContext = makeSnapshotContext({
+        oid: OID, path: 'manual-tests/test-basic.md', source: '# Destination',
+      }, { openSnapshotFile });
+      rerender(<RepositorySnapshotContent />);
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' });
+    } finally {
+      if (scrollSpy) Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', scrollSpy);
+      else Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+    }
+  });
+
+  it('uses reduced motion for same-file fragments and ignores a missing fragment without opening another snapshot', () => {
+    mocks.appState.settings.language = '';
+    const openSnapshotFile = vi.fn();
+    mocks.snapshotContext = makeSnapshotContext({
+      oid: OID, path: 'README.md',
+      source: '[Jump](./README.md#destination)\n\n[Missing](./README.md#absent)\n\n## Destination',
+    }, { openSnapshotFile });
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true })));
+    try {
+      render(<RepositorySnapshotContent />);
+      const target = document.getElementById('destination')!;
+      target.scrollIntoView = vi.fn();
+      fireEvent.click(screen.getByRole('link', { name: 'Missing' }));
+      expect(target.scrollIntoView).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('link', { name: 'Jump' }));
+      expect(target.scrollIntoView).toHaveBeenCalledExactlyOnceWith({ behavior: 'auto', block: 'start' });
+      expect(openSnapshotFile).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('renders Markdown locally when pre-rendered content is unavailable', () => {
+    mocks.appState.tocCollapsed = true;
+    const source = '---\nstatus: ready\n---\n\n<!-- private note -->\n\n# Offline snapshot\n\nDetails.';
+    mocks.snapshotContext = makeSnapshotContext({ oid: OID, path: 'docs/offline.mdx', source }, { activeRendered: undefined });
+    const { container } = render(<RepositorySnapshotContent />);
+    expect(screen.getByRole('heading', { name: 'Offline snapshot' })).toBeInTheDocument();
+    expect(screen.getByText('Details.')).toBeInTheDocument();
+    expect(screen.getByText('ready')).toBeInTheDocument();
+    expect(container.querySelector('article')).toHaveAttribute('data-mdn-source-document-path', 'docs/offline.mdx');
+  });
+
+  it('shows empty and populated snapshot properties without exposing a collapsed contents panel', () => {
+    mocks.appState.tocCollapsed = true;
+    const source = '# Contents\n\n## Section\n\nDetails.';
+    mocks.snapshotContext = makeSnapshotContext({ oid: OID, path: 'README.md', source }, {
+      activeRendered: {
+        ...renderMarkdownClientSide(source, 'README.md'),
+        frontmatter: { status: 'ready', owner: '' },
+      },
+    });
+    const { container } = render(<RepositorySnapshotContent />);
+    expect(screen.getByText('2 properties')).toBeInTheDocument();
+    expect(screen.getByText('ready')).toBeInTheDocument();
+    expect(screen.getByText('owner').nextElementSibling).toHaveClass('is-empty');
+    expect(container.querySelector('.toc-compact')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [' Jane Doe ', '', 'Authored by Jane Doe'],
+    ['', '2026-01-15', 'Authored on 15 Jan 2026'],
+    ['', '', null],
+  ] as const)('handles partial commit metadata for author %j and date %j', (author, authoredAt, metadata) => {
+    mocks.appState.sidebarCollapsed = false;
+    mocks.setSidebarCollapsed.mockClear();
+    mocks.setSidebarActiveTab.mockClear();
+    mocks.snapshotContext = makeSnapshotContext(null, {
+      commits: [{ oid: OID, shortOid: '', parentOids: [], author, authoredAt, subject: ' ', refs: [], isHead: false }],
+    });
+    const { container } = render(<RepositorySnapshotContent />);
+    const panel = screen.getByTestId('repository-snapshot-commit-panel');
+    expect(panel).toHaveTextContent(OID.slice(0, 7));
+    expect(screen.getByRole('heading')).not.toBeEmptyDOMElement();
+    const meta = container.querySelector('.repository-snapshot-content__commit-meta');
+    if (metadata) expect(meta).toHaveTextContent(metadata);
+    else expect(meta).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Explore Files' }));
+    expect(mocks.setSidebarActiveTab).toHaveBeenCalledWith('files');
+    expect(mocks.setSidebarCollapsed).not.toHaveBeenCalled();
+  });
+
   it('renders a centered commit info panel when no snapshot file is opened yet, with Explore Files and Back to current HEAD actions', () => {
     mocks.appState.sidebarCollapsed = true;
     mocks.setSidebarActiveTab.mockClear();

@@ -36,6 +36,49 @@ describe('sendCurrentState', () => {
     fs.rmSync(rootDir, { recursive: true, force: true });
   });
 
+  it('picks up an update manifest written after the idle manager was created', () => {
+    const app = createAppStub(rootDir);
+    const sendToWindow = vi.fn();
+    const manager = createUpdateManager({ platform: 'win32', app, sendToWindow });
+    const staged = path.join(rootDir, 'staged.exe');
+    fs.writeFileSync(staged, 'staged');
+    const updatesDir = path.join(app.getPath('userData'), 'updates');
+    fs.mkdirSync(updatesDir, { recursive: true });
+    fs.writeFileSync(path.join(updatesDir, 'last-update-result.txt'), '');
+    fs.writeFileSync(path.join(updatesDir, 'pending-update.json'), JSON.stringify({
+      version: 'v2.0', stagedFilePath: staged, downloadUrl: 'https://example.test/Setup.exe',
+    }));
+    manager.sendCurrentState();
+    expect(sendToWindow).toHaveBeenCalledExactlyOnceWith({
+      command: 'updateStateChanged', state: expect.objectContaining({
+        status: 'scheduled-on-exit', version: 'v2.0', downloadedFileName: 'staged.exe',
+      }),
+    });
+  });
+
+  it('uses zero for unknown progress and removes a partial download on failure', async () => {
+    const sendToWindow = vi.fn();
+    const failure = new Error('network disconnected');
+    let partialPath: string | undefined;
+    const manager = createUpdateManager({
+      platform: 'win32', app: createAppStub(rootDir), sendToWindow,
+      downloadUpdateFile: async ({ destinationPath, onProgress }: any) => {
+        partialPath = destinationPath;
+        fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
+        fs.writeFileSync(destinationPath, 'partial');
+        onProgress();
+        throw failure;
+      },
+    });
+    await expect(manager.startDownload({ version: 'v2.0', url: 'https://example.test/Setup.exe' })).rejects.toBe(failure);
+    expect(sendToWindow).toHaveBeenNthCalledWith(2, {
+      command: 'updateStateChanged', state: expect.objectContaining({ status: 'downloading', progressPercent: 0 }),
+    });
+    expect(manager.getState()).toMatchObject({ status: 'error', error: 'network disconnected' });
+    expect(partialPath).toBeDefined();
+    expect(fs.existsSync(partialPath!)).toBe(false);
+  });
+
   it('emits non-idle current state directly without checking persisted state', async () => {
     const sent: any[] = [];
     const manager = createUpdateManager({

@@ -68,7 +68,10 @@ mod tests {
 
     #[test]
     fn quality_codes_are_stable() {
-        assert_eq!(ConversionQuality::Standard.quality_code(), "converted-preview");
+        assert_eq!(
+            ConversionQuality::Standard.quality_code(),
+            "converted-preview"
+        );
         assert_eq!(
             ConversionQuality::BestEffortLegacy.quality_code(),
             "legacy-best-effort"

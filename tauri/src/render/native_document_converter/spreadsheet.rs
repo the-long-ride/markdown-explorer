@@ -6,8 +6,8 @@ use calamine::{open_workbook_auto, Reader};
 use std::path::Path;
 
 pub fn convert_ods(path: &Path) -> Result<ConversionOutput, ConversionError> {
-    let mut workbook = open_workbook_auto(path)
-        .map_err(|error| ConversionError::Parse(error.to_string()))?;
+    let mut workbook =
+        open_workbook_auto(path).map_err(|error| ConversionError::Parse(error.to_string()))?;
     let sheet_names = workbook.sheet_names().to_vec();
     let mut markdown = String::new();
 

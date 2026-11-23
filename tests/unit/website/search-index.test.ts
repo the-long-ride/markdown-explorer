@@ -1,5 +1,28 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { makeSearchExcerpt } from '../../../website-app/src/search-index';
+import { searchVirtualFilesIncremental } from '../../../website-app/src/web-test-search';
+import { buildVirtualMdFile } from '../../../website-app/src/user-virtual-workspaces';
+
+it('batches exact virtual matches, limits hits per file, and stops a cancelled search', async () => {
+  const source = 'one two three four five six seven eight nine ten ' + 'NEEDLE '.repeat(10) + 'eleven twelve';
+  const file = buildVirtualMdFile('one.md', source);
+  const titleMatch = buildVirtualMdFile('two.md', '# NEEDLE in title');
+  const onBatch = vi.fn();
+  const options = {
+    files: [file, titleMatch],
+    getContent: (path: string) => path === file.relativePath ? source : null,
+    matchCase: true, batchSize: 2, yieldEvery: 10, onBatch,
+  };
+  expect(await searchVirtualFilesIncremental('NEEDLE', options)).toEqual({ total: 9, truncated: false, cancelled: false });
+  const matches = onBatch.mock.calls.flatMap(([batch]) => batch);
+  expect(matches.filter((item) => item.relativePath === 'one.md').map((item) => item.matchOrdinal))
+    .toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+  expect(matches.find((item) => item.relativePath === 'one.md').excerpt).toMatch(/^\.\.\..*\.\.\.$/);
+  expect(matches.find((item) => item.relativePath === 'two.md')).toMatchObject({ excerpt: '' });
+  onBatch.mockClear();
+  expect(await searchVirtualFilesIncremental('NEEDLE', { ...options, shouldCancel: () => onBatch.mock.calls.length > 0 }))
+    .toEqual({ total: 2, truncated: false, cancelled: true });
+});
 
 describe('makeSearchExcerpt', () => {
   it('returns match text when short content', () => {

@@ -50,7 +50,13 @@ impl SearchIndex {
             } else {
                 item.title.clone()
             };
-            let base_score = score_item_name(&title, &file_name, &relative_path, &needle, options.match_case);
+            let base_score = score_item_name(
+                &title,
+                &file_name,
+                &relative_path,
+                &needle,
+                options.match_case,
+            );
             let mut found_any = false;
 
             if can_search_file_contents(&item.fs_path) {
@@ -64,11 +70,8 @@ impl SearchIndex {
                         };
                         found_any = true;
                         let mut result_item = make_result(item, &title, &file_name, &relative_path);
-                        result_item.excerpt = Some(make_search_excerpt(
-                            &entry.raw,
-                            match_index,
-                            match_length,
-                        ));
+                        result_item.excerpt =
+                            Some(make_search_excerpt(&entry.raw, match_index, match_length));
                         result_item.match_index = Some(match_index);
                         result_item.match_ordinal = Some(ordinal);
                         result_item.match_length = Some(match_length);

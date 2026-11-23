@@ -521,6 +521,15 @@ describe('Sidebar render', () => {
     expect(tree).toHaveAttribute('id', 'sidebarTree');
   });
 
+  it.each(['history', 'bookmarks'])('returns to Files when the saved %s tab is disabled', (tab) => {
+    mockState.sidebarActiveTab = tab;
+    mockState.settings.language = '';
+    mockState.settings.historySidebarEnabled = false;
+    mockState.settings.bookmarksEnabled = false;
+    render(<Sidebar />);
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'SET_SIDEBAR_ACTIVE_TAB', tab: 'files' });
+  });
+
   it('hides files matching filter', () => {
     mockState.fileList = [
       { fsPath: '/docs/readme.md', relativePath: 'readme.md', fileName: 'readme.md', title: 'Readme' },

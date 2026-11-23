@@ -67,7 +67,3 @@ export async function loadExportRuntimeAssets(
     return { name, fileName, code };
   }));
 }
-
-export function clearExportRuntimeAssetCache(): void {
-  defaultCache.clear();
-}

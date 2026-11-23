@@ -29,7 +29,8 @@ impl Dispatcher {
             state.ready_handled = true;
             state.last_ready_id = ready_id;
         }
-        let operation = requested_operation.or_else(|| host_message::current_workspace_operation(&self.app));
+        let operation =
+            requested_operation.or_else(|| host_message::current_workspace_operation(&self.app));
 
         let config_dir = self.app.path().app_config_dir().unwrap_or_default();
         let update_state =

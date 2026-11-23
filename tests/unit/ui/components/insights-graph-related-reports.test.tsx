@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
 import { WorkspaceInsightsIndex } from '../../../../ui/src/insights/index';
 import { GraphView } from '../../../../ui/src/components/Insights/GraphView';
+import { INSIGHTS_TRANSLATIONS } from '../../../../ui/src/contexts/insightsTranslations';
 import { RelatedView } from '../../../../ui/src/components/Insights/RelatedView';
 import { LinksView } from '../../../../ui/src/components/Insights/LinksView';
 import { createInsightsJsonReport, createInsightsMarkdownReport } from '../../../../ui/src/insights/reports';
@@ -29,6 +30,110 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     await user.click(screen.getByRole('button', { name: /api reference/i }));
     expect(screen.getByRole('button', { name: /api reference/i })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByTestId('graph-node-b.md')).toHaveAttribute('data-selected', 'true');
+  });
+
+  it('selects tag and heading nodes without opening a document and highlights only matching links', () => {
+    const index = new WorkspaceInsightsIndex();
+    index.applyDocument(doc('guide.md', '---\ntags: [documentation]\n---\n# Guide\n## Setup\n[[reference.md]]'));
+    index.applyDocument(doc('reference.md', '# Reference\n[[other.md]]'));
+    index.applyDocument(doc('other.md', '# Other'));
+    const onSelectPath = vi.fn();
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    const { container } = render(<GraphView snapshot={index.snapshot()} centerPath="guide.md" showTags showHeadings onSelectPath={onSelectPath} />);
+    const tag = screen.getByTestId('graph-node-tag:documentation');
+    const heading = container.querySelector('[data-node-kind="heading"]')!;
+    expect(tag.querySelector('circle')).toHaveAttribute('r', '14');
+    expect(heading).toBeInTheDocument();
+    fireEvent.click(tag);
+    expect(tag).toHaveAttribute('data-selected', 'true');
+    expect(tag.querySelector('circle')).toHaveAttribute('r', '16');
+    fireEvent.click(heading);
+    expect(heading).toHaveAttribute('data-selected', 'true');
+    expect(heading.querySelector('circle')).toHaveAttribute('r', '14');
+    expect(onSelectPath).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole('searchbox', { name: labels.searchNodesPlaceholder }), {
+      target: { value: 'documentation' },
+    });
+    const guide = screen.getByTestId('graph-node-guide.md');
+    expect(guide).toHaveClass('is-highlighted');
+    expect(container.querySelector('.insights-graph__edge.is-dimmed')).toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole('listbox'));
+    fireEvent.click(screen.getByRole('option', { name: /Guide\s*tag/i }));
+    expect(onSelectPath).toHaveBeenCalledExactlyOnceWith('guide.md');
+  });
+
+  it('renders an empty graph, then exposes the number of documents hidden by the node cap', () => {
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    const empty = new WorkspaceInsightsIndex().snapshot();
+    const { rerender } = render(<GraphView snapshot={empty} />);
+    expect(screen.getByText(labels.noGraphConnections)).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: labels.graphAria })).not.toBeInTheDocument();
+    const { snapshot } = fixture();
+    rerender(<GraphView snapshot={snapshot} centerPath="b.md" nodeCap={1} />);
+    expect(screen.getByText(/\(\+2\)/)).toHaveAttribute('data-hover-tooltip', expect.stringContaining('2'));
+    expect(screen.getByTestId('graph-node-b.md')).toHaveAttribute('data-selected', 'true');
+    expect(screen.queryByTestId('graph-node-a.md')).not.toBeInTheDocument();
+  });
+
+  it('pans on the canvas, supports wheel zoom, and resets both transforms', () => {
+    const { snapshot } = fixture();
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    render(<GraphView snapshot={snapshot} />);
+    const canvas = screen.getByRole('img', { name: labels.graphAria });
+    const transform = canvas.querySelector('g')!;
+    const drag = (target: Element, type: string, x: number, y: number) =>
+      fireEvent(target, new MouseEvent(type, { bubbles: true, clientX: x, clientY: y }));
+    drag(screen.getByTestId('graph-node-a.md'), 'pointerdown', 2, 3);
+    drag(canvas, 'pointermove', 120, 90);
+    expect(transform).toHaveAttribute('transform', 'translate(0 0) scale(1)');
+    drag(canvas, 'pointerdown', 100, 90);
+    expect(canvas).toHaveClass('is-dragging');
+    drag(canvas, 'pointermove', 130, 115);
+    expect(transform).toHaveAttribute('transform', 'translate(30 25) scale(1)');
+    drag(canvas, 'pointercancel', 130, 115);
+    expect(canvas).not.toHaveClass('is-dragging');
+    fireEvent.wheel(canvas, { deltaY: -10, cancelable: true });
+    expect(transform).toHaveAttribute('transform', 'translate(30 25) scale(1.15)');
+    fireEvent.wheel(canvas, { deltaY: 10, cancelable: false });
+    expect(transform).not.toHaveAttribute('transform', 'translate(30 25) scale(1.15)');
+    fireEvent.click(screen.getByRole('button', { name: labels.zoomOut }));
+    fireEvent.click(screen.getByRole('button', { name: labels.zoomIn }));
+    fireEvent.click(screen.getByRole('button', { name: labels.resetZoom }));
+    expect(transform).toHaveAttribute('transform', 'translate(0 0) scale(1)');
+    fireEvent.click(canvas);
+    expect(screen.queryByRole('button', { name: labels.clearSelection })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: labels.toggleFullscreen }));
+    expect(screen.getByRole('button', { name: labels.exitFullscreen })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.getByRole('button', { name: labels.toggleFullscreen })).toBeInTheDocument();
+  });
+
+  it('finds paths, headings and aliases; supports keyboard selection and outside dismissal', () => {
+    const index = new WorkspaceInsightsIndex();
+    index.applyDocument(doc('notes/guide.md', '---\naliases: [Manual]\n---\n# Guide\n## Deploying'));
+    index.applyDocument(doc('reference.md', '# Reference'));
+    const onSelectPath = vi.fn();
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    render(<GraphView snapshot={index.snapshot()} onSelectPath={onSelectPath} />);
+    const search = screen.getByRole('searchbox', { name: labels.searchNodesPlaceholder });
+    for (const [query, matchType] of [['notes/', 'path'], ['deploying', 'heading'], ['manual', 'alias']]) {
+      fireEvent.change(search, { target: { value: query } });
+      expect(screen.getByRole('option')).toHaveTextContent(matchType);
+      expect(screen.getByTestId('graph-node-reference.md')).toHaveClass('is-dimmed');
+      fireEvent.mouseDown(search);
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      fireEvent.mouseDown(document.body);
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    }
+    fireEvent.focus(search);
+    fireEvent.keyDown(search, { key: 'Escape' });
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(onSelectPath).toHaveBeenCalledExactlyOnceWith('notes/guide.md');
+    fireEvent.change(search, { target: { value: 'not in the graph' } });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(onSelectPath).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('0 found')).toBeInTheDocument();
   });
 
   it('supports graph node search, zoom controls, and fullscreen toggle', async () => {
@@ -60,6 +165,17 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     // Clicking node calls onSelectPath
     await user.click(nodeB);
     expect(onSelectPath).toHaveBeenCalledWith('b.md');
+  });
+
+  it('ignores unrelated fullscreen keys and returns to embedded view on Escape', () => {
+    const { snapshot } = fixture();
+    const { container } = render(<GraphView snapshot={snapshot} nodeCap={100} />);
+    fireEvent.click(screen.getByRole('button', { name: /fullscreen/i }));
+    const graph = container.querySelector('.insights-graph')!;
+    fireEvent.keyDown(window, { key: 'R' });
+    expect(graph).toHaveClass('is-fullscreen');
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(graph).not.toHaveClass('is-fullscreen');
   });
 
   it('highlights multi-level relationships with lighter level colors when a node is clicked', async () => {
@@ -129,6 +245,20 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(screen.getByText(/score/i)).toBeVisible();
   });
 
+  it('falls back to the first document and explains direct links and shared headings', () => {
+    const documents = [
+      doc('a.md', '# First\n## Shared heading\n[[b.md]]'),
+      doc('b.md', '# Second\n## Shared heading'),
+    ];
+    const { rerender } = render(<RelatedView documents={documents} selectedPath="missing.md" />);
+    expect(screen.getByText(/related to first/i)).toBeVisible();
+    expect(screen.getByText(/direct links.*b\.md/i)).toBeVisible();
+    expect(screen.getByText(/shared headings.*shared heading/i)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Second' }));
+    rerender(<RelatedView documents={documents} />);
+    expect(screen.getByText(/related to first/i)).toBeVisible();
+  });
+
   it('checks unique external URLs only after explicit user action', async () => {
     const remote = doc('remote.md', '# Remote\n[x](https://example.test/path) [again](https://example.test/path)');
     const index = new WorkspaceInsightsIndex(); index.applyDocument(remote);
@@ -138,6 +268,30 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(onCheckExternalLinks).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: /check external links/i }));
     expect(onCheckExternalLinks).toHaveBeenCalledWith(['https://example.test/path']);
+  });
+
+  it('rechecks a known result, shows the pending state, and supports cancellation', async () => {
+    const url = 'https://example.test/docs';
+    const remote = doc('remote.md', `# Remote\n[Docs](${url})`);
+    const index = new WorkspaceInsightsIndex();
+    index.applyDocument(remote);
+    const externalResults = new Map([[url, { requestId: 'check-1', url, status: 'reachable' as const, checkedAt: '2025-01-07T00:00:00.000Z' }]]);
+    let done!: () => void;
+    const onCheckExternalLinks = vi.fn(() => new Promise<void>(resolve => { done = resolve; }));
+    const onCancelExternalChecks = vi.fn();
+    const props = { snapshot: index.snapshot(), documents: [remote], externalResults, externalCheckingEnabled: true };
+    const { rerender } = render(<LinksView {...props} />);
+    expect(screen.getByRole('button', { name: 'Recheck' })).toBeDisabled();
+    rerender(<LinksView {...props} onCheckExternalLinks={onCheckExternalLinks} onCancelExternalChecks={onCancelExternalChecks} />);
+    expect(screen.getByRole('button', { name: `${url} - remote.md` })).toHaveTextContent(new Date(externalResults.get(url)!.checkedAt).toLocaleString());
+    fireEvent.click(screen.getByRole('button', { name: 'Recheck' }));
+    expect(onCheckExternalLinks).toHaveBeenCalledExactlyOnceWith([url], { recheck: true });
+    expect(screen.getByRole('button', { name: /checking external links/i })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Recheck' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel checks' }));
+    expect(onCancelExternalChecks).toHaveBeenCalledOnce();
+    await act(async () => { done(); });
+    expect(screen.getByRole('button', { name: 'Recheck' })).toBeEnabled();
   });
 
   it('exports scoped privacy-safe Markdown and JSON snapshots with completeness metadata', () => {
@@ -161,7 +315,7 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(markdown).not.toContain('Authentication refresh tokens.');
   });
 
-  it('copies AI prompt to fix graph and link issues', () => {
+  it('copies AI prompt to fix graph and link issues', async () => {
     const { snapshot } = fixture();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
@@ -173,5 +327,6 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     const copiedText = writeText.mock.calls[0][0];
     expect(copiedText).toBeDefined();
     expect(copiedText.length).toBeGreaterThan(0);
+    expect(await screen.findByRole('button', { name: 'Copied AI prompt!' })).toBeVisible();
   });
 });

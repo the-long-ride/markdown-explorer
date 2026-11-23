@@ -5,6 +5,7 @@ import { RecentWorkspacesModal } from '../../../../ui/src/components/Workspace/R
 import { WorkspaceWindowControls } from '../../../../ui/src/components/Workspace/WorkspaceWindowControls';
 
 const mockPostMessage = vi.fn();
+let mockDesktopRuntime = false;
 
 let mockState: any = {
   theme: 'light',
@@ -48,7 +49,7 @@ vi.mock('../../../../ui/src/contexts/translations', async (importOriginal) => {
 });
 
 vi.mock('../../../../ui/src/components/Workspace/workspaceSelectionUtils', () => ({
-  isDesktopRuntime: () => false,
+  isDesktopRuntime: () => mockDesktopRuntime,
   formatLastOpened: () => '1m ago',
 }));
 
@@ -320,6 +321,23 @@ describe('WorkspaceWindowControls', () => {
   it('renders restore tooltip when isMaximized is true in desktop mode', () => {
     render(<WorkspaceWindowControls embeddedInTabs={false} theme="light" isMaximized={true} onToggleTheme={vi.fn()} />);
     expect(document.querySelector('.window-controls')).toBeInTheDocument();
+  });
+
+  it('offers Restore for a maximized dark desktop window with a missing locale', () => {
+    const previousLanguage = mockState.settings.language;
+    mockState.settings.language = '';
+    mockDesktopRuntime = true;
+    try {
+      const { container } = render(<WorkspaceWindowControls embeddedInTabs={false} theme="dark" isMaximized onToggleTheme={vi.fn()} />);
+      expect(container.querySelector('button[tooltip="Light"] svg circle')).toBeInTheDocument();
+      const restore = container.querySelector('button[tooltip="Restore"]')!;
+      expect(restore.querySelector('svg rect')).not.toBeInTheDocument();
+      fireEvent.click(restore);
+      expect(mockPostMessage).toHaveBeenCalledExactlyOnceWith({ command: 'window-maximize' });
+    } finally {
+      mockDesktopRuntime = false;
+      mockState.settings.language = previousLanguage;
+    }
   });
 
   it('renders correct theme toggle label for light mode', () => {

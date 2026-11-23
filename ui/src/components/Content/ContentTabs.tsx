@@ -34,7 +34,6 @@ export function ContentTabs() {
     closeOtherContentTabs,
     closeAllContentTabs,
     openInSplit,
-    moveToOtherPane,
     swapSplitPanes,
     closeSplitView,
     guardUnsavedChanges = (_filePaths: string[], commit: () => void) => commit(),
@@ -182,9 +181,6 @@ export function ContentTabs() {
         case "history":
           requestOpenDocumentHistory(contextMenu.filePath);
           break;
-        case "moveToOtherPane":
-          moveToOtherPane(contextMenu.filePath);
-          break;
         case "swapPanes":
           swapSplitPanes();
           break;
@@ -225,7 +221,6 @@ export function ContentTabs() {
       closeSplitView,
       contextMenu,
       guardUnsavedChanges,
-      moveToOtherPane,
       openInSplit,
       requestTabClose,
       setContentTabHtmlPreview,

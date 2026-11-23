@@ -4,9 +4,16 @@ const OPEN_WITH_FOLDER_FLAG: &str = "--open-with-folder";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ExternalOpenRequest {
-    File { file_path: PathBuf },
-    Folder { folder_path: PathBuf },
-    FileWithParentWorkspace { file_path: PathBuf, folder_path: PathBuf },
+    File {
+        file_path: PathBuf,
+    },
+    Folder {
+        folder_path: PathBuf,
+    },
+    FileWithParentWorkspace {
+        file_path: PathBuf,
+        folder_path: PathBuf,
+    },
 }
 
 impl ExternalOpenRequest {
@@ -20,18 +27,14 @@ impl ExternalOpenRequest {
                 "mode": "folder",
                 "folderPath": folder_path.to_string_lossy(),
             }),
-            Self::FileWithParentWorkspace { file_path, folder_path } => serde_json::json!({
+            Self::FileWithParentWorkspace {
+                file_path,
+                folder_path,
+            } => serde_json::json!({
                 "mode": "file-with-parent-workspace",
                 "filePath": file_path.to_string_lossy(),
                 "folderPath": folder_path.to_string_lossy(),
             }),
-        }
-    }
-
-    pub fn primary_path(&self) -> &Path {
-        match self {
-            Self::File { file_path } | Self::FileWithParentWorkspace { file_path, .. } => file_path,
-            Self::Folder { folder_path } => folder_path,
         }
     }
 }
@@ -43,17 +46,24 @@ fn is_markdown_file(path: &Path) -> bool {
 
 pub fn request_for_path(path: &Path) -> Option<ExternalOpenRequest> {
     if path.is_dir() {
-        return Some(ExternalOpenRequest::Folder { folder_path: path.to_path_buf() });
+        return Some(ExternalOpenRequest::Folder {
+            folder_path: path.to_path_buf(),
+        });
     }
     if is_markdown_file(path) {
-        return Some(ExternalOpenRequest::File { file_path: path.to_path_buf() });
+        return Some(ExternalOpenRequest::File {
+            file_path: path.to_path_buf(),
+        });
     }
     None
 }
 
 pub fn parse_external_open_request(argv: &[String]) -> Option<ExternalOpenRequest> {
     let args = argv.iter().skip(1).collect::<Vec<_>>();
-    if let Some(index) = args.iter().position(|value| value.as_str() == OPEN_WITH_FOLDER_FLAG) {
+    if let Some(index) = args
+        .iter()
+        .position(|value| value.as_str() == OPEN_WITH_FOLDER_FLAG)
+    {
         let file_path = Path::new(args.get(index + 1)?.as_str());
         if !is_markdown_file(file_path) {
             return None;
@@ -72,12 +82,7 @@ pub fn parse_external_open_request(argv: &[String]) -> Option<ExternalOpenReques
     })
 }
 
-pub fn parse_external_open_path(argv: &[String]) -> Option<PathBuf> {
-    parse_external_open_request(argv).map(|request| request.primary_path().to_path_buf())
-}
-
-#[cfg(not(test))]
-pub fn emit_external_open_request(app: &tauri::AppHandle, request: &ExternalOpenRequest) {
+pub fn emit_external_open_request(app: &crate::HostApp, request: &ExternalOpenRequest) {
     let mut extra = serde_json::Map::new();
     extra.insert("request".into(), request.to_json());
     crate::host_message::emit(app, "externalOpenRequest", extra);
@@ -104,11 +109,15 @@ mod tests {
                 "--squirrel-firstrun".into(),
                 file.to_string_lossy().into_owned(),
             ]),
-            Some(ExternalOpenRequest::File { file_path: file.clone() })
+            Some(ExternalOpenRequest::File {
+                file_path: file.clone()
+            })
         );
         assert_eq!(
             parse_external_open_request(&["app".into(), dir.to_string_lossy().into_owned()]),
-            Some(ExternalOpenRequest::Folder { folder_path: dir.clone() })
+            Some(ExternalOpenRequest::Folder {
+                folder_path: dir.clone()
+            })
         );
         assert_eq!(
             parse_external_open_request(&[

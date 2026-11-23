@@ -234,6 +234,36 @@ describe('Electron native close guard', () => {
     expect(app.quit).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps requests through same-document navigation in legacy Electron but clears them on reload', () => {
+    const window = makeWindow();
+    const app = { quit: vi.fn() };
+    const guard = createNativeCloseGuard({ app, getMainWindow: () => window, platform: 'win32', responseTimeoutMs: 0 });
+    guard.attachWindow(window);
+    const first = guard.requestWindowClose();
+    window.webContents.trigger('did-start-navigation', 'app://docs#next', true, true);
+    expect(guard.requestWindowClose()).toEqual(first);
+    window.webContents.trigger('did-start-navigation', 'app://docs', false, true);
+    expect(guard.cancel(first)).toBe(false);
+    expect(guard.requestWindowClose().requestId).not.toBe(first.requestId);
+    expect(app.quit).not.toHaveBeenCalled();
+  });
+
+  it('prompts without a parent when the window disappears while a close is pending', async () => {
+    const window = makeWindow();
+    let mainWindow: typeof window | null = window;
+    const app = { quit: vi.fn() };
+    const dialog = { showMessageBox: vi.fn().mockResolvedValue({ response: 1 }) };
+    const guard = createNativeCloseGuard({ app, dialog, getMainWindow: () => mainWindow, platform: 'win32', responseTimeoutMs: 0 });
+    guard.attachWindow(window);
+    const request = guard.requestWindowClose();
+    mainWindow = null;
+    window.trigger('unresponsive');
+    await Promise.resolve();
+    expect(dialog.showMessageBox).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ buttons: ['Quit', 'Cancel'] }));
+    expect(guard.confirm(request)).toBe(false);
+    expect(app.quit).not.toHaveBeenCalled();
+  });
+
   it('allows close immediately when the renderer is crashed, destroyed, or still loading', () => {
     for (const state of ['crashed', 'destroyed', 'loading'] as const) {
       const window = makeWindow();
@@ -302,5 +332,78 @@ describe('Electron native close guard', () => {
     expect(guard.confirm({ ...request, requestId: 'wrong' })).toBe(false);
     expect(guard.confirm({ ...request, intent: 'window' })).toBe(false);
     expect(app.quit).not.toHaveBeenCalled();
+  });
+
+  it('quits without a window but leaves a macOS window-close request as a no-op', () => {
+    const app = { quit: vi.fn() };
+    const sendHostMessage = vi.fn();
+    const guard = createNativeCloseGuard({ app, getMainWindow: () => null, sendHostMessage, platform: 'darwin' });
+    expect(guard.requestWindowClose()).toBeNull();
+    expect(app.quit).not.toHaveBeenCalled();
+    expect(guard.requestAppQuit()).toBeNull();
+    expect(app.quit).toHaveBeenCalledOnce();
+    expect(sendHostMessage).not.toHaveBeenCalled();
+  });
+
+  it('preserves a pending app quit when the renderer fails and the next request is a window close', () => {
+    const window = makeWindow();
+    window.webContents.isCrashed = vi.fn().mockReturnValueOnce(false).mockImplementation(() => { throw new Error('renderer gone'); });
+    const app = { quit: vi.fn() };
+    const sendHostMessage = vi.fn();
+    const guard = createNativeCloseGuard({ app, getMainWindow: () => window, sendHostMessage, platform: 'darwin', responseTimeoutMs: 0 });
+    guard.attachWindow(window);
+    guard.requestAppQuit();
+    guard.requestWindowClose();
+    const finalEvent = makeEvent();
+    window.trigger('close', finalEvent);
+    expect(finalEvent.preventDefault).not.toHaveBeenCalled();
+    expect(app.quit).toHaveBeenCalledOnce();
+    expect(window.close).not.toHaveBeenCalled();
+    expect(sendHostMessage).toHaveBeenCalledOnce();
+  });
+
+  it('lets the renderer recover from a crash before making a new close request', () => {
+    const window = makeWindow();
+    const app = { quit: vi.fn() };
+    const sendHostMessage = vi.fn();
+    const guard = createNativeCloseGuard({ app, getMainWindow: () => window, sendHostMessage, platform: 'darwin' });
+    guard.attachWindow(window);
+    window.webContents.trigger('render-process-gone');
+    guard.requestWindowClose();
+    expect(window.close).toHaveBeenCalledOnce();
+    window.webContents.trigger('did-finish-load');
+    guard.requestWindowClose();
+    expect(sendHostMessage).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ intent: 'window' }));
+    expect(guard.confirm({ ...sendHostMessage.mock.calls[0][0], cancelled: true })).toBe(true);
+    expect(app.quit).not.toHaveBeenCalled();
+  });
+
+  it('keeps just one native prompt and ignores its answer after renderer cancellation', async () => {
+    const window = makeWindow();
+    const app = { quit: vi.fn() };
+    const sendHostMessage = vi.fn();
+    let answer: (value: { response: number }) => void;
+    const dialog = { showMessageBox: vi.fn(() => new Promise<{ response: number }>((resolve) => { answer = resolve; })) };
+    const guard = createNativeCloseGuard({ app, dialog, getMainWindow: () => window, sendHostMessage, platform: 'linux' });
+    guard.attachWindow(window);
+    guard.requestWindowClose();
+    window.trigger('unresponsive');
+    window.trigger('unresponsive');
+    expect(dialog.showMessageBox).toHaveBeenCalledOnce();
+    expect(guard.cancel(sendHostMessage.mock.calls[0][0])).toBe(true);
+    answer!({ response: 0 });
+    await Promise.resolve();
+    expect(app.quit).not.toHaveBeenCalled();
+  });
+
+  it.each(['unavailable', 'throws'])('allows closing when the fallback native dialog is %s', async (mode) => {
+    const window = makeWindow();
+    const app = { quit: vi.fn() };
+    const dialog = mode === 'unavailable' ? undefined : { showMessageBox: vi.fn().mockRejectedValue(new Error('dialog unavailable')) };
+    const guard = createNativeCloseGuard({ app, dialog, getMainWindow: () => window, sendHostMessage: vi.fn(), platform: 'win32' });
+    guard.attachWindow(window);
+    guard.requestWindowClose();
+    window.trigger('unresponsive');
+    await vi.waitFor(() => expect(app.quit).toHaveBeenCalledOnce());
   });
 });

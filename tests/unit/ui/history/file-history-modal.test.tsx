@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { FileHistoryModal } from '../../../../ui/src/components/History/FileHistoryModal';
+import { FileHistoryModal, nextComparePicks } from '../../../../ui/src/components/History/FileHistoryModal';
+import { getHistoryTranslations } from '../../../../ui/src/contexts/historyTranslations';
+import { getFileHistoryTranslations } from '../../../../ui/src/contexts/fileHistoryTranslations';
 import { PlatformProvider } from '../../../../ui/src/contexts/PlatformContext';
 import type { GitRevisionSummary } from '../../../../ui/src/history/contracts';
 import type { HistoryClient } from '../../../../ui/src/history/historyClient';
@@ -47,6 +49,28 @@ function renderModal(entries = [entry(0), entry(1), entry(2)], bridge = createBr
 const rowFor = (subject: string) => screen.getByRole('button', { name: new RegExp(subject) });
 
 describe('FileHistoryModal', () => {
+  it('orders range endpoints correctly when the older commit is picked first', async () => {
+    const { client } = renderModal();
+    await screen.findByText('commit 0');
+    fireEvent.click(screen.getByRole('button', { name: /compare/i }));
+    fireEvent.click(within(rowFor('commit 2').closest('li')!).getByRole('checkbox'));
+    fireEvent.click(within(rowFor('commit 0').closest('li')!).getByRole('checkbox'));
+    const olderOid = entry(2).oid;
+    const newerOid = entry(0).oid;
+    await waitFor(() => expect(client.compareGitRevisions).toHaveBeenLastCalledWith(
+      expect.objectContaining({ oid: olderOid }), expect.objectContaining({ oid: newerOid }),
+    ));
+  });
+  it('shows an invalid authored date and substitutes the short SHA for a missing subject', async () => {
+    renderModal([entry(0, { subject: '', shortOid: 'a1b2c3d', authoredAt: 'Archived (date unknown)' })]);
+    const row = await screen.findByRole('button', { name: /a1b2c3d.*Archived \(date unknown\)/i });
+    expect(row).toBeVisible();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'a1b2c3d' } });
+    expect(row).toBeVisible();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'does not match' } });
+    expect(row).not.toBeInTheDocument();
+  });
+
   it('opens with the commit list and the latest commit diff in raw inline view', async () => {
     const { client } = renderModal();
 
@@ -209,6 +233,52 @@ describe('FileHistoryModal', () => {
     expect(await screen.findByText('commit 0')).toBeInTheDocument();
   });
 
+  it.each([
+    ['unsupported-runtime', getHistoryTranslations('en').unsupportedRuntime],
+    ['git-unavailable', getHistoryTranslations('en').gitUnavailable],
+    ['History request timed out', getFileHistoryTranslations('en').timeout],
+    ['Host rejected this path', 'Host rejected this path'],
+  ])('reports the history failure %s and allows closing from the backdrop', async (reason, message) => {
+    const client = createClient([]);
+    vi.mocked(client.listDocumentHistory).mockRejectedValueOnce(new Error(reason));
+    const bridge = createBridge();
+    const onClose = vi.fn();
+    render(<PlatformProvider bridge={bridge}><FileHistoryModal filePath="docs/a.md" client={client} language="en" currentSource={() => null} onClose={onClose} bridge={bridge} /></PlatformProvider>);
+    expect(await screen.findByRole('status')).toHaveTextContent(message);
+    fireEvent.click(screen.getByText(message));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('dialog'));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('reports an empty history, with Compare disabled', async () => {
+    renderModal([]);
+    expect(await screen.findByRole('status')).toHaveTextContent(getFileHistoryTranslations('en').noFileHistory);
+    expect(screen.getByRole('button', { name: 'Compare' })).toBeDisabled();
+  });
+
+  it('falls back to raw inline history with no persisted state and stores a new view', async () => {
+    const client = createClient([entry(0)]);
+    const bridge = createBridge();
+    vi.mocked(bridge.getState).mockReturnValue(undefined);
+    render(<PlatformProvider bridge={bridge}><FileHistoryModal filePath="C:\\docs\\a.md" client={client} currentSource={() => ''} onClose={vi.fn()} bridge={bridge} /></PlatformProvider>);
+    expect(screen.getByRole('dialog', { name: /file history.*a\.md/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Inline' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Split' }));
+    expect(bridge.setState).toHaveBeenLastCalledWith({ fileHistoryView: 'raw-split' });
+  });
+
+  it.each([
+    [['old', 'new'], 'older', ['new', 'older']],
+    [['new', 'old'], 'newer', ['newer', 'old']],
+    [['old', 'stale'], 'middle', ['stale', 'middle']],
+    [['new', 'stale'], 'unlisted', ['stale', 'unlisted']],
+    [['stale', 'old'], 'middle', ['stale', 'middle']],
+  ])('updates compare boundaries for %j when picking %s', (picks, oid, expected) => {
+    const entries = ['newer', 'new', 'middle', 'old', 'older'].map(oid => ({ oid }));
+    expect(nextComparePicks(entries, picks, oid, 'older')).toEqual({ picks: expected, nextInsideSide: 'older' });
+  });
+
   it('shows the file as added for its first commit', async () => {
     renderModal([entry(0)]);
     expect(await screen.findByText(/file added in this commit/i)).toBeInTheDocument();
@@ -272,6 +342,68 @@ describe('FileHistoryModal', () => {
     })));
     fireEvent.doubleClick(split);
     expect(split).toHaveAttribute('aria-valuenow', '50');
+  });
+
+  it('requests the next history page only when scrolling near the bottom', async () => {
+    const entries = Array.from({ length: 150 }, (_, index) => entry(index));
+    const client = createClient(entries.slice(0, 100));
+    vi.mocked(client.listDocumentHistory).mockResolvedValueOnce(entries.slice(0, 100)).mockResolvedValue(entries);
+    const bridge = createBridge();
+    render(<PlatformProvider bridge={bridge}><FileHistoryModal filePath="docs/a.md" client={client} language="en" currentSource={() => null} onClose={vi.fn()} bridge={bridge} /></PlatformProvider>);
+    await screen.findByText('commit 99');
+    const list = screen.getByText('commit 99').closest('ol')!;
+    Object.defineProperties(list, {
+      scrollHeight: { value: 1000, configurable: true },
+      clientHeight: { value: 200, configurable: true },
+    });
+    fireEvent.scroll(list, { target: { scrollTop: 120 } });
+    expect(client.listDocumentHistory).toHaveBeenCalledExactlyOnceWith('docs/a.md', 100);
+    fireEvent.scroll(list, { target: { scrollTop: 800 } });
+    expect(await screen.findByText('commit 149')).toBeVisible();
+    expect(client.listDocumentHistory).toHaveBeenLastCalledWith('docs/a.md', 200);
+    fireEvent.scroll(list);
+    expect(client.listDocumentHistory).toHaveBeenCalledTimes(2);
+  });
+
+  it('resizes a measured split diff and ignores drags until its guide has usable width', async () => {
+    renderModal(undefined, createBridge({ fileHistoryView: 'raw-split' }));
+    const handle = await screen.findByRole('separator', { name: /resize diff panes/i });
+    const guide = handle.parentElement!;
+    const pointer = (type: string, x: number) => Object.assign(new MouseEvent(type, { bubbles: true, clientX: x }), { pointerId: 4 });
+    fireEvent(handle, pointer('pointerdown', 240));
+    fireEvent(handle, pointer('pointermove', 330));
+    expect(handle).toHaveAttribute('aria-valuenow', '50');
+    Object.defineProperty(guide, 'clientWidth', { value: 424, configurable: true });
+    vi.spyOn(guide, 'getBoundingClientRect').mockReturnValue(new DOMRect(80, 0, 424, 500));
+    fireEvent(handle, pointer('pointermove', 330));
+    expect(handle).not.toHaveAttribute('aria-valuenow', '50');
+    fireEvent(handle, pointer('pointerup', 330));
+  });
+
+  it('drags the commit list from its left edge, ignores a secondary-button press, and ends on pointer cancellation', async () => {
+    renderModal();
+    await screen.findByText('commit 0');
+    const handle = screen.getByRole('separator', { name: /resize commit list/i });
+    vi.spyOn(handle.parentElement!, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 280, 500));
+    const setPointerCapture = vi.fn();
+    const releasePointerCapture = vi.fn();
+    Object.assign(handle, { setPointerCapture, hasPointerCapture: () => true, releasePointerCapture });
+    const pointer = (type: string, x: number, button = 0) => Object.assign(
+      new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, button }), { pointerId: 3 },
+    );
+    fireEvent(handle, pointer('pointerdown', 380, 2));
+    expect(setPointerCapture).not.toHaveBeenCalled();
+    fireEvent(handle, pointer('pointerdown', 380));
+    expect(handle).toHaveClass('is-dragging');
+    expect(setPointerCapture).toHaveBeenCalledWith(3);
+    fireEvent(handle, pointer('pointermove', 430));
+    expect(handle).toHaveAttribute('aria-valuenow', '330');
+    fireEvent(handle, pointer('pointercancel', 430));
+    expect(handle).not.toHaveClass('is-dragging');
+    expect(document.body).not.toHaveClass('is-file-history-resizing');
+    expect(releasePointerCapture).toHaveBeenCalledWith(3);
+    fireEvent(handle, pointer('pointermove', 480));
+    expect(handle).toHaveAttribute('aria-valuenow', '330');
   });
 
   it('restores a remembered layout within bounds', async () => {

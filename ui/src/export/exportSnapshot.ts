@@ -40,10 +40,6 @@ export function detectExportFeatures(root: ParentNode): ReadonlySet<ExportFeatur
   return features;
 }
 
-export function collectExportVisualBlocks(root: ParentNode): readonly ExportVisualBlock[] {
-  return capturePdfVisualBlocks(root);
-}
-
 function createStagingHost(snapshot: DocumentSnapshot): { host: HTMLElement; body: HTMLElement } {
   const host = document.createElement('div');
   host.dataset.mdnExportStaging = 'true';

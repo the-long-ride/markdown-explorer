@@ -148,6 +148,33 @@ describe('createZipUpdateScript', () => {
 });
 
 describe('launchWindowsUpdateHelper', () => {
+  test('writes the generated script with default filesystem helpers and invokes the configured command interpreter', () => {
+    const dir = makeTempDir('uh-native-script-');
+    const tmpdir = vi.spyOn(os, 'tmpdir').mockReturnValue(dir);
+    const unref = vi.fn();
+    const spawn = vi.fn(() => ({ unref }));
+    vi.stubEnv('comspec', 'C:/Windows/System32/custom-cmd.exe');
+    const payload = {
+      stagedFilePath: path.join(dir, 'update.exe'),
+      targetExePath: path.join(dir, 'app.exe'),
+      workingDirectory: dir,
+    };
+    try {
+      const script = launchWindowsUpdateHelper(payload, { spawn });
+      expect(path.dirname(script)).toBe(path.join(dir, 'markdown-explorer-updater'));
+      expect(fs.readFileSync(script, 'utf8')).toBe(createWindowsUpdateScript(payload));
+      expect(spawn).toHaveBeenCalledExactlyOnceWith(
+        'C:/Windows/System32/custom-cmd.exe', ['/d', '/s', '/c', script],
+        { detached: true, stdio: 'ignore', windowsHide: true },
+      );
+      expect(unref).toHaveBeenCalledOnce();
+    } finally {
+      tmpdir.mockRestore();
+      vi.unstubAllEnvs();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test('writes script and spawns child process', () => {
     const dir = makeTempDir('uh-launch-');
     const scriptDir = path.join(dir, 'scripts');

@@ -65,7 +65,3 @@ export class BrowserRecentWorkspaces {
     return await this.load();
   }
 }
-
-export async function recentWorkspacesChangedMessage() {
-  return { command: "recentWorkspacesChanged", recentWorkspaces: await BrowserRecentWorkspaces.load() };
-}

@@ -9,6 +9,7 @@ name = "markdown_explorer_tauri_lib"
 crate-type = ["staticlib", "rlib"]
 
 [build-dependencies]
+embed-resource = "3"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
@@ -47,6 +48,7 @@ calamine = "0.38"
 trash = "5"
 
 [dev-dependencies]
+tauri = { version = "2", features = ["test"] }
 tempfile = "3"
 
 [package.metadata]

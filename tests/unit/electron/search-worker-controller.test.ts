@@ -247,26 +247,44 @@ describe('createSearchWorkerController', () => {
     Worker.prototype.terminate = origTerminate;
   });
 
-  test('onError filtered when disposed is true (delayed terminate)', async () => {
+  test('ignores a worker error delivered after disposal has started', async () => {
     const origTerminate = Worker.prototype.terminate;
-    Worker.prototype.terminate = function (this: any) {
-      return new Promise<number>((resolve) => {
-        setTimeout(() => { origTerminate.call(this).then(resolve); }, 100);
-      });
-    };
-
-    const errors: any[] = [];
-    controller = createSearchWorkerController({
-      onError(error) { errors.push(error); },
-      workerPath: path.join(os.tmpdir(), `nonexistent-delayed-term-${Date.now()}.js`),
+    const lateError = new Error('worker failed during disposal');
+    const delivered = vi.fn();
+    const terminate = vi.spyOn(Worker.prototype, 'terminate').mockImplementation(function (this: Worker) {
+      delivered(this.emit('error', lateError));
+      return origTerminate.call(this);
     });
+    const errors: any[] = [];
+    try {
+      controller = createSearchWorkerController({ onError(error) { errors.push(error); } });
+      controller.dispose();
+      expect(delivered).toHaveBeenCalledExactlyOnceWith(true);
+      expect(errors.length).toBe(0);
+      await terminate.mock.results[0].value;
+    } finally {
+      terminate.mockRestore();
+    }
+  });
 
-    controller.dispose();
-
-    await new Promise((r) => setTimeout(r, 500));
-    expect(errors.length).toBe(0);
-
-    Worker.prototype.terminate = origTerminate;
+  test('filters a case-sensitive search to the requested tabs', async () => {
+    const items = createFixture('search-worker-selected-tabs-', 2, () => 'needle NEEDLE needle');
+    items[1].tabId = 'tab-2';
+    const onBatch = vi.fn();
+    let finish!: (message: unknown) => void;
+    const done = new Promise(resolve => { finish = resolve; });
+    controller = createSearchWorkerController({
+      onMessage(message: any) {
+        if (message.type === 'batch') onBatch(message.results);
+        if (message.type === 'done') finish(message);
+      },
+    });
+    controller.setItems(items);
+    controller.search({ requestId: 'selected', query: 'NEEDLE', matchCase: true, tabIds: ['tab-2'] });
+    await expect(done).resolves.toMatchObject({ requestId: 'selected', total: 1 });
+    expect(onBatch).toHaveBeenCalledExactlyOnceWith([
+      expect.objectContaining({ tabId: 'tab-2', fsPath: items[1].fsPath, matchIndex: 7 }),
+    ]);
   });
 
   test('default onError logs to console when worker errors', async () => {

@@ -130,7 +130,7 @@ export function registerCodeLineHandlers() {
     }
 
     if (pointRange.compareBoundaryPoints(Range.START_TO_START, codeRange) <= 0) return 0;
-    if (pointRange.compareBoundaryPoints(Range.START_TO_END, codeRange) >= 0) return textLength;
+    if (pointRange.compareBoundaryPoints(Range.END_TO_END, codeRange) >= 0) return textLength;
 
     const beforeRange = document.createRange();
     beforeRange.setStart(code, 0);

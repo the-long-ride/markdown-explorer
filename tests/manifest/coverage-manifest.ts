@@ -194,7 +194,6 @@ export const coverageManifest: Record<string, string[]> = {
   'ui/src/dom/localFileBrowserSupport.ts': ['tests/node/html-menu-behavior.test.mjs'],
   'ui/src/dom/localFileUrl.ts': ['tests/node/html-menu-behavior.test.mjs'],
   'ui/src/dom/saveTauriImage.ts': ['tests/unit/ui/save-blob-as-file.test.ts'],
-  'ui/src/dom/tableFilterHandlers.ts': ['tests/unit/ui/dom/tableHandlers-filter.test.ts'],
   'ui/src/dom/tableHandlers.ts': ['tests/unit/ui/dom/tableHandlers.test.ts'],
   'ui/src/dom/tableResizeStore.ts': ['tests/unit/ui/dom/table-resize-store.test.ts'],
   'ui/src/hooks/useDesktopTabs.ts': ['tests/unit/ui/desktop-tabs.test.ts'],
