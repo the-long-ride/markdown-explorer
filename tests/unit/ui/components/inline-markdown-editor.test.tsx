@@ -257,6 +257,33 @@ describe('InlineMarkdownEditor', () => {
     expect(textarea).toHaveAttribute('wrap', 'soft');
     expect(wrapButton).toHaveAttribute('aria-pressed', 'true');
   });
+
+  it.each([
+    [0, 0, '', '\n\n', 'A\nB'],
+    [1, 2, '\n\n', '\n\n', 'B'],
+    [3, 3, '\n\n', '\n', ''],
+    [2, 2, '', '\n\n', 'B'],
+  ])('inserts a table at selection %i–%i with Markdown block spacing', (from, to, prefix, suffix, remaining) => {
+    const target = createTarget();
+    target.setAttribute('data-mdn-source-end', '8');
+    const onApply = vi.fn();
+    render(<InlineMarkdownEditor target={target} source={'# A\n\nA\nB'} labels={labels} onApply={onApply} onCancel={vi.fn()} />);
+    const textarea = screen.getByRole<HTMLTextAreaElement>('textbox', { name: labels.sourceLabel });
+    textarea.setSelectionRange(from, to);
+    fireEvent.click(screen.getByRole('button', { name: labels.formatting.table }));
+    fireEvent.change(screen.getByTestId('table-insert-cols'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('table-insert-rows'), { target: { value: '2' } });
+    fireEvent.click(screen.getByTestId('table-insert-confirm'));
+
+    const table = '| Column 1 | Column 2 |\n| -------- | -------- |\n| Value 1  | Value 2  |';
+    const before = 'A\nB'.slice(0, from);
+    const expected = before + prefix + table + suffix + remaining;
+    expect(textarea).toHaveValue(expected);
+    expect(textarea.selectionStart).toBe(expected.length - remaining.length);
+    expect(textarea.selectionEnd).toBe(textarea.selectionStart);
+    fireEvent.keyDown(textarea, { key: 'Enter', ctrlKey: true });
+    expect(onApply).toHaveBeenCalledExactlyOnceWith(expected, { start: 5, end: 8 });
+  });
   it('renders visual table widget when editing a table block in inline edit mode', () => {
     const sampleTable = ['| Header 1 | Header 2 |', '| --- | --- |', '| Cell 1 | Cell 2 |'].join('\n');
     const target = document.createElement('div');
