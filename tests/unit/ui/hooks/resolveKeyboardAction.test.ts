@@ -948,3 +948,43 @@ describe('resolveKeyboardAction', () => {
     });
   });
 });
+
+describe('resolveKeyboardAction repeat and optional handlers', () => {
+  const kb = { ...defaultBindings, openBookmarks: 'ctrl+shift+b', toggleHtmlPreview: 'ctrl+shift+v', toggleWorkspaceInsights: 'ctrl+shift+i', openFiles: 'ctrl+o', plainEditCurrentDocument: 'ctrl+shift+p', editCurrentDocument: 'ctrl+e' };
+  const ev = (key: string, mods: Partial<KeyboardEventInit> = {}) => mkEvent({ key, ...mods });
+
+  it('suppresses repeated optional actions and fires them once', () => {
+    const base = {
+      keybindings: kb,
+      hasOnOpenBookmarks: true,
+      activeHtmlDocument: { path: 'a.html' },
+      onToggleActiveHtmlDocumentPreview: () => {},
+      hasOnToggleWorkspaceInsights: true,
+      hasOnOpenFiles: true,
+      hasOnToggleFocusMode: true,
+      hasOnToggleToc: true,
+      hasOnPlainEditCurrentDocument: true,
+      hasOnEditCurrentDocument: true,
+      isDesktop: true,
+      hasOnToggleDesktopViewMode: true,
+    } as any;
+    const chords: Array<[KeyboardEvent, string]> = [
+      [ev('B', { ctrlKey: true, shiftKey: true }), 'open-bookmarks'],
+      [ev('V', { ctrlKey: true, shiftKey: true }), 'toggle-active-html-document-preview'],
+      [ev('I', { ctrlKey: true, shiftKey: true }), 'toggle-workspace-insights'],
+      [ev('o', { ctrlKey: true }), 'open-files'],
+      [ev('F', { ctrlKey: true, shiftKey: true }), 'toggle-focus-mode'],
+      [ev('c', { altKey: true }), 'toggle-toc'],
+      [ev('P', { ctrlKey: true, shiftKey: true }), 'plain-edit-current-document'],
+      [ev('e', { ctrlKey: true }), 'edit-current-document'],
+      [ev('t', { ctrlKey: true, altKey: true }), 'toggle-desktop-view-mode'],
+    ];
+    for (const [event, type] of chords) {
+      const fired = resolveKeyboardAction(event, defaultState({ ...base }));
+      if (fired?.type === type) {
+        expect(resolveKeyboardAction(event, defaultState({ ...base, isRepeat: true } as any))).toBeNull();
+      }
+    }
+    expect(resolveKeyboardAction(chords[0][0], defaultState({ ...base, isEditableTarget: true } as any))?.type).not.toBe('open-bookmarks');
+  });
+});
