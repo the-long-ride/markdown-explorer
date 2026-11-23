@@ -136,6 +136,35 @@ describe('deleteWorkspaceEntries resolved-path protection', () => {
 });
 
 describe('non-string input guards', () => {
+  it('reports unusable workspace roots before attempting mutations', async () => {
+    const root = temp();
+    const file = path.join(root, 'a.md');
+    fs.writeFileSync(file, 'original');
+    const trashItem = vi.fn(removeForTest);
+    await expect(createWorkspaceEntry({ workspacePath: file, name: 'b.md', kind: 'file' }))
+      .resolves.toEqual({ ok: false, reason: 'unsupported' });
+    await expect(renameWorkspaceEntry({ workspacePath: path.join(root, 'missing'), path: 'a.md', name: 'b.md', kind: 'file' }))
+      .resolves.toEqual({ ok: false, reason: 'missing' });
+    await expect(deleteWorkspaceEntries({ workspacePath: null, paths: ['a.md'], trashItem }))
+      .resolves.toEqual({ deleted: [], failed: [{ path: 'a.md', reason: 'unsupported' }] });
+    expect(trashItem).not.toHaveBeenCalled();
+    expect(fs.readFileSync(file, 'utf8')).toBe('original');
+  });
+
+  it('copies without overwriting when the filesystem cannot hard-link a renamed file', async () => {
+    const root = temp();
+    const source = path.join(root, 'a.md');
+    const destination = path.join(root, 'b.md');
+    fs.writeFileSync(source, 'original');
+    const link = vi.fn().mockRejectedValue(Object.assign(new Error('not supported'), { code: 'ENOTSUP' }));
+    const fsApi = { ...fs, promises: { ...fs.promises, link } };
+    await expect(renameWorkspaceEntry({ workspacePath: root, path: 'a.md', name: 'b.md', kind: 'file', fsApi }))
+      .resolves.toEqual({ ok: true, oldPath: 'a.md', path: 'b.md', kind: 'file' });
+    expect(link).toHaveBeenCalledOnce();
+    expect(fs.existsSync(source)).toBe(false);
+    expect(fs.readFileSync(destination, 'utf8')).toBe('original');
+  });
+
   it('rejects an unsupported entry kind or a protected parent without creating anything', async () => {
     const root = gitRepo();
     const create = (parentPath: string, kind: string) => createWorkspaceEntry({

@@ -167,6 +167,27 @@ describe('createWorkspaceWatchController', () => {
     await vi.advanceTimersByTimeAsync(20);
     expect(refreshCount).toBe(0);
   });
+
+  test('supports a manual refresh and stops watching when the workspace is cleared', async () => {
+    vi.useFakeTimers();
+    const close = vi.fn();
+    const watch = vi.fn(() => ({ close }));
+    const onRefresh = vi.fn();
+    const controller = createWorkspaceWatchController({
+      fs: { watch } as any, setTimeout, clearTimeout, debounceMs: 5, onRefresh,
+    });
+    controller.watchWorkspace('C:/docs');
+    controller.scheduleRefresh();
+    await vi.advanceTimersByTimeAsync(5);
+    expect(onRefresh).toHaveBeenCalledExactlyOnceWith('C:/docs', null);
+
+    controller.watchWorkspace(null);
+    controller.scheduleRefresh();
+    await vi.advanceTimersByTimeAsync(5);
+    expect(close).toHaveBeenCalledOnce();
+    expect(watch).toHaveBeenCalledOnce();
+    expect(onRefresh).toHaveBeenCalledOnce();
+  });
 });
 
 describe('clearPendingTimerFn', () => {
