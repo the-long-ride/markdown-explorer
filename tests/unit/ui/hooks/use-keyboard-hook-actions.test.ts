@@ -83,4 +83,31 @@ describe('useKeyboard hook action dispatch', () => {
     vs.hook.unmount();
     expect(back.mock.calls.length + forward.mock.calls.length).toBeGreaterThan(0);
   });
+  it('handles fullscreen, configured back/forward and edit-mode shortcuts', () => {
+    const anySession = (mode: string) => new Proxy({}, { get: (_t, prop) => (prop === 'then' ? undefined : { mode, savedRevision: 0, revision: 0 }) });
+    const settings = {
+      keybindings: { ...keybindings, back: 'ctrl+[', forward: 'ctrl+]', editCurrentDocument: 'ctrl+e', plainEditCurrentDocument: 'ctrl+shift+e' },
+      markdownEditingEnabled: true,
+    };
+    const first = render({ currentFile: '/w/a.md', settings, documentSessions: anySession('rendered') });
+    press('F11');
+    expect(first.handlers.onToggleFullscreen).toHaveBeenCalled();
+    press('[', { ctrlKey: true });
+    press(']', { ctrlKey: true });
+    expect(back).toHaveBeenCalled();
+    expect(forward).toHaveBeenCalled();
+    press('e', { ctrlKey: true });
+    press('E', { ctrlKey: true, shiftKey: true });
+    expect(appState.setDocumentEditMode).toHaveBeenCalledWith('/w/a.md', 'inline-edit');
+    expect(appState.setDocumentEditMode).toHaveBeenCalledWith('/w/a.md', 'plain');
+    first.hook.unmount();
+    const editing = render({ currentFile: '/w/a.md', settings, documentSessions: anySession('inline-edit') });
+    press('e', { ctrlKey: true });
+    expect(appState.setDocumentEditMode).toHaveBeenCalledWith('/w/a.md', 'rendered');
+    editing.hook.unmount();
+    const plain = render({ currentFile: '/w/a.md', settings, documentSessions: anySession('plain') });
+    press('E', { ctrlKey: true, shiftKey: true });
+    expect(appState.setDocumentEditMode).toHaveBeenCalledWith('/w/a.md', 'rendered');
+    plain.hook.unmount();
+  });
 });
