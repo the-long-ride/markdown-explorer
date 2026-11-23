@@ -39,10 +39,6 @@ export function setSplitDropHandler(handler: SplitDropHandler): () => void {
   };
 }
 
-export function isSplitPointerDragActive(): boolean {
-  return document.body.classList.contains('is-split-dragging');
-}
-
 function paneIdOf(pane: HTMLElement): PaneId | null {
   const id = pane.dataset.paneId;
   return id === 'primary' || id === 'secondary' ? id : null;

@@ -127,7 +127,3 @@ export const USER_MANUAL_TRANSLATIONS: Record<string, UserManualCopy> = {
     ],
   },
 };
-
-export function getUserManualTranslations(language: string): UserManualCopy {
-  return USER_MANUAL_TRANSLATIONS[language] ?? USER_MANUAL_TRANSLATIONS.en;
-}
