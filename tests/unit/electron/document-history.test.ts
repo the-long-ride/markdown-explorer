@@ -446,6 +446,24 @@ describe('Electron repository history paging', () => {
     const error = toGitHistoryError({ killed: true, signal: 'SIGTERM', message: 'Command failed' });
     expect(error.reason).toBe('git-timeout');
   });
+
+  it('reports a vanished workspace as missing rather than reporting Git unavailable', async () => {
+    const repo = await createTempGitRepo();
+    await expect(resolveGitContext(path.join(repo, 'removed-workspace'))).rejects.toMatchObject({
+      reason: 'not-repository',
+      message: 'The workspace folder does not exist',
+    });
+  });
+
+  it.each([
+    [{ code: 'ENOENT' }, 'git-unavailable', 'Git executable is unavailable'],
+    [{ code: 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' }, 'output-too-large', 'Git output exceeded the allowed size'],
+    [new Error('stdout maxBuffer length exceeded'), 'output-too-large', 'Git output exceeded the allowed size'],
+    [{ stderr: ' Git operation failed\n' }, 'git-command-failed', 'Git operation failed'],
+    [undefined, 'git-command-failed', 'Git command failed'],
+  ])('normalizes a Git failure to %j (%s)', (error, reason, message) => {
+    expect(toGitHistoryError(error)).toMatchObject({ reason, message });
+  });
 });
 
 describe('Electron Git history hardening', () => {
