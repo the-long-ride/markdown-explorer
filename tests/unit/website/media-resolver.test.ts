@@ -1,5 +1,27 @@
-import { describe, it, expect } from 'vitest';
-import { resolvePath, isExternalUrl, revokeAll } from '../../../website-app/src/media-resolver';
+import { describe, it, expect, vi } from 'vitest';
+import { resolvePath, isExternalUrl, revokeAll, rewriteMediaUrls } from '../../../website-app/src/media-resolver';
+import { memoryFile, MemoryFolder } from './memory-file-system';
+
+it('rewrites local media and video posters, preserves other URLs, and revokes prior blobs', async () => {
+  const root = new MemoryFolder('root');
+  const docs = new MemoryFolder('docs');
+  root.children.set('docs', docs);
+  docs.children.set('clip.mp4', memoryFile('clip.mp4', 'video'));
+  docs.children.set('poster.png', memoryFile('poster.png', 'image'));
+  const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementationOnce(() => { throw new Error('Could not revoke'); });
+  expect(await rewriteMediaUrls(root.asHandle(), [
+    '<video poster="poster.png" src="clip.mp4"></video>',
+    '<img src="https://example.test/remote.png">',
+    '<img src="missing.png">',
+  ].join(''), 'docs/notes.md')).toMatch(
+    /^<video poster="blob:[^"]+" src="blob:[^"]+"><\/video><img src="https:\/\/example\.test\/remote\.png"><img src="missing\.png">$/,
+  );
+  expect(error).toHaveBeenCalledWith('Failed to resolve relative media path:', 'docs/missing.png', expect.any(Error));
+  expect(await rewriteMediaUrls(root.asHandle(), '<p>text</p>', 'docs/notes.md')).toBe('<p>text</p>');
+  expect(revoke).toHaveBeenCalledTimes(2);
+  expect(error).toHaveBeenCalledWith('Error revoking blob URL:', expect.stringContaining('blob:'), expect.any(Error));
+});
 
 describe('resolvePath', () => {
   it('resolves simple relative path', () => {

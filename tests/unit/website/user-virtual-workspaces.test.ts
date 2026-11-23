@@ -21,7 +21,12 @@ import {
   renameVirtualWorkspaceContent,
   deleteVirtualWorkspaceContent,
   USER_VIRTUAL_WORKSPACES_STORAGE_KEY,
+  VIRTUAL_WORKSPACE_CONTENT_PREFIX,
+  buildVirtualMdFile,
+  loadAllRecentWorkspaces,
+  renderVirtualFile,
 } from '../../../website-app/src/user-virtual-workspaces';
+import { BrowserRecentWorkspaces } from '../../../website-app/src/recent-workspaces';
 import { createFileModeHandlers } from '../../../website-app/src/web-file-mode';
 import { initWebHost, getWebBus } from '../../../website-app/src/web-host';
 
@@ -135,6 +140,37 @@ describe('user-virtual-workspaces', () => {
       expect(welcome).toBeDefined();
       expect(welcome?.title).toBeTruthy();
       expect(snapshot.tree.name).toBe('Snapshot Test');
+    });
+
+    it('uses MDX frontmatter and recovers empty titles and invalid stored file content', () => {
+      expect(buildVirtualMdFile('notes.mdx', '---\nauthor: Example\nuntagged\ntitle: "Article"\n---\n# Heading')).toMatchObject({ title: 'Article' });
+      expect(buildVirtualMdFile('notes.mdx', '# Bare MDX')).toMatchObject({ title: 'Bare MDX' });
+      expect(buildVirtualMdFile('notes.mdx', '---\nauthor: Example\n---\n# Body')).toMatchObject({ title: 'Body' });
+      expect(buildVirtualMdFile('README', '')).toMatchObject({ title: 'README', extension: '' });
+
+      const stale = getVirtualWorkspaceSnapshot('unknown');
+      expect(stale).toMatchObject({ workspaceName: 'unknown', workspacePath: 'virtual://unknown' });
+      const ws = createUserVirtualWorkspace('Unreadable content');
+      localStorage.setItem(VIRTUAL_WORKSPACE_CONTENT_PREFIX + ws.id, '["invalid"]');
+      expect(getVirtualWorkspaceSnapshot(ws.path).files[0]).toMatchObject({ title: 'Welcome' });
+      expect(renderVirtualFile({
+        workspacePath: ws.path, relativePath: 'Welcome.md', fileList: [],
+        operationMetadata: {}, findFileInfo: vi.fn(),
+      })).toMatchObject({ markdownSource: '', html: expect.stringContaining('not found') });
+    });
+
+    it('merges and deduplicates persisted virtual recents with native browser recents', async () => {
+      const [legacy, current] = ['Legacy', 'Current'].map((name) => createUserVirtualWorkspace(name));
+      localStorage.setItem(USER_VIRTUAL_WORKSPACES_STORAGE_KEY, JSON.stringify([{ ...legacy, updatedAt: undefined }, current]));
+      vi.spyOn(BrowserRecentWorkspaces, 'load').mockResolvedValue([
+        { name: 'Duplicate', path: current.path, lastOpened: 0 },
+        { name: 'Local', path: 'local', lastOpened: 0 },
+      ]);
+      expect(await loadAllRecentWorkspaces()).toEqual([
+        { name: legacy.name, path: legacy.path, lastOpened: legacy.createdAt },
+        { name: current.name, path: current.path, lastOpened: current.updatedAt },
+        { name: 'Local', path: 'local', lastOpened: 0 },
+      ]);
     });
   });
 
@@ -312,7 +348,6 @@ describe('user-virtual-workspaces', () => {
       const handlers = createFileModeHandlers({
         state: testState,
         send: (msg) => messages.push(msg),
-        sendLoading: (label) => messages.push({ command: 'setLoading', label }),
         hostInfo: () => ({ appVersion: '1.7.1' }),
         findFileInfo: (list, rel) => ({ relativePath: rel, title: rel }),
         extractWorkspaceName: (p) => p.split('/').pop() || 'Workspace',

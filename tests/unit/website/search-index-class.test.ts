@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BrowserSearchIndex } from '../../../website-app/src/search-index';
 import type { MdFile } from '../../../ui/src/types';
 import { prepareHaystack } from '../../../ui/src/utils/unicodeSearch';
+import { memoryFile, MemoryFolder } from './memory-file-system';
 
 function makeItem(overrides: Partial<MdFile> & { relativePath: string; fileName: string; title: string }): MdFile {
   return {
@@ -120,6 +121,31 @@ describe('BrowserSearchIndex.prime', () => {
     expect(getEntrySpy).toHaveBeenCalledTimes(3);
     getEntrySpy.mockRestore();
   });
+});
+
+it('returns bounded case-sensitive incremental batches and filename matches for missing files', async () => {
+  const folder = new MemoryFolder('root');
+  const file = memoryFile('terms.md', 'Alpha alpha Alpha Alpha');
+  folder.children.set(file.name, file);
+  const index = new BrowserSearchIndex(folder.asHandle());
+  const items = [
+    makeItem({ relativePath: file.name, fileName: file.name, title: 'Terms' }),
+    makeItem({ relativePath: 'Alpha', fileName: 'Alpha', title: '' }),
+  ];
+  const onBatch = vi.fn();
+  await expect(index.searchIncremental(' A ', items, { onBatch })).resolves.toEqual({ total: 0, truncated: false, cancelled: false });
+  expect(onBatch).not.toHaveBeenCalled();
+  await expect(index.searchIncremental('Alpha', items, { batchSize: 2, limit: 2, matchCase: true, onBatch }))
+    .resolves.toEqual({ total: 2, truncated: true, cancelled: false });
+  expect(onBatch).toHaveBeenCalledWith([
+    expect.objectContaining({ matchIndex: 0, matchOrdinal: 0 }),
+    expect.objectContaining({ matchIndex: 12, matchOrdinal: 1 }),
+  ]);
+  onBatch.mockClear();
+  await expect(index.searchIncremental('Alpha', [items[1]], { matchCase: true, onBatch }))
+    .resolves.toEqual({ total: 1, truncated: false, cancelled: false });
+  expect(onBatch).toHaveBeenCalledWith([expect.objectContaining({ title: 'Alpha', excerpt: '' })]);
+  await expect(index.read('missing.md')).resolves.toBeNull();
 });
 
 describe('BrowserSearchIndex.search', () => {

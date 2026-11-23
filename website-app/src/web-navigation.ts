@@ -7,7 +7,6 @@ export type WebNavigationResult =
 
 function decodeNavigationHref(rawHref: string): string {
   const withoutFragment = rawHref.split('#', 1)[0].split('?', 1)[0].trim();
-  if (!withoutFragment) return '';
   try {
     return decodeURIComponent(withoutFragment).replace(/\\/g, '/').trim();
   } catch {

@@ -78,6 +78,16 @@ describe('resolveWebNavigationTarget', () => {
       kind: 'welcome',
     });
   });
+
+  it('resolves case-insensitive paths and handles decoded empty and root-only links', () => {
+    expect(resolveWebNavigationTarget(undefined, 'README.md', files)).toEqual({ kind: 'welcome' });
+    expect(resolveWebNavigationTarget('%20', 'README.md', files)).toEqual({ kind: 'file', filePath: 'README.md' });
+    expect(resolveWebNavigationTarget('%20', null, files)).toEqual({ kind: 'welcome' });
+    expect(resolveWebNavigationTarget('/', 'README.md', files)).toEqual({ kind: 'notFound', href: '/' });
+    expect(resolveWebNavigationTarget('INSTALL-MACOS.MD', 'docs/other.md', files)).toEqual({
+      kind: 'file', filePath: 'docs/install-macos.md',
+    });
+  });
 });
 
 describe('handleWebTestMessage navigate', () => {
