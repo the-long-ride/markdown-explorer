@@ -77,7 +77,11 @@ fn sanitize_leaf(file_name: &str, fallback: &str) -> String {
             other => other,
         })
         .collect::<String>();
-    if safe.is_empty() { fallback.into() } else { safe }
+    if safe.is_empty() {
+        fallback.into()
+    } else {
+        safe
+    }
 }
 
 pub fn normalize_export_file_name(file_name: &str) -> String {
@@ -109,8 +113,14 @@ mod tests {
 
     #[test]
     fn decodes_generic_base64_data_url() {
-        assert_eq!(decode_data_url("data:text/html;charset=utf-8;base64,SGVsbG8=").unwrap(), b"Hello");
-        assert_eq!(decode_data_url("data:application/zip;base64,WklQ").unwrap(), b"ZIP");
+        assert_eq!(
+            decode_data_url("data:text/html;charset=utf-8;base64,SGVsbG8=").unwrap(),
+            b"Hello"
+        );
+        assert_eq!(
+            decode_data_url("data:application/zip;base64,WklQ").unwrap(),
+            b"ZIP"
+        );
     }
 
     #[test]
@@ -120,13 +130,19 @@ mod tests {
 
     #[test]
     fn normalizes_export_file_name_without_forcing_png() {
-        assert_eq!(normalize_export_file_name("../Docs: export.html"), "Docs- export.html");
+        assert_eq!(
+            normalize_export_file_name("../Docs: export.html"),
+            "Docs- export.html"
+        );
         assert_eq!(normalize_export_file_name("site.zip"), "site.zip");
     }
 
     #[test]
     fn normalizes_png_file_name() {
-        assert_eq!(normalize_png_file_name("../Budget: chart"), "Budget- chart.png");
+        assert_eq!(
+            normalize_png_file_name("../Budget: chart"),
+            "Budget- chart.png"
+        );
         assert_eq!(normalize_png_file_name("report.PNG"), "report.PNG");
     }
 }

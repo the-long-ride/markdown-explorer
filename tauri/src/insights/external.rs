@@ -22,11 +22,16 @@ struct ParsedHttpUrl {
 impl ParsedHttpUrl {
     fn parse(input: &str) -> Result<Self, String> {
         let uri = http::Uri::from_str(input).map_err(|_| "invalid-url".to_string())?;
-        let scheme = uri.scheme_str().ok_or_else(|| "missing-scheme".to_string())?.to_ascii_lowercase();
+        let scheme = uri
+            .scheme_str()
+            .ok_or_else(|| "missing-scheme".to_string())?
+            .to_ascii_lowercase();
         if scheme != "http" && scheme != "https" {
             return Err("unsupported-scheme".into());
         }
-        let authority = uri.authority().ok_or_else(|| "missing-authority".to_string())?;
+        let authority = uri
+            .authority()
+            .ok_or_else(|| "missing-authority".to_string())?;
         if authority.as_str().contains('@') {
             return Err("embedded-credentials-unsupported".into());
         }
@@ -34,7 +39,9 @@ impl ParsedHttpUrl {
         if host.is_empty() {
             return Err("missing-host".into());
         }
-        let port = authority.port_u16().unwrap_or(if scheme == "https" { 443 } else { 80 });
+        let port = authority
+            .port_u16()
+            .unwrap_or(if scheme == "https" { 443 } else { 80 });
         let path_and_query = uri
             .path_and_query()
             .map(|value| value.as_str().to_string())
@@ -50,8 +57,14 @@ impl ParsedHttpUrl {
     }
 
     fn origin(&self) -> String {
-        let default_port = (self.scheme == "https" && self.port == 443) || (self.scheme == "http" && self.port == 80);
-        if default_port && !self.authority.rsplit_once(':').is_some_and(|(_, port)| port.parse::<u16>().is_ok()) {
+        let default_port = (self.scheme == "https" && self.port == 443)
+            || (self.scheme == "http" && self.port == 80);
+        if default_port
+            && !self
+                .authority
+                .rsplit_once(':')
+                .is_some_and(|(_, port)| port.parse::<u16>().is_ok())
+        {
             format!("{}://{}", self.scheme, self.host)
         } else {
             format!("{}://{}", self.scheme, self.authority)
@@ -117,7 +130,10 @@ fn is_private_ipv6(ip: Ipv6Addr) -> bool {
 pub fn is_private_ip(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(value) => is_private_ipv4(value),
-        IpAddr::V6(value) => value.to_ipv4_mapped().map(is_private_ipv4).unwrap_or_else(|| is_private_ipv6(value)),
+        IpAddr::V6(value) => value
+            .to_ipv4_mapped()
+            .map(is_private_ipv4)
+            .unwrap_or_else(|| is_private_ipv6(value)),
     }
 }
 
@@ -157,7 +173,12 @@ struct ResponseMeta {
     retry_after: Option<String>,
 }
 
-fn request_once(parsed: &ParsedHttpUrl, ip: IpAddr, method: &str, timeout_ms: u64) -> Result<ResponseMeta, String> {
+fn request_once(
+    parsed: &ParsedHttpUrl,
+    ip: IpAddr,
+    method: &str,
+    timeout_ms: u64,
+) -> Result<ResponseMeta, String> {
     let socket = SocketAddr::new(ip, parsed.port);
     let agent = ureq::AgentBuilder::new()
         .redirects(0)
@@ -183,18 +204,24 @@ fn request_once(parsed: &ParsedHttpUrl, ip: IpAddr, method: &str, timeout_ms: u6
 
 fn parse_retry_after(value: Option<&str>) -> Option<u64> {
     let raw = value?.trim();
-    raw.parse::<u64>().ok().map(|seconds| seconds.saturating_mul(1000))
+    raw.parse::<u64>()
+        .ok()
+        .map(|seconds| seconds.saturating_mul(1000))
 }
 
 pub fn origin_for_url(url: &str) -> String {
-    ParsedHttpUrl::parse(url).map(|parsed| parsed.origin()).unwrap_or_default()
+    ParsedHttpUrl::parse(url)
+        .map(|parsed| parsed.origin())
+        .unwrap_or_default()
 }
 
 pub fn check_url(url: &str, timeout_ms: u64, approved_private_origins: &HashSet<String>) -> Value {
     let original_url = url.to_string();
     let mut current = match ParsedHttpUrl::parse(url) {
         Ok(value) => value,
-        Err(reason) => return json!({"url": original_url, "status": "unsupported", "reason": reason}),
+        Err(reason) => {
+            return json!({"url": original_url, "status": "unsupported", "reason": reason})
+        }
     };
     let mut redirects = 0usize;
     let mut transient_retries = 0usize;
@@ -204,13 +231,15 @@ pub fn check_url(url: &str, timeout_ms: u64, approved_private_origins: &HashSet<
         let origin = current.origin();
         let addresses = match resolve_addresses(&current) {
             Ok(value) => value,
-            Err(reason) => return json!({
-                "url": original_url,
-                "status": "unreachable",
-                "finalUrl": current.raw,
-                "insecureDowngrade": insecure_downgrade,
-                "reason": reason,
-            }),
+            Err(reason) => {
+                return json!({
+                    "url": original_url,
+                    "status": "unreachable",
+                    "finalUrl": current.raw,
+                    "insecureDowngrade": insecure_downgrade,
+                    "reason": reason,
+                })
+            }
         };
         if (is_private_hostname(&current.host) || addresses.iter().copied().any(is_private_ip))
             && !approved_private_origins.contains(&origin)
@@ -228,24 +257,28 @@ pub fn check_url(url: &str, timeout_ms: u64, approved_private_origins: &HashSet<
         let ip = addresses[0];
         let mut response = match request_once(&current, ip, "HEAD", timeout_ms) {
             Ok(value) => value,
-            Err(reason) => return json!({
-                "url": original_url,
-                "status": "unreachable",
-                "finalUrl": current.raw,
-                "insecureDowngrade": insecure_downgrade,
-                "reason": reason,
-            }),
-        };
-        if response.status == 405 || response.status == 501 {
-            response = match request_once(&current, ip, "GET", timeout_ms) {
-                Ok(value) => value,
-                Err(reason) => return json!({
+            Err(reason) => {
+                return json!({
                     "url": original_url,
                     "status": "unreachable",
                     "finalUrl": current.raw,
                     "insecureDowngrade": insecure_downgrade,
                     "reason": reason,
-                }),
+                })
+            }
+        };
+        if response.status == 405 || response.status == 501 {
+            response = match request_once(&current, ip, "GET", timeout_ms) {
+                Ok(value) => value,
+                Err(reason) => {
+                    return json!({
+                        "url": original_url,
+                        "status": "unreachable",
+                        "finalUrl": current.raw,
+                        "insecureDowngrade": insecure_downgrade,
+                        "reason": reason,
+                    })
+                }
             };
         }
 
@@ -263,14 +296,16 @@ pub fn check_url(url: &str, timeout_ms: u64, approved_private_origins: &HashSet<
                 }
                 let next = match resolve_redirect(&current, location) {
                     Ok(value) => value,
-                    Err(reason) => return json!({
-                        "url": original_url,
-                        "status": "unreachable",
-                        "httpStatus": response.status,
-                        "finalUrl": current.raw,
-                        "insecureDowngrade": insecure_downgrade,
-                        "reason": reason,
-                    }),
+                    Err(reason) => {
+                        return json!({
+                            "url": original_url,
+                            "status": "unreachable",
+                            "httpStatus": response.status,
+                            "finalUrl": current.raw,
+                            "insecureDowngrade": insecure_downgrade,
+                            "reason": reason,
+                        })
+                    }
                 };
                 if current.scheme == "https" && next.scheme == "http" {
                     insecure_downgrade = true;
@@ -329,14 +364,26 @@ mod tests {
 
     #[test]
     fn keeps_private_approval_origin_scoped() {
-        assert_eq!(origin_for_url("https://example.test/path"), "https://example.test");
-        assert_eq!(origin_for_url("http://example.test:8080/path"), "http://example.test:8080");
+        assert_eq!(
+            origin_for_url("https://example.test/path"),
+            "https://example.test"
+        );
+        assert_eq!(
+            origin_for_url("http://example.test:8080/path"),
+            "http://example.test:8080"
+        );
     }
 
     #[test]
     fn resolves_relative_redirects_without_losing_origin() {
         let base = ParsedHttpUrl::parse("https://example.test/a/b/index.md?x=1").unwrap();
-        assert_eq!(resolve_redirect(&base, "../next").unwrap().raw, "https://example.test/a/next");
-        assert_eq!(resolve_redirect(&base, "/root").unwrap().raw, "https://example.test/root");
+        assert_eq!(
+            resolve_redirect(&base, "../next").unwrap().raw,
+            "https://example.test/a/next"
+        );
+        assert_eq!(
+            resolve_redirect(&base, "/root").unwrap().raw,
+            "https://example.test/root"
+        );
     }
 }

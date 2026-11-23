@@ -1,7 +1,11 @@
 use super::*;
 
 impl Dispatcher {
-    pub(super) fn handle_window_update_command(&self, cmd: &str, msg: &Value) -> Result<bool, String> {
+    pub(super) fn handle_window_update_command(
+        &self,
+        cmd: &str,
+        msg: &Value,
+    ) -> Result<bool, String> {
         match cmd {
             // ── C4: Window / Zoom ──
             "window-minimize" => {
@@ -31,8 +35,14 @@ impl Dispatcher {
                 }
             }
             "confirmNativeClose" => {
-                let request_id = msg.get("requestId").and_then(Value::as_str).unwrap_or_default();
-                let intent = msg.get("intent").and_then(Value::as_str).unwrap_or_default();
+                let request_id = msg
+                    .get("requestId")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                let intent = msg
+                    .get("intent")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
                 let cancelled = msg.get("cancelled").and_then(Value::as_bool) == Some(true);
                 let outcome = self
                     .state

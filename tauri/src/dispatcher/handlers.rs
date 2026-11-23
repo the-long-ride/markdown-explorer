@@ -279,11 +279,8 @@ impl Dispatcher {
         };
 
         if !status.ok {
-            if self.is_workspace_scan_current(
-                &workspace_path,
-                scan_generation,
-                operation.as_ref(),
-            ) {
+            if self.is_workspace_scan_current(&workspace_path, scan_generation, operation.as_ref())
+            {
                 self.send_workspace_unavailable(
                     &workspace_path,
                     status.reason.unwrap_or(WorkspaceUnavailableReason::Missing),
@@ -337,5 +334,4 @@ impl Dispatcher {
         );
         true
     }
-
 }

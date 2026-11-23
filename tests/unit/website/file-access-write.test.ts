@@ -1,5 +1,30 @@
 import { describe, expect, it, vi } from 'vitest';
-import { documentRevision, documentWriteCapability, writeTextFile } from '../../../website-app/src/file-access';
+import { documentRevision, documentWriteCapability, writeFileHandle, writeTextFile } from '../../../website-app/src/file-access';
+import { asFileHandle, memoryFile, MemoryFolder } from './memory-file-system';
+
+it('distinguishes missing files and denied or failed browser writes', async () => {
+  const folder = new MemoryFolder('root');
+  const file = memoryFile('notes.md');
+  folder.children.set(file.name, file);
+  await expect(writeTextFile(folder.asHandle(), 'missing.md', '# New', null, true))
+    .resolves.toEqual({ ok: false, reason: 'missing' });
+  await expect(documentWriteCapability(folder.asHandle(), 'missing.md'))
+    .resolves.toEqual({ supported: false, revision: null, reason: 'read-only-runtime' });
+  await expect(documentWriteCapability(asFileHandle(file))).resolves.toEqual({ supported: true, revision: '1:0' });
+  await expect(writeFileHandle(asFileHandle(memoryFile('private.md', '', 'denied')), '# New', null, true))
+    .resolves.toEqual({ ok: false, reason: 'permission-denied' });
+
+  const writer = vi.spyOn(file, 'createWritable');
+  for (const [error, result] of [
+    [new DOMException('Removed', 'NotFoundError'), { ok: false, reason: 'missing' }],
+    [new DOMException('Disk full', 'QuotaExceededError'), { ok: false, reason: 'write-failed', error: 'Disk full' }],
+    ['Disconnected', { ok: false, reason: 'write-failed', error: 'Disconnected' }],
+    [null, { ok: false, reason: 'write-failed', error: 'null' }],
+  ]) {
+    writer.mockRejectedValueOnce(error);
+    await expect(writeFileHandle(asFileHandle(file), '# New', null, true)).resolves.toEqual(result);
+  }
+});
 
 function createFileHandle(initialSource = '# A', initialModified = 10) {
   let source = initialSource;

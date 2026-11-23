@@ -65,6 +65,20 @@ describe('createAppBootstrap', () => {
   let htmlPreviewServer: { open: ReturnType<typeof vi.fn>; dispose: ReturnType<typeof vi.fn> };
   let createHtmlPreviewServerFn: ReturnType<typeof vi.fn>;
 
+  function bootstrap(overrides: Record<string, unknown> = {}) {
+    const hidden = makeHiddenWindowMock();
+    const WarmupWindow = vi.fn(function () { return hidden; });
+    WarmupWindow.getAllWindows = BrowserWindowImpl.getAllWindows;
+    return createAppBootstrap({
+      appImpl, BrowserWindowImpl: WarmupWindow, sessionImpl, MenuImpl, pathImpl: path, fsImpl: fs,
+      perfImpl, processImpl, setTimeoutImpl, clearTimeoutImpl, setImmediateImpl,
+      configureYouTubeEmbedHeadersFn, createUpdateManagerFn, registerIpcHandlersFn, runtimeImpl,
+      debugToolsImpl, appDirImpl: '/test/app', createMainWindowFn,
+      ipcMainImpl: {}, clipboardImpl: {}, shellImpl: { openExternal: vi.fn() },
+      createHtmlPreviewServerFn, ...overrides,
+    });
+  }
+
   beforeEach(() => {
     appImpl = makeAppMock();
     hiddenMock = makeHiddenWindowMock();
@@ -383,6 +397,39 @@ describe('createAppBootstrap', () => {
   });
 
   describe('returned API', () => {
+    test('publishes native references and delivers structured external requests only after a window exists', async () => {
+      const setMainWindow = vi.fn();
+      const setUpdateManager = vi.fn();
+      result = bootstrap({ setMainWindow, setUpdateManager });
+      const request = { mode: 'folder', folderPath: 'docs' };
+      result.deliverExternalOpenPath(request);
+      expect(setMainWindow).not.toHaveBeenCalled();
+      await Promise.resolve();
+      const win = result.getMainWindow();
+      expect(setMainWindow).toHaveBeenCalledWith(win);
+      expect(setUpdateManager).toHaveBeenCalledWith(result.getUpdateManager());
+      result.deliverExternalOpenPath(null);
+      expect(win.webContents.send).not.toHaveBeenCalled();
+      result.deliverExternalOpenPath(request);
+      expect(win.webContents.send).toHaveBeenCalledExactlyOnceWith('host-message', {
+        command: 'externalOpenRequest', request,
+      });
+      const { sendToWindow } = createUpdateManagerFn.mock.calls.at(-1)![0];
+      sendToWindow({ command: 'updateState' });
+      expect(win.webContents.send).toHaveBeenLastCalledWith('host-message', { command: 'updateState' });
+    });
+
+    test('does not dispose the runtime when native close confirmation defers quit', () => {
+      const app = makeAppMock();
+      const handleBeforeQuit = vi.fn(() => false);
+      bootstrap({ appImpl: app, createNativeCloseGuardFn: () => ({ attachWindow: vi.fn(), handleBeforeQuit }) });
+      const event = { preventDefault: vi.fn() };
+      app._trigger('before-quit', event);
+      expect(handleBeforeQuit).toHaveBeenCalledWith(event);
+      expect(runtimeImpl.dispose).not.toHaveBeenCalled();
+      expect(htmlPreviewServer.dispose).not.toHaveBeenCalled();
+    });
+
     test('createWindow marks perf and creates main window', async () => {
       await Promise.resolve();
       result.createWindow();
@@ -436,6 +483,56 @@ describe('createAppBootstrap', () => {
       expect(win.webContents.send).toHaveBeenCalledWith('host-message', {
         command: 'deleteWorkspaceEntriesResult', requestId: 'd1', mode: 'trash', deleted: ['old.md'], failed: [],
       });
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('keeps the active file in sync with workspace renames by path segment', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-bootstrap-rename-'));
+    try {
+      fs.mkdirSync(path.join(root, 'docs'));
+      fs.writeFileSync(path.join(root, 'docs', 'note.md'), '# Note');
+      runtimeImpl.state = { workspacePath: root, currentFile: path.join(root, 'docs', 'note.md') };
+      runtimeImpl.refreshActiveWorkspace = vi.fn();
+      bootstrap();
+      await Promise.resolve();
+      const { renameWorkspaceEntry } = registerIpcHandlersFn.mock.calls.at(-1)![0].handlers;
+      await renameWorkspaceEntry({ path: 'docs', name: 'archive', kind: 'folder' });
+      expect(runtimeImpl.state.currentFile).toBe(path.join(root, 'archive', 'note.md'));
+      await renameWorkspaceEntry({ path: 'archive/note.md', name: 'entry.md', kind: 'file' });
+      expect(runtimeImpl.state.currentFile).toBe(path.join(root, 'archive', 'entry.md'));
+      runtimeImpl.state.currentFile = path.join(root, 'archive-copy', 'note.md');
+      await renameWorkspaceEntry({ path: 'archive', name: 'notes', kind: 'folder' });
+      expect(runtimeImpl.state.currentFile).toBe(path.join(root, 'archive-copy', 'note.md'));
+      runtimeImpl.state.currentFile = null;
+      await renameWorkspaceEntry({ path: 'notes', name: 'docs', kind: 'folder' });
+      expect(runtimeImpl.state.currentFile).toBeNull();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('probes resources relative to directory and single-file workspaces', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mdx-bootstrap-probe-'));
+    try {
+      const documentPath = path.join(root, 'note.md');
+      fs.writeFileSync(documentPath, '# Note');
+      fs.writeFileSync(path.join(root, 'theme.css'), 'body {}');
+      result = bootstrap();
+      await Promise.resolve();
+      const { probeWorkspaceResource } = registerIpcHandlersFn.mock.calls.at(-1)![0].handlers;
+      const send = result.getMainWindow().webContents.send;
+      for (const workspacePath of [root, documentPath]) {
+        runtimeImpl.state = { workspacePath };
+        await probeWorkspaceResource({ requestId: 'present', documentPath, resourcePath: './theme.css' });
+        expect(send).toHaveBeenLastCalledWith('host-message', expect.objectContaining({
+          command: 'workspaceResourceProbeResult', requestId: 'present', status: 'exists', relativePath: 'theme.css',
+        }));
+      }
+      runtimeImpl.state.workspacePath = path.join(root, 'removed');
+      await probeWorkspaceResource({ requestId: 'gone', documentPath, resourcePath: './theme.css' });
+      expect(send).toHaveBeenLastCalledWith('host-message', expect.objectContaining({ requestId: 'gone', status: 'missing' }));
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

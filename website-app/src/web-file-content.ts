@@ -2,8 +2,6 @@ import {
   documentWriteCapability,
   documentRevision,
   resolveFileHandle,
-  writeFileHandle,
-  type BrowserDocumentWriteResult,
 } from './file-access';
 import type { MdFile } from '../../ui/src/types';
 import { isExtraDocumentFile, convertWebDocumentToMarkdown } from './web-document-converter';
@@ -16,15 +14,6 @@ export async function singleFileDocumentWriteCapability(handle: FileSystemFileHa
   const permission = await (handle as any).queryPermission?.({ mode: 'readwrite' });
   if (permission !== 'granted') return { supported: false, revision: null, reason: 'permission-required' as const };
   return { supported: true, revision: await documentRevision(handle) };
-}
-
-export async function writeSingleFileDocument(
-  handle: FileSystemFileHandle,
-  source: string,
-  expectedRevision: string | null,
-  force = false,
-): Promise<BrowserDocumentWriteResult> {
-  return writeFileHandle(handle, source, expectedRevision, force);
 }
 
 export function buildMdFileFromName(fileName: string, modifiedAt = 0): MdFile {

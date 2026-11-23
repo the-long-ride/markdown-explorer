@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { handlePanelDocumentWrite } from '../../../vscode/src/core/panelDocumentWrite';
+import { handlePanelDocumentWrite, panelDocumentWriteCapability } from '../../../vscode/src/core/panelDocumentWrite';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -51,6 +51,46 @@ function message(overrides: Record<string, unknown> = {}) {
 }
 
 describe('VS Code panel Markdown document writes', () => {
+  it('advertises writes only for accessible Markdown documents contained in the real workspace', async () => {
+    const file = path.resolve('/workspace/a.md');
+    const { deps } = createDeps({ [file]: '# A' });
+    const realpathImpl = async (value: string) => value;
+    const options = { realpathImpl };
+    await expect(panelDocumentWriteCapability(file, deps, options)).resolves.toEqual({ supported: true, revision: '10:3' });
+    await expect(panelDocumentWriteCapability(path.resolve('/workspace/readme.pdf'), deps, options)).resolves.toEqual({
+      supported: false, revision: null, reason: 'unsupported-document',
+    });
+    for (const [candidate, resolve] of [
+      [path.resolve('/external/a.md'), realpathImpl],
+      [file, async (value: string) => value === file ? path.resolve('/external/a.md') : value],
+      [file, async () => { throw new Error('permission denied'); }],
+    ] as const) {
+      await expect(panelDocumentWriteCapability(candidate, deps, { realpathImpl: resolve })).resolves.toEqual({
+        supported: false, revision: null, reason: 'read-only-runtime',
+      });
+    }
+  });
+
+  it.each([
+    [Object.assign(new Error('absent'), { code: 'ENOENT' }), 'missing', undefined],
+    [Object.assign(new Error('absent'), { name: 'FileNotFound' }), 'missing', undefined],
+    [new Error('permission denied'), 'write-failed', 'permission denied'],
+    ['unknown provider error', 'write-failed', 'unknown provider error'],
+  ])('reports filesystem failures without losing the original request: %s', async (error, reason, details) => {
+    const file = path.resolve('/workspace/a.md');
+    const { deps, writeFile } = createDeps({ [file]: '# A' });
+    const realpathImpl = async (value: string) => value;
+    const expected = { command: 'saveDocumentResult', requestId: 'save-1', filePath: file, ok: false, reason };
+    const result = { ...expected, ...(details && { error: details }) };
+    const rejectedRealpath = async () => { throw error; };
+    await expect(handlePanelDocumentWrite(message(), deps, { realpathImpl: rejectedRealpath })).resolves.toEqual(result);
+    deps.workspace.fs.readFile.mockRejectedValueOnce(error);
+    await expect(handlePanelDocumentWrite(message(), deps, { realpathImpl })).resolves.toEqual(result);
+    expect(writeFile).not.toHaveBeenCalled();
+    writeFile.mockRejectedValueOnce(error);
+    await expect(handlePanelDocumentWrite(message(), deps, { realpathImpl })).resolves.toEqual(result);
+  });
+
   it('writes through workspace.fs and returns a correlated result', async () => {
     const { deps, files, writeFile } = createDeps({ '/workspace/a.md': '# A' });
 

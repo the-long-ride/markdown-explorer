@@ -2,12 +2,58 @@ import { describe, expect, it } from 'vitest';
 import {
   detectDelimiter,
   excelColumnName,
+  inferHeader,
   parseDelimitedFenceInfo,
   parseDelimitedText,
   tokenizeDelimitedSource,
 } from '../../../vscode/src/markdown/delimitedText';
 
 describe('vscode delimitedText', () => {
+  it('preserves source syntax around escaped quotes and quoted multiline fields', () => {
+    const source = '\uFEFF"first","line\r\nwith ""quote"""\r\nnext,value';
+    const parts = tokenizeDelimitedSource(source, ',');
+    expect(parts.map(part => part.text).join('')).toBe(source);
+    expect(parts.filter(part => part.kind === 'field').map(part => [part.columnIndex, part.text])).toEqual([
+      [0, 'first'], [1, 'line'], [1, 'with '], [1, 'quote'], [0, 'next'], [1, 'value'],
+    ]);
+    expect(parseDelimitedText(source, { headerMode: 'noheader' }).rows).toEqual([
+      ['first', 'line\nwith "quote"'], ['next', 'value'],
+    ]);
+  });
+
+  it('preserves literal quotes, trailing fields and lone CRs inside quoted values', () => {
+    expect(parseDelimitedText('ordinary"quote,"first\rsecond"\r\nnext,\r\n\r\n', {
+      delimiter: ',', headerMode: 'noheader',
+    })).toMatchObject({ rows: [['ordinary"quote', 'first\nsecond'], ['next', '']], warnings: [] });
+    expect(parseDelimitedText('one,', { delimiter: ',', headerMode: 'noheader' }).rows).toEqual([['one', '']]);
+  });
+
+  it('recognizes literal delimiter options and leaves the last valid choice intact', () => {
+    expect(parseDelimitedFenceInfo('')).toEqual({ delimiter: undefined, headerMode: 'auto' });
+    expect(parseDelimitedFenceInfo('TSV no-header delimiter=; delimiter=invalid delimiter=.'))
+      .toEqual({ delimiter: ';', headerMode: 'noheader' });
+    expect(excelColumnName(1.5)).toBe('');
+    expect(excelColumnName(-1)).toBe('');
+    expect(parseDelimitedText('', { headerMode: 'header' })).toMatchObject({ headers: [], rows: [], hasHeader: true });
+  });
+
+  it.each([
+    [[[], []], false],
+    [[['template', ''], ['a', 'b']], false],
+    [[['code', 'cOdE'], ['a', 'b']], false],
+    [[['When', 'Enabled'], ['1/2/2026', 'false'], ['2026-01-03', 'yes']], true],
+    [[['Name', 'Item code'], ['First', 'X'], ['Second', 'Y']], true],
+    [[['alpha team', 'beta_group'], ['A', 'B']], true],
+    [[['§', '?'], ['A', 'B']], false],
+    [[['7', 'alpha'], ['letters', ''], ['words', '']], false],
+    [[['title'], ['Visible text']], true],
+    [[['other'], ['Visible text']], false],
+    [[['name'], ['Alpha', 'neutral'], ['123', '']], false],
+    [[['12', '9'], ['4', ''], ['text', '6'], ['8', '7']], false],
+  ])('infers a heading only when the leading row is sufficiently distinct: %j', (rows, expected) => {
+    expect(inferHeader(rows)).toBe(expected);
+  });
+
   describe('excelColumnName', () => {
     it('generates single and multi-letter column names', () => {
       expect(excelColumnName(0)).toBe('A');

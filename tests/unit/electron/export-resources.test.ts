@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createExportResourceHandlers } = require('../../../electron/core/runtime-export-resources.js');
+const { createExportResourceHandlers, resolveRequestedPath } = require('../../../electron/core/runtime-export-resources.js');
 
 const roots: string[] = [];
 
@@ -60,6 +60,33 @@ function harness(root: string) {
 }
 
 describe('Electron export resource handlers', () => {
+  it('returns precise errors for missing workspaces, unavailable files, directories, and unsupported URLs', () => {
+    const ws = workspace();
+    ws.write('folder/content.unknown', 'bytes');
+    const { handlers, sent } = harness(ws.root);
+    const missingWorkspace = harness(join(ws.root, 'missing'));
+    missingWorkspace.handlers.readWorkspaceExportResource();
+    expect(missingWorkspace.sent).toEqual([{ command: 'workspaceExportResourceResult', requestId: '', ok: false, reason: 'missing' }]);
+
+    for (const [resourcePath, reason] of [
+      ['', 'unsupported'], ['blob://url', 'unsupported'], ['file:///%XX', 'unsupported'],
+      ['folder', 'unsupported'], ['missing', 'missing'],
+    ]) {
+      handlers.readWorkspaceExportResource({ requestId: 'assets', resourcePath });
+      expect(sent.at(-1)).toMatchObject({ command: 'workspaceExportResourceResult', requestId: 'assets', ok: false, reason });
+    }
+    handlers.readWorkspaceExportResource({ requestId: 'unknown', resourcePath: 'folder/content.unknown' });
+    expect(sent.at(-1)).toMatchObject({
+      ok: true, relativePath: 'folder/content.unknown', mimeType: 'application/octet-stream', dataBase64: Buffer.from('bytes').toString('base64'),
+    });
+  });
+
+  it.each(['file:///C:/workspace/logo.svg', 'C:\\workspace\\logo.svg'])('resolves an absolute Windows path %s', (resourcePath) => {
+    const pathApi = require('node:path').win32;
+    expect(resolveRequestedPath({ workspaceRoot: 'C:\\workspace', resourcePath, pathApi }))
+      .toEqual({ target: 'C:\\workspace\\logo.svg' });
+  });
+
   it('reads document-relative and workspace-root-relative binary assets', () => {
     const ws = workspace();
     const documentPath = ws.write('docs/readme.md', '# Readme');

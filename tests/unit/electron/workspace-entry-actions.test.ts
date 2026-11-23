@@ -53,3 +53,131 @@ it('renames files on a volume without hard-link support',async()=>{
   expect(await rename({workspacePath:root,path:'a.md',name:'b.md',kind:'file',fsApi})).toMatchObject({ok:true,path:'b.md'});
   expect(fs.readFileSync(path.join(root,'b.md'),'utf8')).toBe('keep');expect(fs.existsSync(path.join(root,'a.md'))).toBe(false);
 });
+
+describe('workspace entry errors and recovery', () => {
+  it('rejects invalid paths and preserves entries if the workspace is absent or not a directory', async () => {
+    const root = temp();
+    const existing = path.join(root, 'a.md');
+    fs.writeFileSync(existing, 'keep');
+    const create = (overrides: Record<string, unknown>) => entries.createWorkspaceEntry({
+      workspacePath: root, parentPath: '', name: 'x.md', kind: 'file', ...overrides,
+    });
+    await expect(create({ workspacePath: undefined })).resolves.toMatchObject({ reason: 'unsupported' });
+    await expect(create({ workspacePath: existing })).resolves.toMatchObject({ reason: 'unsupported' });
+    await expect(create({ name: '.git' })).resolves.toMatchObject({ reason: 'protected' });
+    await expect(create({ name: 'COM1.txt' })).resolves.toMatchObject({ reason: 'invalid-name' });
+    for (const parentPath of ['sub//dir', './dir', 'sub\\dir']) {
+      await expect(create({ parentPath })).resolves.toMatchObject({ reason: 'outside-workspace' });
+    }
+    const trashItem = vi.fn();
+    await expect(entries.deleteWorkspaceEntries({ workspacePath: root, paths: ['../a.md', '', '.git'], trashItem })).resolves.toEqual({
+      deleted: [], failed: [
+        { path: '../a.md', reason: 'outside-workspace' },
+        { path: '', reason: 'protected' }, { path: '.git', reason: 'protected' },
+      ],
+    });
+    await expect(entries.deleteWorkspaceEntries({ workspacePath: null, paths: ['a.md'], trashItem })).resolves.toEqual({
+      deleted: [], failed: [{ path: 'a.md', reason: 'unsupported' }],
+    });
+    await expect(entries.deleteWorkspaceEntries({ workspacePath: root, paths: null, trashItem })).resolves.toEqual({ deleted: [], failed: [] });
+    await expect(rename({ workspacePath: null, path: 'a.md', name: 'b.md', kind: 'file' })).resolves.toMatchObject({ reason: 'unsupported' });
+    await expect(rename({ workspacePath: root, path: 'a.md', name: '.git', kind: 'file' })).resolves.toMatchObject({ reason: 'protected' });
+    await expect(rename({ workspacePath: root, path: 'a.md', name: 'a.md', kind: 'file' })).resolves.toMatchObject({ ok: true, path: 'a.md' });
+    expect(trashItem).not.toHaveBeenCalled();
+    expect(fs.readFileSync(existing, 'utf8')).toBe('keep');
+  });
+
+  it('rejects mutations through parent and target aliases outside the workspace', async () => {
+    const root = temp();
+    const outside = temp();
+    fs.mkdirSync(path.join(root, 'folder'));
+    fs.mkdirSync(path.join(root, '.git'));
+    fs.writeFileSync(path.join(root, 'a.md'), 'original');
+    const fsApi = {
+      ...fs, promises: {
+        ...fs.promises,
+        realpath: async (target: string) => {
+          if (target === path.join(root, 'folder')) return outside;
+          if (target === path.join(root, 'a.md')) return path.join(root, '.git', 'config');
+          return fs.promises.realpath(target);
+        },
+      },
+    };
+    const trashItem = vi.fn();
+    await expect(entries.deleteWorkspaceEntries({ workspacePath: root, paths: ['folder/a.md', 'a.md'], fsApi, trashItem })).resolves.toEqual({
+      deleted: [], failed: [{ path: 'folder/a.md', reason: 'outside-workspace' }, { path: 'a.md', reason: 'protected' }],
+    });
+    await expect(rename({ workspacePath: root, path: 'folder/a.md', name: 'b.md', kind: 'file', fsApi }))
+      .resolves.toMatchObject({ reason: 'outside-workspace' });
+    await expect(rename({ workspacePath: root, path: 'a.md', name: 'b.md', kind: 'file', fsApi }))
+      .resolves.toMatchObject({ reason: 'protected' });
+    expect(trashItem).not.toHaveBeenCalled();
+    expect(fs.readFileSync(path.join(root, 'a.md'), 'utf8')).toBe('original');
+  });
+
+  it('rolls back the exclusive destination if removing the original fails', async () => {
+    const root = temp();
+    const source = path.join(root, 'a.md');
+    const target = path.join(root, 'b.md');
+    fs.writeFileSync(source, 'keep');
+    const unlink = vi.fn(async (file: string) => {
+      if (file === source) throw Object.assign(new Error('denied'), { code: 'EACCES' });
+      await fs.promises.unlink(file);
+    });
+    const fsApi = { ...fs, promises: { ...fs.promises, unlink } };
+    await expect(rename({ workspacePath: root, path: 'a.md', name: 'b.md', kind: 'file', fsApi }))
+      .resolves.toMatchObject({ ok: false, reason: 'permission-denied', error: 'denied' });
+    expect(unlink.mock.calls).toEqual([[source], [target]]);
+    expect(fs.readFileSync(source, 'utf8')).toBe('keep');
+    expect(fs.existsSync(target)).toBe(false);
+  });
+
+  it.each([false, true])('stages case-only rename on case-insensitive volumes (failure=%s)', async (fail) => {
+    const root = temp();
+    const source = path.join(root, 'lower.md');
+    const target = path.join(root, 'LOWER.md');
+    fs.writeFileSync(source, 'keep');
+    const nativeRename = vi.fn().mockImplementation(async (from, to) => {
+      if (fail && to === target) throw Object.assign(new Error('denied'), { code: 'EPERM' });
+      await fs.promises.rename(from, to);
+    });
+    const fsApi = {
+      ...fs, promises: {
+        ...fs.promises, rename: nativeRename,
+        lstat: (file: string) => fs.promises.lstat(file === target ? source : file),
+      },
+    };
+    const result = await rename({ workspacePath: root, path: 'lower.md', name: 'LOWER.md', kind: 'file', fsApi });
+    expect(result).toMatchObject(fail ? { ok: false, reason: 'permission-denied' } : { ok: true, path: 'LOWER.md' });
+    expect(nativeRename).toHaveBeenCalledTimes(fail ? 3 : 2);
+    expect(fs.readdirSync(root)).toEqual([fail ? 'lower.md' : 'LOWER.md']);
+  });
+
+  it('returns protocol results even if host state or refresh fails', async () => {
+    const root = temp();
+    const refresh = vi.fn().mockRejectedValue(new Error('watch closed'));
+    const sendHostMessage = vi.fn();
+    const onRename = vi.fn();
+    const getWorkspacePath = vi.fn(() => root);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const handlers = entries.createWorkspaceEntryHandlers({ getWorkspacePath, refresh, sendHostMessage, trashItem: vi.fn(), onRename });
+    await handlers.handleCreateWorkspaceEntry();
+    await handlers.handleCreateWorkspaceEntry({ requestId: 'create', name: 'a.md', kind: 'file' });
+    await handlers.handleRenameWorkspaceEntry();
+    await handlers.handleRenameWorkspaceEntry({ requestId: 'rename', path: 'a.md', name: 'b.md', kind: 'file' });
+    getWorkspacePath.mockImplementation(() => { throw new Error('state gone'); });
+    await handlers.handleDeleteWorkspaceEntries();
+    await handlers.handleDeleteWorkspaceEntries({ requestId: 'delete', paths: ['b.md', null] });
+    expect(sendHostMessage.mock.calls).toEqual([
+      [{ command: 'createWorkspaceEntryResult', requestId: undefined, ok: false, reason: 'invalid-name' }],
+      [{ command: 'createWorkspaceEntryResult', requestId: 'create', ok: true, kind: 'file', path: 'a.md' }],
+      [{ command: 'renameWorkspaceEntryResult', requestId: undefined, ok: false, reason: 'outside-workspace' }],
+      [{ command: 'renameWorkspaceEntryResult', requestId: 'rename', ok: true, oldPath: 'a.md', kind: 'file', path: 'b.md' }],
+      [{ command: 'deleteWorkspaceEntriesResult', requestId: undefined, mode: 'trash', deleted: [], failed: [] }],
+      [{ command: 'deleteWorkspaceEntriesResult', requestId: 'delete', mode: 'trash', deleted: [],
+        failed: [{ path: 'b.md', reason: 'failed' }, { path: '', reason: 'failed' }] }],
+    ]);
+    expect(onRename).toHaveBeenCalledExactlyOnceWith('a.md', 'b.md');
+    expect(log).toHaveBeenCalledTimes(2);
+  });
+});

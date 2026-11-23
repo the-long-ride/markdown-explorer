@@ -1,21 +1,15 @@
-#[cfg(not(test))]
 pub mod app_state;
 #[cfg(not(test))]
 pub mod core;
 pub mod debug_tools;
 #[cfg(not(test))]
 pub mod dispatcher;
-#[cfg(test)]
 #[path = "dispatcher/document_write.rs"]
-mod document_write_test_target;
-#[cfg(test)]
-#[path = "dispatcher/git_history.rs"]
-mod git_history_test_target;
-#[cfg(test)]
-#[path = "dispatcher/workspace_entries.rs"]
-mod workspace_entries_test_target;
+mod document_write;
 pub mod error;
 pub mod fonts;
+#[path = "dispatcher/git_history.rs"]
+mod git_history;
 #[cfg(not(test))]
 pub mod host_message;
 pub mod insights;
@@ -32,6 +26,8 @@ pub mod runtime;
 pub mod search;
 pub mod update;
 pub mod workspace;
+#[path = "dispatcher/workspace_entry_operations.rs"]
+mod workspace_entry_operations;
 pub mod youtube;
 
 #[cfg(not(test))]

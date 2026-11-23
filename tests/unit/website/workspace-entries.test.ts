@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { handleBrowserWorkspaceEntryCommand } from '../../../website-app/src/workspace-entries';
+import { createBrowserWorkspaceEntry, handleBrowserWorkspaceEntryCommand, renameBrowserWorkspaceEntry } from '../../../website-app/src/workspace-entries';
 import { handleWebFileUtilityMessage } from '../../../website-app/src/web-file-utility-router';
+import { memoryFile, MemoryFolder } from './memory-file-system';
 
 class MemoryFile {
   readonly kind = 'file';
@@ -9,6 +10,71 @@ class MemoryFile {
   async getFile() { return new Blob([this.content]); }
   async createWritable() { return { write: async (data: Blob) => { this.content = await data.text(); }, close: async () => {} }; }
 }
+
+describe('browser workspace rename', () => {
+  it('rejects unsupported, protected, and invalid paths before asking for permission', async () => {
+    const folder = new MemoryFolder('root', 'denied');
+    const root = folder.asHandle();
+    const input = { path: 'old.md', name: 'new.md', kind: 'file' };
+    expect(await renameBrowserWorkspaceEntry(null, input)).toMatchObject({ reason: 'unsupported' });
+    for (const [patch, reason] of [
+      [{ path: '../outside.md' }, 'outside-workspace'],
+      [{ path: '.git/config' }, 'protected'],
+      [{ path: undefined }, 'protected'],
+      [{ name: undefined }, 'invalid-name'],
+      [{ name: 'outside/file.md' }, 'invalid-name'],
+      [{ kind: 'symlink' }, 'invalid-name'],
+      [{}, 'permission-denied'],
+    ] as const) {
+      expect(await renameBrowserWorkspaceEntry(root, { ...input, ...patch })).toMatchObject({ ok: false, reason });
+    }
+  });
+
+  it('does not replace an existing directory, but allows a same-name rename', async () => {
+    const folder = new MemoryFolder('root');
+    folder.children.set('notes', new MemoryFolder('notes'));
+    folder.children.set('archive', new MemoryFolder('archive'));
+    const root = folder.asHandle();
+    expect(await renameBrowserWorkspaceEntry(root, { path: 'notes', name: 'notes', kind: 'folder' }))
+      .toEqual({ ok: true, oldPath: 'notes', path: 'notes', kind: 'folder' });
+    expect(await renameBrowserWorkspaceEntry(root, { path: 'notes', name: 'archive', kind: 'folder' }))
+      .toMatchObject({ ok: false, reason: 'exists' });
+  });
+
+  it('uses a browser-native move for case-only renames of the same entry', async () => {
+    const folder = new MemoryFolder('root');
+    const note = Object.assign(memoryFile('note.md', '# Note'), {
+      isSameEntry: vi.fn().mockResolvedValue(true),
+      move: vi.fn(),
+    });
+    folder.children.set('note.md', note);
+    folder.children.set('different.md', memoryFile('different.md', '# Different'));
+    const original = folder.getFileHandle.bind(folder);
+    vi.spyOn(folder, 'getFileHandle').mockImplementation((name, options) => original(name === 'NOTE.md' ? 'note.md' : name, options));
+    const root = folder.asHandle();
+    expect(await renameBrowserWorkspaceEntry(root, { path: 'note.md', name: 'different.md', kind: 'file' })).toMatchObject({ reason: 'exists' });
+    note.isSameEntry.mockResolvedValueOnce(false);
+    expect(await renameBrowserWorkspaceEntry(root, { path: 'note.md', name: 'NOTE.md', kind: 'file' })).toMatchObject({ reason: 'exists' });
+    expect(await renameBrowserWorkspaceEntry(root, { path: 'note.md', name: 'NOTE.md', kind: 'file' })).toMatchObject({ ok: true, path: 'NOTE.md' });
+    expect(note.move).toHaveBeenCalledExactlyOnceWith(root, 'NOTE.md');
+  });
+
+  it('keeps the source and rolls back an incomplete recursive copy', async () => {
+    const root = new MemoryFolder('root');
+    const child = new MemoryFolder('child');
+    const file = memoryFile('private.md', '# Secret');
+    child.children.set(file.name, file);
+    root.children.set(child.name, child);
+    vi.spyOn(file, 'getFile').mockRejectedValue(new DOMException('Denied', 'NotAllowedError'));
+    expect(await renameBrowserWorkspaceEntry(root.asHandle(), { path: 'child', name: 'next', kind: 'folder' }))
+      .toMatchObject({ ok: false, reason: 'permission-denied' });
+    expect([...root.children.keys()]).toEqual(['child']);
+
+    vi.spyOn(root, 'getFileHandle').mockRejectedValue(new DOMException('Restricted', 'SecurityError'));
+    expect(await createBrowserWorkspaceEntry(root.asHandle(), { name: 'new.md', kind: 'file' }))
+      .toMatchObject({ ok: false, reason: 'permission-denied', error: 'Restricted' });
+  });
+});
 class MemoryDir {
   readonly kind = 'directory';
   readonly entries = new Map<string, MemoryDir | MemoryFile>();

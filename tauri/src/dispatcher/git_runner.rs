@@ -80,7 +80,9 @@ pub(super) fn run_git_limited(
     let mut child = command.spawn().map_err(|err| {
         // A missing cwd fails the spawn too (NotFound on Unix, an invalid-directory error on Windows);
         // do not blame Git for a deleted folder.
-        if !cwd.is_dir() { return error("not-repository", "The workspace folder does not exist"); }
+        if !cwd.is_dir() {
+            return error("not-repository", "The workspace folder does not exist");
+        }
         if err.kind() == std::io::ErrorKind::NotFound {
             error("git-unavailable", "Git executable is unavailable")
         } else {
@@ -89,7 +91,11 @@ pub(super) fn run_git_limited(
     })?;
 
     let overflow = Arc::new(AtomicBool::new(false));
-    let stdout_reader = spawn_pipe_reader(child.stdout.take(), max_stdout_bytes, Some(overflow.clone()));
+    let stdout_reader = spawn_pipe_reader(
+        child.stdout.take(),
+        max_stdout_bytes,
+        Some(overflow.clone()),
+    );
     let stderr_reader = spawn_pipe_reader(child.stderr.take(), GIT_STDERR_CAPTURE_BYTES, None);
     let too_large = || error("output-too-large", "Git output exceeded the allowed size");
 
@@ -121,14 +127,23 @@ pub(super) fn run_git_limited(
     };
 
     // Git can exit early (broken pipe) after the reader stopped on an oversized stream.
-    if overflow.load(Ordering::SeqCst) { return Err(too_large()); }
+    if overflow.load(Ordering::SeqCst) {
+        return Err(too_large());
+    }
     let stdout = stdout_reader
         .recv_timeout(PIPE_DRAIN_TIMEOUT)
         .map_err(|_| error("git-command-failed", "Git output stream did not close"))?;
-    if overflow.load(Ordering::SeqCst) { return Err(too_large()); }
+    if overflow.load(Ordering::SeqCst) {
+        return Err(too_large());
+    }
     if !status.success() {
-        let stderr = stderr_reader.recv_timeout(PIPE_DRAIN_TIMEOUT).unwrap_or_default();
-        return Err(error("git-command-failed", String::from_utf8_lossy(&stderr).trim().to_owned()));
+        let stderr = stderr_reader
+            .recv_timeout(PIPE_DRAIN_TIMEOUT)
+            .unwrap_or_default();
+        return Err(error(
+            "git-command-failed",
+            String::from_utf8_lossy(&stderr).trim().to_owned(),
+        ));
     }
     Ok(String::from_utf8_lossy(&stdout).into_owned())
 }
@@ -138,21 +153,36 @@ mod tests {
     use super::*;
 
     fn temp_dir(label: &str) -> std::path::PathBuf {
-        let nonce = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
-        let dir = std::env::temp_dir().join(format!("md-explorer-git-runner-{label}-{}-{nonce}", std::process::id()));
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!(
+            "md-explorer-git-runner-{label}-{}-{nonce}",
+            std::process::id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         dir
     }
 
-    fn args(values: &[&str]) -> Vec<String> { values.iter().map(|value| (*value).to_owned()).collect() }
+    fn args(values: &[&str]) -> Vec<String> {
+        values.iter().map(|value| (*value).to_owned()).collect()
+    }
 
     #[test]
     fn oversized_stdout_is_rejected_while_streaming() {
         let dir = temp_dir("big");
         // `git var -l` needs no repository and prints far more than 16 bytes.
-        let small = run_git_limited(&dir, &args(&["var", "-l"]), Duration::from_secs(20), 1024 * 1024).unwrap();
+        let small = run_git_limited(
+            &dir,
+            &args(&["var", "-l"]),
+            Duration::from_secs(20),
+            1024 * 1024,
+        )
+        .unwrap();
         assert!(!small.is_empty());
-        let error = run_git_limited(&dir, &args(&["var", "-l"]), Duration::from_secs(20), 16).unwrap_err();
+        let error =
+            run_git_limited(&dir, &args(&["var", "-l"]), Duration::from_secs(20), 16).unwrap_err();
         assert_eq!(error.reason, "output-too-large");
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -166,16 +196,26 @@ mod tests {
             &args(&["-c", "alias.slow=!sleep 5", "slow"]),
             Duration::from_millis(300),
             MAX_GIT_OUTPUT_BYTES,
-        ).unwrap_err();
+        )
+        .unwrap_err();
         assert_eq!(error.reason, "git-timeout");
-        assert!(started.elapsed() < Duration::from_secs(4), "the timeout must not wait for the child");
+        assert!(
+            started.elapsed() < Duration::from_secs(4),
+            "the timeout must not wait for the child"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn failing_git_reports_stderr_and_lossy_utf8_is_tolerated() {
         let dir = temp_dir("fail");
-        let error = run_git_limited(&dir, &args(&["definitely-not-a-git-command"]), Duration::from_secs(20), MAX_GIT_OUTPUT_BYTES).unwrap_err();
+        let error = run_git_limited(
+            &dir,
+            &args(&["definitely-not-a-git-command"]),
+            Duration::from_secs(20),
+            MAX_GIT_OUTPUT_BYTES,
+        )
+        .unwrap_err();
         assert_eq!(error.reason, "git-command-failed");
         assert!(!error.message.is_empty());
         let _ = std::fs::remove_dir_all(&dir);

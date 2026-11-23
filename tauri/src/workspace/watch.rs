@@ -62,8 +62,22 @@ const EXTRA_DOCUMENT_EXTENSIONS: &[&str] = &[
 ];
 
 const IGNORED_DIRS: &[&str] = &[
-    ".git", "node_modules", ".vscode", "dist", "out", "build", "coverage", ".next",
-    ".nuxt", ".turbo", ".cache", "vendor", "target", "bin", "obj", ".tauri",
+    ".git",
+    "node_modules",
+    ".vscode",
+    "dist",
+    "out",
+    "build",
+    "coverage",
+    ".next",
+    ".nuxt",
+    ".turbo",
+    ".cache",
+    "vendor",
+    "target",
+    "bin",
+    "obj",
+    ".tauri",
 ];
 
 fn is_ignored_watch_path(path: &str) -> bool {
@@ -634,10 +648,9 @@ mod tests {
 
     #[test]
     fn collect_watch_event_paths_ignores_access_and_filters_ignored_paths() {
-        let access_event = notify::Event::new(notify::EventKind::Access(
-            notify::event::AccessKind::Read,
-        ))
-        .add_path(PathBuf::from("/workspace/readme.md"));
+        let access_event =
+            notify::Event::new(notify::EventKind::Access(notify::event::AccessKind::Read))
+                .add_path(PathBuf::from("/workspace/readme.md"));
         assert!(collect_watch_event_paths(&access_event).is_none());
 
         let mixed_event = notify::Event::new(notify::EventKind::Modify(

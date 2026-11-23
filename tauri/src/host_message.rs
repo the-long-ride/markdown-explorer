@@ -35,9 +35,7 @@ fn dispatch_native_host_message(app: &AppHandle, payload: &Value) {
     let Ok(payload_json) = serde_json::to_string(payload) else {
         return;
     };
-    let script = format!(
-        "window.__markdownExplorerHandleHostMessage?.({payload_json});"
-    );
+    let script = format!("window.__markdownExplorerHandleHostMessage?.({payload_json});");
     let _ = window.eval(script);
 }
 
