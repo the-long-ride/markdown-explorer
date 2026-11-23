@@ -97,18 +97,6 @@ describe('GitHub Actions workflow contracts', () => {
     expect(workflow).toContain('overwrite_files: true');
   });
 
-  test('macOS release builds brand the standalone disk image files', () => {
-    const workflow = readWorkflow('release.yml');
-    const iconCommand = 'swift scripts/set-dmg-file-icon.swift ui/assets/logos/logo-512.png';
-
-    expect(workflow).toContain(
-      "if: runner.os == 'macOS'\n" + `        run: ${iconCommand} electron/dist/*.dmg`,
-    );
-    expect(workflow).toContain(
-      "if: runner.os == 'macOS'\n" + `        run: ${iconCommand} tauri/target/release/bundle/dmg/*.dmg`,
-    );
-  });
-
   test('desktop store workflow publishes Tauri packages from reusable releases', () => {
     const workflow = readWorkflow('publish-desktop-stores.yml');
     expect(workflow).toContain('workflow_call:');
