@@ -10,6 +10,11 @@ const mockPostMessage = vi.fn();
 const mockOpenInEditor = vi.fn();
 const mockToggleToc = vi.fn();
 const mockToggleFocusMode = vi.fn();
+let mockSnapshot: { repositoryView: { mode: 'revision' }; activeToc?: Array<{ id: string; text: string; level: number; children: [] }> } | undefined;
+
+vi.mock('../../../../ui/src/contexts/RepositorySnapshotContext', () => ({
+  useRepositorySnapshot: () => mockSnapshot,
+}));
 
 let mockAppState: any;
 
@@ -205,7 +210,7 @@ vi.mock('../../../../ui/src/components/shared/ToolbarActionMenu', () => ({
       <button data-testid="menu-edit" onClick={props.onEdit}>Edit</button>
       <button data-testid="menu-settings" onClick={props.onSettings}>Settings</button>
       <button data-testid="menu-sidebar" onClick={props.onSidebarToggle}>Sidebar</button>
-      <button data-testid="menu-toc" onClick={props.onTocToggle}>TOC</button>
+      <button data-testid="menu-toc" disabled={props.tocToggleDisabled} aria-pressed={props.tocActive} onClick={props.onTocToggle}>TOC</button>
       <button data-testid="menu-focus" onClick={props.onFocusModeToggle}>Focus</button>
       {props.showFullscreen && <button data-testid="menu-fullscreen" onClick={props.onFullscreenToggle}>Show full screen</button>}
     </div>
@@ -256,6 +261,7 @@ describe('DesktopTabBar interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAppState = createMockAppState();
+    mockSnapshot = undefined;
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       writable: true,
@@ -396,6 +402,22 @@ describe('DesktopTabBar interactions', () => {
     renderTabBar();
     fireEvent.click(screen.getByTestId('menu-edit'));
     expect(mockOpenInEditor).not.toHaveBeenCalled();
+  });
+
+  it('does not launch editing without a live file and uses the revision outline', () => {
+    mockAppState = createMockAppState({ currentFile: null, tocCollapsed: false });
+    mockSnapshot = { repositoryView: { mode: 'revision' } };
+    const { rerender } = renderTabBar();
+    expect(screen.getByTestId('menu-toc')).toBeDisabled();
+    fireEvent.click(screen.getByTestId('menu-edit'));
+    expect(mockOpenInEditor).not.toHaveBeenCalled();
+    mockSnapshot.activeToc = [{ id: 'revision', text: 'Revision', level: 1, children: [] }];
+    rerender(<DesktopTabBar {...props} />);
+    const toc = screen.getByTestId('menu-toc');
+    expect(toc).toBeEnabled();
+    expect(toc).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(toc);
+    expect(mockToggleToc).toHaveBeenCalledOnce();
   });
 
   it('closes a tab when its close button is clicked', () => {

@@ -4,6 +4,7 @@ import { WelcomePage } from "../../../../ui/src/components/Content/WelcomePage";
 import { WelcomeLaunchpad } from "../../../../ui/src/components/Content/WelcomeLaunchpad";
 import { RandomTipCard } from "../../../../ui/src/components/Content/RandomTipCard";
 import { useAppState } from "../../../../ui/src/contexts/AppStateContext";
+import * as translations from "../../../../ui/src/contexts/translations";
 
 vi.mock("../../../../ui/src/contexts/AppStateContext");
 
@@ -696,6 +697,54 @@ describe("WelcomePage rendering", () => {
         expect(onMessage).toHaveBeenCalledOnce();
       } finally {
         delete (window as any).__webBus;
+      }
+    });
+
+    it("does not dispatch virtual workspace creation if the web bus disappears before the click", () => {
+      const bus = new EventTarget();
+      const onMessage = vi.fn();
+      bus.addEventListener("webview-message", onMessage);
+      vi.stubGlobal("__webBus", bus);
+      try {
+        render(<WelcomeLaunchpad language="en" isDesktop={false} />);
+        const createButton = screen.getByTestId("welcome-create-virtual-workspace-btn");
+        vi.stubGlobal("__webBus", undefined);
+        fireEvent.click(createButton);
+        expect(onMessage).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it("keeps actions available when the locale omits launchpad labels", () => {
+      const original = translations.getTranslations("en");
+      const translate = vi.spyOn(translations, "getTranslations").mockReturnValue({
+        ...original,
+        actions: { ...original.actions, workspaceSelection: "" },
+        workspaceSelection: { ...original.workspaceSelection, title: "", subtitle: "", openFile: "", openFolder: "", workspaces: "" },
+        sidebar: { ...original.sidebar, files: "" },
+        topbar: { ...original.topbar, settings: "" },
+      });
+      try {
+        const { rerender } = render(<WelcomeLaunchpad language="en" isDesktop />);
+        expect(screen.getByText("Select a workspace folder or file")).toBeVisible();
+        expect(screen.getByRole("button", { name: "Open Folder" })).toBeVisible();
+        expect(screen.getByRole("button", { name: "Open File" })).toBeVisible();
+        expect(screen.getByRole("button", { name: "Settings" })).toBeVisible();
+        rerender(<WelcomeLaunchpad language="en" isDesktop workspaceName="Docs" fileCount={2}
+          recentWorkspaces={[{ name: "Notes", path: "/notes" }]} />);
+        expect(screen.getByRole("button", { name: "Switch Workspace" })).toBeVisible();
+        expect(screen.getByText("2 files")).toBeVisible();
+        expect(screen.getByText("Recent Workspaces")).toBeVisible();
+        translate.mockReturnValue({
+          ...original,
+          actions: { ...original.actions, workspaceSelection: "" },
+          workspaceSelection: { ...original.workspaceSelection, title: "Choose a workspace" },
+        });
+        rerender(<WelcomeLaunchpad language="en" isDesktop workspaceName="Docs" />);
+        expect(screen.getByRole("button", { name: "Choose a workspace" })).toBeVisible();
+      } finally {
+        translate.mockRestore();
       }
     });
 

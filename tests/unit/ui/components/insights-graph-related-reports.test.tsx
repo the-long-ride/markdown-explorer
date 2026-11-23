@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
@@ -268,6 +268,30 @@ describe('Insights Graph, Related, external checks, and reports', () => {
     expect(onCheckExternalLinks).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: /check external links/i }));
     expect(onCheckExternalLinks).toHaveBeenCalledWith(['https://example.test/path']);
+  });
+
+  it('rechecks a known result, shows the pending state, and supports cancellation', async () => {
+    const url = 'https://example.test/docs';
+    const remote = doc('remote.md', `# Remote\n[Docs](${url})`);
+    const index = new WorkspaceInsightsIndex();
+    index.applyDocument(remote);
+    const externalResults = new Map([[url, { requestId: 'check-1', url, status: 'reachable' as const, checkedAt: '2025-01-07T00:00:00.000Z' }]]);
+    let done!: () => void;
+    const onCheckExternalLinks = vi.fn(() => new Promise<void>(resolve => { done = resolve; }));
+    const onCancelExternalChecks = vi.fn();
+    const props = { snapshot: index.snapshot(), documents: [remote], externalResults, externalCheckingEnabled: true };
+    const { rerender } = render(<LinksView {...props} />);
+    expect(screen.getByRole('button', { name: 'Recheck' })).toBeDisabled();
+    rerender(<LinksView {...props} onCheckExternalLinks={onCheckExternalLinks} onCancelExternalChecks={onCancelExternalChecks} />);
+    expect(screen.getByRole('button', { name: `${url} - remote.md` })).toHaveTextContent(new Date(externalResults.get(url)!.checkedAt).toLocaleString());
+    fireEvent.click(screen.getByRole('button', { name: 'Recheck' }));
+    expect(onCheckExternalLinks).toHaveBeenCalledExactlyOnceWith([url], { recheck: true });
+    expect(screen.getByRole('button', { name: /checking external links/i })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Recheck' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel checks' }));
+    expect(onCancelExternalChecks).toHaveBeenCalledOnce();
+    await act(async () => { done(); });
+    expect(screen.getByRole('button', { name: 'Recheck' })).toBeEnabled();
   });
 
   it('exports scoped privacy-safe Markdown and JSON snapshots with completeness metadata', () => {

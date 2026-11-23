@@ -132,7 +132,9 @@ describe('search document preview', () => {
       expect(action).toHaveBeenCalledOnce();
     }
     expect(fireEvent.click(screen.getByRole('button', { name: 'Chart' }))).toBe(false);
+    expect(fireEvent.click(screen.getByRole('button', { name: 'Choose view' }))).toBe(false);
     expect(table.switchView).toHaveBeenCalledOnce();
+    expect(table.toggleViewDropdown).toHaveBeenCalledOnce();
   });
 
   it('scrolls to an existing outer fragment when the preview has no matching target', () => {
