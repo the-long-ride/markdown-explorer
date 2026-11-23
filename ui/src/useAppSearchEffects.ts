@@ -208,7 +208,7 @@ export function useAppSearchEffects({
       lineNumber?: number,
       excerpt?: string,
     ) => {
-      const trimmedQuery = query.trim();
+      const trimmedQuery = typeof query === 'string' ? query.trim() : '';
       if (!filePath || !trimmedQuery) return;
       lastAppliedJumpRef.current = null;
       setPendingSearchJump({
