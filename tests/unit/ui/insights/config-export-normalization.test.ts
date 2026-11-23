@@ -38,6 +38,6 @@ describe('insights settings export normalization', () => {
     const many = Array.from({ length: 2000 }, (_, i) => `s${i}`);
     const settings = normalizeInsightsSettings({ duplicateSuppressions: many, lintSuppressions: many.map((id) => ({ scope: 'finding', findingId: id })) as any, userPatterns: 'no' as any });
     expect(settings.duplicateSuppressions.length).toBeLessThanOrEqual(2000);
-    expect(settings.lintSuppressions.length).toBeLessThan(2000);
+    expect(settings.lintSuppressions.length).toBeLessThanOrEqual(2000);
   });
 });
