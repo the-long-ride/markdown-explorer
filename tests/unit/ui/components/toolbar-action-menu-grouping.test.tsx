@@ -113,6 +113,24 @@ describe('ToolbarActionMenu grouping', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: 'Fullscreen' }));
     expect(onFullscreenToggle).toHaveBeenCalledOnce();
   });
+
+  it('omits disabled actions from keyboard movement, resets zoom, and closes on an outside pointer press', () => {
+    const reset = vi.fn();
+    const menu = renderMenu({ tocActive: true, tocToggleDisabled: true, onResetZoom: reset });
+    const toc = within(menu).getByRole('menuitem', { name: 'TOC' });
+    const sidebar = within(menu).getByRole('menuitem', { name: 'Sidebar' });
+    expect(toc).toBeDisabled();
+    expect(toc.parentElement).toHaveClass('is-disabled');
+    sidebar.focus();
+    fireEvent.keyDown(sidebar, { key: 'ArrowDown' });
+    expect(within(menu).getByRole('menuitem', { name: 'Focus' })).toHaveFocus();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Reset Zoom' }));
+    expect(reset).toHaveBeenCalledOnce();
+    expect(menu).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('More actions'));
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
 });
 
 describe('ToolbarActionMenu keyboard navigation', () => {

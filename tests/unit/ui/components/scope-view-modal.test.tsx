@@ -46,6 +46,7 @@ vi.mock('../../../../ui/src/export/documentSnapshot', () => ({
     if (!link.resolved) return null;
     const target = decodeURIComponent(link.resolved)
       .replace(/^file:\/\//, '')
+      .replace(/^\/(?=[a-z]:\/)/i, '')
       .replace(/[?#].*$/, '')
       .replace(/\\/g, '/');
     return candidates.find((candidate) => candidate.fsPath.replace(/\\/g, '/') === target) ?? null;
@@ -98,6 +99,41 @@ function snapshot(target: MdFile) {
 }
 
 describe('ScopeViewToc', () => {
+  it('updates the visible heading on scroll and jumps with reduced motion', () => {
+    const body = document.createElement('div');
+    body.innerHTML = '<h1 id="first">First heading</h1><h2 id="second">Second heading</h2>';
+    const second = body.querySelector('h2')!;
+    second.scrollIntoView = vi.fn();
+    second.getBoundingClientRect = () => new DOMRect(0, 200, 10, 20);
+    const scroll = document.createElement('div');
+    const frames = new Map<number, FrameRequestCallback>();
+    let id = 0;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.set(++id, callback); return id; });
+    vi.stubGlobal('cancelAnimationFrame', (frame: number) => { frames.delete(frame); });
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    const flush = () => act(() => {
+      for (const [frame, callback] of frames) { frames.delete(frame); callback(0); }
+    });
+    try {
+      const { unmount } = render(<ScopeViewToc
+        entries={[{ id: 'first', text: 'First', level: 1 }, { id: 'missing', text: 'Missing', level: 2 }, { id: 'second', text: 'Second', level: 2 }]}
+        documentKey="scroll" emptyLabel="No headings" scrollRef={{ current: scroll }} bodyRef={{ current: body }}
+      />);
+      flush();
+      expect(screen.getByRole('button', { name: 'First' })).toHaveAttribute('aria-current', 'location');
+      second.getBoundingClientRect = () => new DOMRect(0, 50, 10, 20);
+      fireEvent.scroll(scroll);
+      fireEvent.scroll(scroll);
+      expect(frames.size).toBe(1);
+      flush();
+      expect(screen.getByRole('button', { name: 'Second' })).toHaveAttribute('aria-current', 'location');
+      fireEvent.click(screen.getByRole('button', { name: 'Second' }));
+      expect(second.scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'auto' });
+      unmount();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
   it('uses supplied entries, or derives nonempty headings and stable fallback identifiers from older snapshots', () => {
     const legacy: DocumentSnapshot = { file: file(0), markdownSource: '', html: '' };
     const body = document.createElement('div');
@@ -502,6 +538,26 @@ describe('ScopeViewModal', () => {
       expect(baseElement.querySelectorAll('.scope-view__depth-segment.is-filled')).toHaveLength(1);
     } finally {
       window.removeEventListener(ACTION_NOTICE_EVENT, onNotice);
+    }
+  });
+
+  it('falls back to English with an unknown locale and recognizes a Windows self-link despite a case change', async () => {
+    mocks.appState.settings.language = 'legacy';
+    const active = { ...files[0], fsPath: 'C:/Docs/1.md' };
+    const same = { ...active, fsPath: 'c:/docs/1.md' };
+    mocks.loadDocumentSnapshot.mockResolvedValue({ ...snapshot(active), html: '<a href="file:///c:/docs/1.md">Same file</a>' });
+    const notice = vi.fn();
+    window.addEventListener(ACTION_NOTICE_EVENT, notice);
+    try {
+      render(<ScopeViewModal initialFile={active} files={[same]} onClose={vi.fn()} />);
+      expect(screen.getByRole('button', { name: 'Close scope view' })).toBeVisible();
+      fireEvent.click(await screen.findByRole('link', { name: 'Same file' }));
+      expect(mocks.loadDocumentSnapshot).toHaveBeenCalledOnce();
+      expect(notice).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+        detail: expect.objectContaining({ message: 'You are currently viewing this document.' }),
+      }));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, notice);
     }
   });
 

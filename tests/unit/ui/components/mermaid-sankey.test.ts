@@ -122,6 +122,19 @@ describe('mermaidSankey', () => {
       expect(repairSankeyLabelCollisions({} as any)).toBe(0);
     });
 
+    it('expands a tight viewBox when labels have no room to shift upward, using default spacing', () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 50 20');
+      svg.innerHTML = '<g class="node-labels"><text y="3">First</text><text y="4">Second</text></g>';
+      const [first, second] = svg.querySelectorAll('text');
+      first.getBBox = () => new DOMRect(0, 3, 12, 10);
+      second.getBBox = () => new DOMRect(0, 4, 12, 10);
+      expect(repairSankeyLabelCollisions(svg)).toBe(1);
+      expect(first).toHaveAttribute('y', '3');
+      expect(second).toHaveAttribute('y', '21');
+      expect(svg).toHaveAttribute('viewBox', '0 -5 50 44');
+    });
+
     it('deconflicts overlapping labels vertically in the same column', () => {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('viewBox', '0 0 500 500');

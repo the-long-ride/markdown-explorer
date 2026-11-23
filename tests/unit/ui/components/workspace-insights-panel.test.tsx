@@ -7,7 +7,11 @@ import { WORKSPACE_INSIGHTS_TOGGLE_EVENT } from '../../../../ui/src/components/s
 import { AppStateContext } from '../../../../ui/src/contexts/AppStateContext';
 import { PlatformContext } from '../../../../ui/src/contexts/PlatformContext';
 import { INSIGHTS_TRANSLATIONS } from '../../../../ui/src/contexts/insightsTranslations';
+import * as workspaceInsights from '../../../../ui/src/insights/useWorkspaceInsights';
 import type { WorkspaceInsightsSessionViewModel } from '../../../../ui/src/insights/useWorkspaceInsights';
+import * as lintLocation from '../../../../ui/src/insights/jumpToLocation';
+import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
+import { WorkspaceInsightsIndex } from '../../../../ui/src/insights/index';
 
 function session(overrides: Partial<WorkspaceInsightsSessionViewModel> = {}): WorkspaceInsightsSessionViewModel {
   return {
@@ -73,6 +77,70 @@ describe('WorkspaceInsightsPanel', () => {
     const separator = screen.getByRole('separator');
     fireEvent.keyDown(separator, { key: 'ArrowLeft' });
     expect(document.documentElement.style.getPropertyValue('--insights-width')).not.toBe('');
+  });
+
+  it('renders graph, lint and related views with indexing warnings', () => {
+    const labels = INSIGHTS_TRANSLATIONS.en;
+    const value = session({ warnings: ['Unreadable document'], workerMode: 'degraded' });
+    render(<WorkspaceInsightsPanel session={value} />);
+    expect(screen.getByText(/1 .*warning/i)).toBeInTheDocument();
+    for (const label of [labels.graph, labels.lint, labels.related]) {
+      fireEvent.click(screen.getByRole('tab', { name: label }));
+      expect(screen.getByRole('tabpanel', { name: label })).toBeInTheDocument();
+    }
+  });
+
+  it('does not install a portal while disabled and falls back to English when enabled with a legacy locale', async () => {
+    const bridge = { onMessage: vi.fn(() => () => {}), postMessage: vi.fn() };
+    const state = { workspacePath: '', workspaceName: '', settings: { insightsEnabled: false, language: 'legacy' }, fileList: [] };
+    const view = (insightsEnabled: boolean) => (
+      <AppStateContext.Provider value={{ state: { ...state, settings: { ...state.settings, insightsEnabled } } } as any}>
+        <PlatformContext.Provider value={bridge as any}>
+          <div className="body"><WorkspaceInsightsEntry /></div>
+        </PlatformContext.Provider>
+      </AppStateContext.Provider>
+    );
+    const { rerender } = render(view(false));
+    expect(document.getElementById('workspaceInsightsPanel')).toBeNull();
+    rerender(view(true));
+    expect(await screen.findByRole('separator', { name: INSIGHTS_TRANSLATIONS.en.title })).toHaveClass('is-collapsed');
+  });
+
+  it('maps case-insensitive workspace paths when opening an Insights result and jumps only when a location is present', () => {
+    const index = new WorkspaceInsightsIndex();
+    const paths = ['Guide.md', 'C:/Docs/Manual.md', 'Pack/Part.md', 'Prefix/Note.md', 'Missing.md'];
+    paths.forEach(path => index.applyDocument(analyzeDocument({ path, revision: '1', source: '![Example](image.png)' })));
+    const hook = vi.spyOn(workspaceInsights, 'useWorkspaceInsights').mockReturnValue(session({ snapshot: index.snapshot() }));
+    const jump = vi.spyOn(lintLocation, 'jumpToLintLocation').mockImplementation(() => {});
+    const navigate = vi.fn();
+    const records = [
+      { relativePath: 'guide.md', fsPath: 'C:\\Docs\\guide.md' },
+      { relativePath: 'manual.md', fsPath: 'C:\\Docs\\Manual.md' },
+      { relativePath: 'site/pack/part.md', fsPath: '/docs/site/pack/part.md' },
+      { relativePath: 'note.md', fsPath: '/docs/note.md' },
+    ];
+    const destinations = [...records.map(item => item.fsPath), 'Missing.md'];
+    try {
+      render(
+        <AppStateContext.Provider value={{ state: { workspacePath: '/docs', settings: { insightsEnabled: true, language: 'en' }, fileList: records }, navigate } as any}>
+          <PlatformContext.Provider value={{ onMessage: vi.fn(() => () => {}), postMessage: vi.fn() } as any}>
+            <div className="body"><WorkspaceInsightsEntry /></div>
+          </PlatformContext.Provider>
+        </AppStateContext.Provider>,
+      );
+      for (const path of paths) {
+        fireEvent.click(screen.getByTestId(`gallery-card-${path}:0:image.png`));
+      }
+      expect(navigate.mock.calls.flat()).toEqual(destinations);
+      expect(jump.mock.calls.map(([path]) => path)).toEqual(destinations);
+      fireEvent.click(screen.getByRole('tab', { name: INSIGHTS_TRANSLATIONS.en.graph }));
+      fireEvent.click(screen.getByTestId('graph-node-Guide.md'));
+      expect(navigate).toHaveBeenLastCalledWith(destinations[0]);
+      expect(jump).toHaveBeenCalledTimes(paths.length);
+    } finally {
+      hook.mockRestore();
+      jump.mockRestore();
+    }
   });
 
   it('applies is-collapsed and inert when panel is not open', () => {

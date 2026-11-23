@@ -27,6 +27,9 @@ function Tree({
     <button type="button">Outside</button>
     <div ref={treeRef}>
       <label>Filter<input /></label>
+      <span role="textbox" aria-label="Editor" contentEditable ref={node => {
+        if (node) Object.defineProperty(node, 'isContentEditable', { configurable: true, value: true });
+      }} />
       <output aria-label="Cursor">{cursor ?? 'None'}</output>
       {filter !== 'empty' && <button type="button" ref={setScroll} data-sidebar-cursor-item="true" data-sidebar-id="folder" data-sidebar-kind="directory" onClick={onFolder}>Folder</button>}
       {!filter && <button type="button" ref={setScroll} data-sidebar-cursor-item="true" data-sidebar-id="a.md" data-sidebar-kind="file" onClick={onFile}>A</button>}
@@ -74,6 +77,17 @@ describe('sidebar cursor navigation', () => {
     expect(fireEvent.keyDown(folder, { key: 'Escape' })).toBe(false);
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Outside' }));
     expect(onClose).toHaveBeenCalledTimes(3);
+  });
+
+  it('leaves contenteditable keystrokes and already handled events alone', () => {
+    const onFile = vi.fn();
+    render(<Tree currentFile="a.md" onFile={onFile} />);
+    const editor = screen.getByRole('textbox', { name: 'Editor' });
+    expect(fireEvent.keyDown(editor, { key: 'Enter' })).toBe(true);
+    const key = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    key.preventDefault();
+    fireEvent(screen.getByRole('button', { name: 'A' }), key);
+    expect(onFile).not.toHaveBeenCalled();
   });
 
   it('refocuses visible rows when filtering, then clears the cursor in an empty or closed tree', () => {

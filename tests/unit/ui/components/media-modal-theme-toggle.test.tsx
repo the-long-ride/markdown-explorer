@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
 import { copyElementImageToClipboard, saveElementImageAsPng } from '../../../../ui/src/dom/copyImage';
 import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
@@ -30,6 +30,7 @@ vi.mock('../../../../ui/src/components/Content/enhancements/mermaidRenderToSvg',
 vi.mock('../../../../ui/src/dom/copyImage', () => ({ copyElementImageToClipboard: vi.fn(), saveElementImageAsPng: vi.fn() }));
 
 import { MediaModal } from '../../../../ui/src/components/Modal/MediaModal';
+import { renderMermaidToSvg } from '../../../../ui/src/components/Content/enhancements/mermaidRenderToSvg';
 import type { MediaGallery } from '../../../../ui/src/components/Modal/mediaGallery';
 
 const mockGallery: MediaGallery = {
@@ -41,6 +42,37 @@ describe('MediaModal theme toggle integration', () => {
   beforeEach(() => {
     mocks.stateRef.current = { theme: 'dark', settings: { language: 'en' } };
     mocks.setTheme.mockClear();
+  });
+
+  it('does not render when closed before the deferred recolor begins', async () => {
+    const mermaid = vi.mocked(renderMermaidToSvg);
+    mermaid.mockClear();
+    const onClose = vi.fn();
+    const gallery: MediaGallery = { items: [{ type: 'svg', source: 'flowchart TD\nA-->B' }] };
+    const { rerender } = render(<MediaModal gallery={gallery} onClose={onClose} />);
+    rerender(<MediaModal gallery={null} onClose={onClose} />);
+    await act(async () => {});
+    expect(mermaid).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('leaves the cached SVG untouched when a pending recolor resolves after close', async () => {
+    const mermaid = vi.mocked(renderMermaidToSvg);
+    mermaid.mockClear();
+    let complete: (value: { svgHtml: string }) => void;
+    mermaid.mockImplementationOnce(() => new Promise((resolve) => { complete = resolve; }));
+    const onClose = vi.fn();
+    const original = '<svg id="original-pending">Original</svg>';
+    const gallery: MediaGallery = { items: [{ type: 'svg', html: original, source: 'flowchart TD\nA-->B' }] };
+    const { rerender } = render(<MediaModal gallery={gallery} onClose={onClose} />);
+    mocks.stateRef.current = { theme: 'light', settings: { language: '' } };
+    rerender(<MediaModal gallery={gallery} onClose={onClose} />);
+    await waitFor(() => expect(mermaid).toHaveBeenCalledOnce());
+    rerender(<MediaModal gallery={null} onClose={onClose} />);
+    await act(async () => complete!({ svgHtml: '<svg id="stale">Stale</svg>' }));
+    rerender(<MediaModal gallery={gallery} onClose={onClose} />);
+    expect(document.querySelector('#original-pending')).toBeInTheDocument();
+    expect(document.querySelector('#stale')).not.toBeInTheDocument();
   });
 
   it('wraps around a mixed gallery with the keyboard and buttons, resets the media transform, and closes on Escape or backdrop', () => {

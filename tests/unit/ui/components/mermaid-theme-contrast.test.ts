@@ -167,6 +167,30 @@ describe('Mermaid SVG text contrast', () => {
     expect(label).toHaveAttribute('fill', '#111111');
   });
 
+  it('keeps later labels readable if creating a clip for one painted shape fails', () => {
+    const svg = diagram('<rect id="failed" fill="#000"/><rect id="valid" fill="#000"/><text id="label">Text</text>');
+    const failed = geometry(svg, '#failed');
+    geometry(svg, '#valid');
+    geometry(svg, '#label');
+    vi.spyOn(failed, 'cloneNode').mockImplementation(() => { throw new DOMException('Cannot copy shape'); });
+    enforceMermaidSvgContrast(svg, tokens);
+    expect(failed.cloneNode).toHaveBeenCalledOnce();
+    expect(svg.querySelectorAll('clipPath')).toHaveLength(1);
+    expect(svg.querySelector(layerSelector)).toHaveAttribute('fill', '#ffffff');
+  });
+
+  it('clips transparent HTML labels over dark paint but preserves nested local background contrast', () => {
+    const svg = diagram(`<rect fill="#000"/><foreignObject><div xmlns="http://www.w3.org/1999/xhtml">
+      <span>Plain</span><div style="background-color:#fff"><span class="local">Local</span></div>
+    </div></foreignObject>`);
+    geometry(svg, 'rect');
+    geometry(svg, 'foreignObject');
+    enforceMermaidSvgContrast(svg, tokens);
+    const layer = svg.querySelector(layerSelector)!;
+    expect(layer.querySelector('span')).toHaveStyle({ color: '#ffffff' });
+    expect(layer.querySelector('.local')).toHaveStyle({ color: '#111111' });
+  });
+
   it('uses relative geometry for transformed paint and skips unknown coordinate spaces', () => {
     const svg = diagram(`<g><rect id="dark" fill="#000"/><rect id="unknown" transform="translate(1)" fill="#000"/></g><g><text id="label">text</text></g>`);
     const shapeMatrix = { a: 1, b: 0, c: 0, d: 1, e: 10, f: 0 };

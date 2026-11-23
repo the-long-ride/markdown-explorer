@@ -19,6 +19,43 @@ function setup(initialSource: string) {
 }
 
 describe('InlineTableEditor', () => {
+  it('disconnects its resize observer and turns a retained handle into safe no-ops after unmount', () => {
+    let notify: ResizeObserverCallback;
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: ResizeObserverCallback) { notify = callback; }
+      observe = observe;
+      disconnect = disconnect;
+    });
+    const measure = vi.spyOn(EditorView.prototype, 'requestMeasure');
+    try {
+      const { content, editor, props, unmount } = setup('| Col |\n| --- |\n| Cell |');
+      expect(observe).toHaveBeenCalledWith(content);
+      measure.mockClear();
+      act(() => notify!([], {} as ResizeObserver));
+      expect(measure).toHaveBeenCalled();
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+      expect(props.editorRef.current).toBeNull();
+      expect(editor.getCurrentDoc()).toBe('');
+      expect(editor.canUndo()).toBe(false);
+      expect(editor.canRedo()).toBe(false);
+      measure.mockClear();
+      act(() => {
+        notify!([], {} as ResizeObserver);
+        editor.runFormat('bold');
+        editor.replaceDoc('No longer mounted');
+        editor.undo();
+        editor.redo();
+      });
+      expect(measure).not.toHaveBeenCalled();
+      expect(props.onChange).not.toHaveBeenCalled();
+    } finally {
+      measure.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
   it('formats the raw selection, reports undo and redo state, and releases the handle on unmount', () => {
     const { props, content, editor, unmount } = setup('Draft');
     const view = EditorView.findFromDOM(content)!;

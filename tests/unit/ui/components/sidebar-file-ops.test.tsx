@@ -402,6 +402,29 @@ it('restores row keyboard focus after cancelling rename',async()=>{
   fireEvent.keyDown(screen.getByRole('textbox',{name:'Rename file'}),{key:'Escape'});
   await waitFor(()=>expect(document.activeElement).toBe(row('Readme.md')));
 });
+it('does not retain a stale file focus after the workspace file list removes the row', () => {
+  const { rerender } = render(<Sidebar />);
+  fireEvent.click(row('Readme.md'));
+  expect(row('Readme.md')).toHaveClass('is-entry-focused');
+  mockState = makeState({ tree: emptyOnlyTree, fileList: [] });
+  rerender(<Sidebar />);
+  fireEvent.keyDown(treeEl(), { key: 'F2' });
+  fireEvent.keyDown(treeEl(), { key: 'Delete' });
+  expect(screen.queryByRole('textbox', { name: t.sidebar.renameFile })).not.toBeInTheDocument();
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(posted).toHaveLength(0);
+});
+
+it('cancels a delete from the keyboard and restores focus to the selected entry', async () => {
+  render(<Sidebar />);
+  fireEvent.click(row('docs'));
+  fireEvent.keyDown(row('docs'), { key: 'Delete' });
+  expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: t.bookmarks.cancel }));
+  await waitFor(() => expect(row('docs')).toHaveFocus());
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(posted.some((message) => message.command === 'deleteWorkspaceEntries')).toBe(false);
+});
 it('restores folder focus and keeps keyboard actions after unchanged-name Enter',async()=>{
   render(<Sidebar />);fireEvent.click(row('docs'));fireEvent.keyDown(row('docs'),{key:'F2'});
   fireEvent.keyDown(screen.getByRole('textbox',{name:'Rename folder'}),{key:'Escape'});

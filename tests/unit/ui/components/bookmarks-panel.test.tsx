@@ -218,6 +218,26 @@ describe('BookmarksPanel', () => {
 
     expect(screen.getByRole('menuitem', { name: translations.sortNameDesc })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('menuitem', { name: translations.sortNameDesc }));
+    fireEvent.click(sortBtn);
+    expect(screen.getByRole('menuitem', { name: translations.sortNameDesc }).querySelector('svg')).toBeInTheDocument();
+    fireEvent.click(sortBtn);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('starts with all workspace groups collapsed when no workspace is active', () => {
+    bookmarkStore.add(bm1);
+    const onNavigate = vi.fn();
+    render(<BookmarksPanel visible viewMode="tabs" workspaces={workspaces} activeWorkspaceKey="" translations={translations} onNavigate={onNavigate} />);
+    expect(screen.queryByText(bm1.selectedText)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: translations.expandAll }));
+    const item = screen.getByText(bm1.selectedText).closest('.bookmark-item')!;
+    fireEvent.keyDown(item, { key: 'Tab' });
+    expect(onNavigate).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: translations.toggleSelection }));
+    fireEvent.click(item);
+    expect(within(item as HTMLElement).getByRole('checkbox')).toBeChecked();
+    fireEvent.click(item);
+    expect(within(item as HTMLElement).getByRole('checkbox')).not.toBeChecked();
   });
 
   it('uses item menu actions to navigate, rename with retry, and remove a saved bookmark', () => {

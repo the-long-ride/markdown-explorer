@@ -85,6 +85,23 @@ describe('useDocumentOverlays', () => {
 
   const copy = getTranslations('en').previewActions;
 
+  it('opens an absolute fragment URL through a standalone browser preview and reports bridge errors', () => {
+    const notice = vi.fn();
+    window.addEventListener(ACTION_NOTICE_EVENT, notice);
+    try {
+      const bridge = { postMessage: vi.fn(() => { throw new Error('Host unavailable'); }) };
+      let open: (menu: LinkContextMenuState) => void;
+      render(<Harness bridge={bridge} onReady={(fn) => { open = fn; }} />);
+      const absolute = 'file:///docs/b.md#heading';
+      act(() => open({ x: 10, y: 10, link: { kind: 'fragment', raw: absolute, resolved: absolute, openable: true, copyable: true } }));
+      fireEvent.click(screen.getByRole('menuitem', { name: copy.openInBrowser }));
+      expect(bridge.postMessage).toHaveBeenCalledWith({ command: 'openHtmlPreview', documentHtml: expect.stringContaining('heading') });
+      expect(notice).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { message: copy.unableToOpenLink, tone: 'neutral' } }));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, notice);
+    }
+  });
+
   it('uses the external browser for web links and the standalone document preview for page fragments', () => {
     const bridge = { postMessage: vi.fn() };
     let open: (menu: LinkContextMenuState) => void;

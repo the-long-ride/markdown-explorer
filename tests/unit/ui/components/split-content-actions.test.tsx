@@ -99,6 +99,33 @@ describe('split content tab actions', () => {
     expect(context.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'navigate', path: first });
   });
 
+  it('navigates to an uncached sibling after closing the active tab without activating a cached document', () => {
+    const { dispatch } = fixture(second, undefined, {
+      contentTabs: [{ filePath: second, fileName: 'b.md', relativePath: 'b.md', title: 'B' }],
+    });
+    fireEvent.click(within(tab('B')).getByRole('button', { name: /close/i }));
+    expect(dispatch).toHaveBeenCalledExactlyOnceWith({ type: 'CLOSE_SPLIT_PANE_TAB', paneId: 'primary', filePath: second });
+    expect(context.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'navigate', path: first });
+  });
+
+  it('does not navigate to an empty opposite pane when closing all tabs', () => {
+    const split = createSplitViewState(first);
+    const { dispatch } = fixture(first, undefined, {
+      splitView: {
+        ...split,
+        enabled: true,
+        primary: { ...split.primary, tabs: [first, second], activeTabPath: first, filePath: first },
+        secondary: { ...split.secondary, tabs: [], activeTabPath: null, filePath: null },
+      },
+    });
+    menuAction('a.md', t.tabContextMenu.closeAllTabs);
+    expect(dispatch.mock.calls.flat()).toEqual([
+      { type: 'CLOSE_SPLIT_PANE_TAB', paneId: 'primary', filePath: first },
+      { type: 'CLOSE_SPLIT_PANE_TAB', paneId: 'primary', filePath: second },
+    ]);
+    expect(context.postMessage).not.toHaveBeenCalled();
+  });
+
   it('uses the right neighbour when closing the first active tab, and the opposite pane when closing its last tab', () => {
     const { dispatch } = fixture(first);
     menuAction('a.md', t.tabContextMenu.closeThisTab);
@@ -182,6 +209,23 @@ describe('split content tab actions', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: /close split/i }));
     expect(swapSplitPanes).toHaveBeenCalledOnce();
     expect(closeSplitView).toHaveBeenCalledOnce();
+  });
+
+  it('navigates without dispatching a document activation for a pane tab that has not been cached', () => {
+    const split = createSplitViewState(first);
+    const { dispatch } = fixture(second, undefined, {
+      contentTabs: [{ filePath: second, fileName: 'b.md', relativePath: 'b.md', title: 'B' }],
+      splitView: {
+        ...split, enabled: true,
+        primary: { ...split.primary, tabs: [first, second], activeTabPath: second, filePath: second },
+      },
+    });
+    fireEvent.click(tab('a.md'));
+    expect(dispatch.mock.calls.flat()).toEqual([
+      { type: 'ACTIVATE_SPLIT_PANE', paneId: 'primary' },
+      { type: 'ACTIVATE_SPLIT_PANE_TAB', paneId: 'primary', filePath: first },
+    ]);
+    expect(context.postMessage).toHaveBeenCalledExactlyOnceWith({ command: 'navigate', path: first });
   });
 
   it.each([

@@ -7,6 +7,7 @@ import type { runExportJob } from '../../../../ui/src/export/exportJobRunner';
 const fixtures = vi.hoisted(() => ({
   runtime: 'desktop' as AppRuntime,
   language: 'en',
+  currentFile: '/docs/readme.md' as string | null,
   files: [
     { fsPath: '/docs/readme.md', relativePath: 'readme.md', parts: ['readme.md'], fileName: 'readme.md', title: 'Readme', extension: '.md', documentKind: 'markdown' },
     { fsPath: '/docs/guide/a.md', relativePath: 'guide/a.md', parts: ['guide', 'a.md'], fileName: 'a.md', title: 'A', extension: '.md', documentKind: 'markdown' },
@@ -14,7 +15,7 @@ const fixtures = vi.hoisted(() => ({
   ] as MdFile[],
 }));
 const mocks = vi.hoisted(() => ({ runExportJob: vi.fn<typeof runExportJob>(async () => ({ savedPaths: ['export.html'], successCount: 1, failureCount: 0, warningCount: 0, cancelled: false })) }));
-vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({ useAppState: () => ({ state: { currentFile: '/docs/readme.md', fileList: fixtures.files, workspaceName: 'Docs', appRuntime: fixtures.runtime, settings: { language: fixtures.language } } }) }));
+vi.mock('../../../../ui/src/contexts/AppStateContext', () => ({ useAppState: () => ({ state: { currentFile: fixtures.currentFile, fileList: fixtures.files, workspaceName: 'Docs', appRuntime: fixtures.runtime, settings: { language: fixtures.language } } }) }));
 vi.mock('../../../../ui/src/contexts/PlatformContext', () => ({ usePlatform: () => ({ postMessage: vi.fn(), onMessage: () => () => {}, getState: () => undefined, setState: () => {}, copyToClipboard: () => {} }) }));
 vi.mock('../../../../ui/src/export/exportJobRunner', () => ({ runExportJob: mocks.runExportJob }));
 
@@ -24,6 +25,7 @@ describe('ExportCenterModal', () => {
   beforeEach(() => {
     fixtures.runtime = 'desktop';
     fixtures.language = 'en';
+    fixtures.currentFile = '/docs/readme.md';
   });
 
   it('defaults to current document, HTML, separate, and Document only layout', () => {
@@ -82,6 +84,30 @@ describe('ExportCenterModal', () => {
       '/docs/guide/a.md',
       '/docs/guide/deep/b.md',
     ]);
+  });
+
+  it('defaults to no selected files without a current document and can export only a nested folder', async () => {
+    fixtures.currentFile = null;
+    mocks.runExportJob.mockClear();
+    const onClose = vi.fn();
+    render(<ExportCenterModal isOpen onClose={onClose} />);
+    const exportButton = screen.getByRole('button', { name: 'Export' });
+    const sourceMode = screen.getByRole('button', { name: 'Source mode' });
+    expect(sourceMode).toHaveTextContent('Selected documents');
+    expect(exportButton).toBeDisabled();
+    fireEvent.click(sourceMode);
+    expect(screen.getByRole('option', { name: 'Current document' })).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(screen.getByRole('option', { name: 'Folder' }));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Folder to export' }));
+    fireEvent.click(screen.getByRole('option', { name: 'guide/deep' }));
+    expect(exportButton).toBeEnabled();
+    fireEvent.click(exportButton);
+    await waitFor(() => expect(mocks.runExportJob).toHaveBeenCalled());
+    expect(mocks.runExportJob.mock.lastCall?.[0].job.files.map(({ fsPath }) => fsPath)).toEqual(['/docs/guide/deep/b.md']);
+    fireEvent.click(screen.getByRole('heading', { name: 'Export Center' }));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('dialog', { name: 'Export Center' }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('renders the Export Center controls in the selected application language', () => {

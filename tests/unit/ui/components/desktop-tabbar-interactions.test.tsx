@@ -402,6 +402,31 @@ describe('DesktopTabBar interactions', () => {
     }
   });
 
+  it('closes a zero-width tab without waiting for animations', () => {
+    (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
+    renderTabBar();
+    fireEvent.click(screen.getAllByLabelText('Close tab')[1]);
+    expect(props.onCloseTab).toHaveBeenCalledExactlyOnceWith('ws2');
+    expect(screen.getAllByRole('tab')[1]).not.toHaveClass('is-closing--fade');
+  });
+
+  it('prevents another deferred close while the first close is animating', () => {
+    vi.useFakeTimers();
+    const width = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100);
+    try {
+      (window.matchMedia as ReturnType<typeof vi.fn>).mockReturnValue({ matches: false });
+      renderTabBar();
+      const [first, second] = screen.getAllByLabelText('Close tab');
+      fireEvent.click(first);
+      fireEvent.click(second);
+      act(() => vi.runAllTimers());
+      expect(props.onCloseTab).toHaveBeenCalledExactlyOnceWith('ws1');
+    } finally {
+      width.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
   it('animates every tab removed by a bulk close action', () => {
     vi.useFakeTimers();
     const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(100);
@@ -524,6 +549,19 @@ describe('DesktopTabBar interactions', () => {
     fireEvent.doubleClick(ws1Tab);
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toHaveValue('Docs');
+  });
+
+  it.each([
+    [{ alias: 'Project alias', workspaceName: 'Docs' }, 'Project alias'],
+    [{ alias: undefined, workspaceName: undefined }, ''],
+  ])('initializes alias editing from the saved alias or an empty unnamed tab', (tabFields, value) => {
+    renderTabBar({ tabs: [makeDesktopTab('home', 'home'), makeDesktopTab('ws1', 'workspace', tabFields)] });
+    fireEvent.doubleClick(screen.getByRole('tab'));
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveValue(value);
+    fireEvent.change(input, { target: { value: '   Updated workspace   ' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(props.onAliasChange).toHaveBeenCalledExactlyOnceWith('ws1', 'Updated workspace');
   });
 
   it('commits alias change when the alias input is blurred', () => {

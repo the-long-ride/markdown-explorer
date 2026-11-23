@@ -82,6 +82,20 @@ function props(overrides: Partial<DocumentBodyProps> = {}): DocumentBodyProps {
 }
 
 describe('DocumentBody', () => {
+  it('renders empty frontmatter values with source offsets and shows preview metadata', () => {
+    render(<DocumentBody {...props({
+      contentHtml: '', frontmatterEntries: [['owner', ''], ['revision', '1']],
+      frontmatterSourceRange: { start: 0, end: 23 },
+      previewNotice: { kind: 'converted', title: 'Converted preview', warning: 'May differ', meta: 'Updated today' },
+    })} />);
+    const frontmatter = screen.getByLabelText(t.ui.documentProperties);
+    expect(frontmatter).toHaveAttribute('data-mdn-source-start', '0');
+    expect(frontmatter).toHaveAttribute('data-mdn-source-end', '23');
+    expect(screen.getByText('owner').nextElementSibling).toHaveClass('is-empty');
+    expect(screen.getByText(`2 ${t.ui.propertyPlural}`)).toBeVisible();
+    expect(screen.getByRole('note')).toHaveTextContent('Updated today');
+  });
+
   it('renders frontmatter, stale and preview notices, compact TOC and body', async () => {
     render(<DocumentBody {...props()} />);
     expect(screen.getByText('Doc title')).toBeInTheDocument();

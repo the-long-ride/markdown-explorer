@@ -595,6 +595,28 @@ describe('RepositorySnapshotContent', () => {
     }
   });
 
+  it('uses reduced motion for same-file fragments and ignores a missing fragment without opening another snapshot', () => {
+    mocks.appState.settings.language = '';
+    const openSnapshotFile = vi.fn();
+    mocks.snapshotContext = makeSnapshotContext({
+      oid: OID, path: 'README.md',
+      source: '[Jump](./README.md#destination)\n\n[Missing](./README.md#absent)\n\n## Destination',
+    }, { openSnapshotFile });
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true })));
+    try {
+      render(<RepositorySnapshotContent />);
+      const target = document.getElementById('destination')!;
+      target.scrollIntoView = vi.fn();
+      fireEvent.click(screen.getByRole('link', { name: 'Missing' }));
+      expect(target.scrollIntoView).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('link', { name: 'Jump' }));
+      expect(target.scrollIntoView).toHaveBeenCalledExactlyOnceWith({ behavior: 'auto', block: 'start' });
+      expect(openSnapshotFile).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('renders Markdown locally when pre-rendered content is unavailable', () => {
     mocks.appState.tocCollapsed = true;
     const source = '---\nstatus: ready\n---\n\n<!-- private note -->\n\n# Offline snapshot\n\nDetails.';

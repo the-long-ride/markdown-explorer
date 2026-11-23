@@ -7,6 +7,7 @@ import { ACTIONS_LIST } from '../../../../ui/src/components/Settings/settingsAct
 import { getDefaultKeybindingsForRuntime } from '../../../../ui/src/contexts/appStateConstants';
 import { initialState } from '../../../../ui/src/contexts/appStateModel';
 import { getTranslations } from '../../../../ui/src/contexts/translations';
+import { INSIGHTS_SETTINGS_CHANGED_EVENT } from '../../../../ui/src/insights/settingsStore';
 
 const mockUpdateSettings = vi.fn();
 const mockPostMessage = vi.fn();
@@ -414,5 +415,45 @@ describe('Settings shortcut groups', () => {
       vi.unstubAllGlobals();
       anchorClick.mockRestore();
     }
+  });
+
+  it('restores a custom theme and announces imported Insights settings separately from the built-in appearance', async () => {
+    const t = getTranslations('en');
+    const settingsChanged = vi.fn();
+    window.addEventListener(INSIGHTS_SETTINGS_CHANGED_EVENT, settingsChanged);
+    try {
+      const { container } = renderModal();
+      fireEvent.click(screen.getByRole('button', { name: t.updateBackup }));
+      const input = container.querySelector<HTMLInputElement>('input[type=file]')!;
+      const settings = {
+        activeCustomThemeId: 'project-theme',
+        customThemes: [{ id: 'project-theme', name: 'Project Theme', baseStyle: 'bento', createdAt: 1, updatedAt: 1 }],
+      };
+      const backup = new File([JSON.stringify({
+        kind: 'markdown-explorer-settings', schemaVersion: 1,
+        payload: { theme: 'light', themeStyle: 'default', settings, insights: {} },
+      })], 'custom-settings.json');
+      fireEvent.change(input, { target: { files: [backup] } });
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(t.settingsData.imported));
+      expect(mockUpdateSettings).toHaveBeenCalledWith(expect.objectContaining({ activeCustomThemeId: 'project-theme' }));
+      expect(mockSetTheme).toHaveBeenCalledWith('light');
+      expect(mockSetThemeStyle).not.toHaveBeenCalled();
+      expect(mockPostMessage).toHaveBeenCalledWith({ command: 'updateAppearance', theme: 'light', themeStyle: 'bento' });
+      expect(settingsChanged).toHaveBeenCalledOnce();
+    } finally {
+      window.removeEventListener(INSIGHTS_SETTINGS_CHANGED_EVENT, settingsChanged);
+    }
+  });
+
+  it('asks the VS Code host to reload even when its reload shortcut has been disabled', () => {
+    mockState.appRuntime = 'vscode';
+    mockState.settings.language = '';
+    mockState.settings.keybindings.reloadWindow = 'Ctrl+Alt+R';
+    mockState.settings.disabledKeybindings.reloadWindow = true;
+    renderModal();
+    const reload = screen.getByRole('button', { name: getTranslations('en').tooltips.reloadWindow });
+    expect(reload).not.toHaveAttribute('data-hover-tooltip-shortcut');
+    fireEvent.click(reload);
+    expect(mockPostMessage).toHaveBeenCalledWith({ command: 'reloadWebview' });
   });
 });

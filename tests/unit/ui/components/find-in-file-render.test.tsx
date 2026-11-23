@@ -216,6 +216,25 @@ it('filters current-file matches by case when Match case is enabled', () => {
   expect(mdBody.querySelectorAll('mark.mdn-find-mark')).toHaveLength(1);
 });
 
+it('keeps search usable without a mounted document and returns focus to the query on repeated rendering', () => {
+  mdBody.removeAttribute('id');
+  const { rerender } = render(<FindInFilePanel isOpen onClose={defaultOnClose} renderVersion={0} shortcutLabel="Ctrl+F" />);
+  const input = screen.getByRole('textbox');
+  fireEvent.change(input, { target: { value: 'Alpha' } });
+  act(() => { vi.advanceTimersByTime(50); });
+  expect(input).toHaveFocus();
+  fireEvent.keyDown(input, { key: 'Enter' });
+  expect(screen.getByText('0/0')).toBeInTheDocument();
+  mdBody.id = 'mdBody';
+  mdBody.innerHTML = '<p>Alpha</p><p>alpha</p><p>Beta</p>';
+  rerender(<FindInFilePanel isOpen onClose={defaultOnClose} renderVersion={1} shortcutLabel="Ctrl+F" />);
+  act(() => { vi.advanceTimersByTime(50); });
+  expect(screen.getByText('1/2')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /Match case/ }));
+  act(() => { vi.advanceTimersByTime(50); });
+  expect(screen.getByText('1/1')).toBeInTheDocument();
+});
+
 it('expands collapsed sections for matches while skipping interactive text and respecting reduced motion', () => {
   vi.mocked(window.matchMedia).mockReturnValue({ matches: true } as MediaQueryList);
   mdBody.innerHTML = `<div class="mdn-section" data-expanded="false">

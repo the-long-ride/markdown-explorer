@@ -202,6 +202,29 @@ describe('TabContextMenu', () => {
     expect(menu.style.left).toBeDefined();
     expect(menu.style.top).toBeDefined();
   });
+
+  it('shows a custom location action with no pointer dismissal inside the menu', () => {
+    const onAction = vi.fn();
+    const onClose = vi.fn();
+    render(React.createElement(TabContextMenu, {
+      x: 5, y: 5, labels: { ...defaultLabels, openLocation: 'Reveal in folder' },
+      openLocationIcon: React.createElement('span'), ariaLabel: 'Document actions', onAction, onClose,
+    }));
+    const menu = screen.getByRole('menu', { name: 'Document actions' });
+    fireEvent.pointerDown(menu);
+    fireEvent.keyDown(document, { key: 'Enter' });
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reveal in folder' }));
+    expect(onAction).toHaveBeenCalledExactlyOnceWith('openLocation');
+    fireEvent.pointerDown(document.body);
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not invent menu items when none were provided', () => {
+    render(React.createElement(TabContextMenu, { x: 5, y: 5, onAction: vi.fn(), onClose: vi.fn() }));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem')).not.toBeInTheDocument();
+  });
 });
 
 describe('TooltipButton', () => {

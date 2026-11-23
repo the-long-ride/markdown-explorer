@@ -35,6 +35,21 @@ describe('SidebarSearch pure functions', () => {
       expect(buildSearchResultTree(new Map())).toBeNull();
     });
 
+    it('sorts and groups incomplete search hits by filename or filesystem path and skips empty groups', () => {
+      const fallbackPath = result('', { fsPath: 'archive/notes.md', fileName: '' });
+      const fallbackName = result('', { fsPath: '/workspace/other.md', fileName: 'begin.md' });
+      const nested = result('zeta/readme.md');
+      for (const hits of [[fallbackPath, fallbackName, nested], [nested, fallbackName, fallbackPath]]) {
+        const input = new Map(hits.map(hit => [hit.fsPath, [hit]]));
+        input.set('/workspace/deleted.md', []);
+        const tree = buildSearchResultTree(input);
+        expect(tree?.children.map(folder => folder.path)).toEqual(['archive', 'zeta']);
+        expect(tree?.files.map(node => node.fileName)).toEqual(['begin.md']);
+        expect(tree?.children[0].files[0].matches).toEqual([fallbackPath]);
+      }
+      expect(buildSearchResultTree(new Map([['/workspace/deleted.md', []]]))).toBeNull();
+    });
+
     it('builds only folders represented by matching files', () => {
       const nested = result('guides/setup.md');
       const root = result('readme.md');

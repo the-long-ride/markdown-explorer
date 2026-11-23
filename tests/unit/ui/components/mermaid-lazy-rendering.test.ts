@@ -9,6 +9,7 @@ import {
   clearMermaidSvgCache,
   getCachedMermaidSvg,
   mermaidCacheKey,
+  setCachedMermaidSvg,
 } from '../../../../ui/src/components/Content/enhancements/mermaidSvgCache';
 import {
   createMermaidRerenderQueue,
@@ -67,6 +68,41 @@ describe('resolveMermaidViewport', () => {
 });
 
 describe('renderMermaidNodesLazily', () => {
+  it('leaves a nonempty document unchanged if rendering is already cancelled', async () => {
+    const renderNode = vi.fn(async () => {});
+    await renderMermaidNodesLazily([node('a', 0)], renderNode, { isCancelled: () => true });
+    expect(renderNode).not.toHaveBeenCalled();
+  });
+
+  it('does not insert a cached SVG when its diagram is collapsed while waiting for the render lane', async () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<details open><div class="mermaid">block-beta\n  a</div></details>';
+    document.body.appendChild(root);
+    const details = root.querySelector('details')!;
+    const diagram = root.querySelector<HTMLElement>('.mermaid')!;
+    const getLibrary = vi.fn(async () => ({ initialize: vi.fn(), run: vi.fn() }));
+    let release!: () => void;
+    const blocker = runInMermaidRenderLane(() => new Promise<void>(resolve => { release = resolve; }));
+    await Promise.resolve();
+    const source = diagram.textContent!;
+    setCachedMermaidSvg(mermaidCacheKey(source, 'test'), '<svg viewBox="0 0 1 1"></svg>');
+    try {
+      const pending = enhanceMermaidLazily(root, {
+        getLibrary, isDark: false, isCancelled: () => false, runIdRef: { current: 0 }, cacheSignature: 'test',
+      });
+      details.open = false;
+      release();
+      await pending;
+      expect(diagram).toHaveTextContent('block-beta');
+      expect(diagram.querySelector('svg')).toBeNull();
+      expect(getLibrary).not.toHaveBeenCalled();
+    } finally {
+      release();
+      await blocker;
+      clearMermaidSvgCache();
+      root.remove();
+    }
+  });
   it('renders nothing synchronously and orders diagrams by the root scroll container', async () => {
     const { scheduler, flush } = manualScheduler();
     const rendered: string[] = [];

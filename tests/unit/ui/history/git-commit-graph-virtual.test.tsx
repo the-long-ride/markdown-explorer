@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GitCommitGraph } from '../../../../ui/src/components/History/GitCommitGraph';
 import type { GitRepositoryCommit } from '../../../../ui/src/history/contracts';
+import { ACTION_NOTICE_EVENT } from '../../../../ui/src/utils/actionNotice';
 
 function makeCommits(count: number): GitRepositoryCommit[] {
   const oids = Array.from({ length: count }, (_, index) => index.toString(16).padStart(40, '0'));
@@ -79,5 +80,30 @@ describe('GitCommitGraph virtualization', () => {
     expect(card).not.toBeInTheDocument();
     fireEvent.click(node);
     expect(activate).toHaveBeenCalledExactlyOnceWith(commit.oid);
+  });
+
+  it.each(['no clipboard', 'denied', 'copied'])('reports clipboard outcome from the commit menu: %s', async (outcome) => {
+    const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    const writeText = outcome === 'denied' ? vi.fn().mockRejectedValue(new Error('Denied')) : vi.fn().mockResolvedValue(undefined);
+    const notice = vi.fn();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: outcome === 'no clipboard' ? undefined : { writeText } });
+    window.addEventListener(ACTION_NOTICE_EVENT, notice);
+    try {
+      const [commit] = makeCommits(1);
+      render(<div className="sidebar"><GitCommitGraph commits={[commit]} selectedOid={null} headLabel="HEAD" browseLabel="Browse" onActivateRevision={vi.fn()} onReturnToHead={vi.fn()} /></div>);
+      fireEvent.click(screen.getByRole('button', { name: /commit 0/i }));
+      fireEvent.click(screen.getByRole('menuitem', { name: `SHA ${commit.shortOid}` }));
+      if (outcome !== 'no clipboard') expect(writeText).toHaveBeenCalledExactlyOnceWith(commit.oid);
+      await waitFor(() => expect(notice).toHaveBeenCalledWith(expect.objectContaining({
+        detail: {
+          message: outcome === 'copied' ? 'Commit SHA copied' : 'Commit SHA could not be copied',
+          tone: outcome === 'copied' ? 'success' : 'error',
+        },
+      })));
+    } finally {
+      window.removeEventListener(ACTION_NOTICE_EVENT, notice);
+      if (clipboard) Object.defineProperty(navigator, 'clipboard', clipboard);
+      else Reflect.deleteProperty(navigator, 'clipboard');
+    }
   });
 });

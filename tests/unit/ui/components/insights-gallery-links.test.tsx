@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { analyzeDocument } from '../../../../ui/src/insights/analyzeDocument';
@@ -84,6 +84,41 @@ describe('Insights Gallery and Links views', () => {
     expect(offline).toHaveTextContent('…');
     rerender(<GalleryView documents={[doc('remote.md', '![Remote](https://example.test/remote.jpg)')]} labels={labels} probeResource={probeResource} onOpenMedia={onOpenMedia} />);
     expect(probeResource).toHaveBeenCalledTimes(2);
+  });
+
+  it('lists remote video and audio without embedding them, and opens a rendered diagram', async () => {
+    const document = doc('guide.md', [
+      '[Video clip](https://example.test/video.mp4)',
+      '[Audio clip](https://example.test/audio.ogg)',
+      '```mermaid', 'graph TD; Start-->End;', '```',
+    ].join('\n'));
+    const onOpenMedia = vi.fn();
+    const { container } = render(<GalleryView documents={[document]} onOpenMedia={onOpenMedia} />);
+    expect(container.querySelector('video, audio')).toBeNull();
+    expect(screen.getByText('Video clip')).toBeInTheDocument();
+    expect(screen.getByText('Audio clip')).toBeInTheDocument();
+    fireEvent.click(await screen.findByTestId('mermaid-thumbnail-rendered'));
+    expect(onOpenMedia).toHaveBeenLastCalledWith(expect.objectContaining({
+      items: [expect.objectContaining({ type: 'svg', html: expect.stringContaining('mock-svg') })],
+    }));
+    fireEvent.change(screen.getByRole('searchbox', { name: labels.filterMediaPlaceholder }), { target: { value: 'unknown item' } });
+    expect(screen.getByText(labels.noFilteredMedia)).toBeInTheDocument();
+  });
+
+  it('drops obsolete probe results after the document list changes', async () => {
+    const old = doc('guide.md', '![Previous](old.png)');
+    const current = doc('guide.md', '![Current](new.png)');
+    let complete: (value: { status: 'exists'; kind: 'file' }) => void;
+    const probeResource = vi.fn(async (_path: string, target: string) => {
+      if (target === 'old.png') return new Promise<{ status: 'exists'; kind: 'file' }>((resolve) => { complete = resolve; });
+      throw new Error('Unavailable');
+    });
+    const { rerender } = render(<GalleryView documents={[old]} probeResource={probeResource} />);
+    rerender(<GalleryView documents={[current]} probeResource={probeResource} />);
+    await act(async () => complete!({ status: 'exists', kind: 'file' }));
+    rerender(<GalleryView documents={[old]} probeResource={probeResource} />);
+    expect(probeResource.mock.calls.map(([, target]) => target)).toEqual(['old.png', 'new.png', 'old.png']);
+    expect(screen.getByText('old.png')).toBeInTheDocument();
   });
 
   it('distinguishes missing, invalid anchor, outside, dynamic, and unchecked external links and supports position navigation', async () => {

@@ -49,6 +49,16 @@ function renderModal(entries = [entry(0), entry(1), entry(2)], bridge = createBr
 const rowFor = (subject: string) => screen.getByRole('button', { name: new RegExp(subject) });
 
 describe('FileHistoryModal', () => {
+  it('shows an invalid authored date and substitutes the short SHA for a missing subject', async () => {
+    renderModal([entry(0, { subject: '', shortOid: 'a1b2c3d', authoredAt: 'Archived (date unknown)' })]);
+    const row = await screen.findByRole('button', { name: /a1b2c3d.*Archived \(date unknown\)/i });
+    expect(row).toBeVisible();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'a1b2c3d' } });
+    expect(row).toBeVisible();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'does not match' } });
+    expect(row).not.toBeInTheDocument();
+  });
+
   it('opens with the commit list and the latest commit diff in raw inline view', async () => {
     const { client } = renderModal();
 
@@ -320,6 +330,32 @@ describe('FileHistoryModal', () => {
     })));
     fireEvent.doubleClick(split);
     expect(split).toHaveAttribute('aria-valuenow', '50');
+  });
+
+  it('drags the commit list from its left edge, ignores a secondary-button press, and ends on pointer cancellation', async () => {
+    renderModal();
+    await screen.findByText('commit 0');
+    const handle = screen.getByRole('separator', { name: /resize commit list/i });
+    vi.spyOn(handle.parentElement!, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 280, 500));
+    const setPointerCapture = vi.fn();
+    const releasePointerCapture = vi.fn();
+    Object.assign(handle, { setPointerCapture, hasPointerCapture: () => true, releasePointerCapture });
+    const pointer = (type: string, x: number, button = 0) => Object.assign(
+      new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, button }), { pointerId: 3 },
+    );
+    fireEvent(handle, pointer('pointerdown', 380, 2));
+    expect(setPointerCapture).not.toHaveBeenCalled();
+    fireEvent(handle, pointer('pointerdown', 380));
+    expect(handle).toHaveClass('is-dragging');
+    expect(setPointerCapture).toHaveBeenCalledWith(3);
+    fireEvent(handle, pointer('pointermove', 430));
+    expect(handle).toHaveAttribute('aria-valuenow', '330');
+    fireEvent(handle, pointer('pointercancel', 430));
+    expect(handle).not.toHaveClass('is-dragging');
+    expect(document.body).not.toHaveClass('is-file-history-resizing');
+    expect(releasePointerCapture).toHaveBeenCalledWith(3);
+    fireEvent(handle, pointer('pointermove', 480));
+    expect(handle).toHaveAttribute('aria-valuenow', '330');
   });
 
   it('restores a remembered layout within bounds', async () => {

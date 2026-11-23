@@ -145,6 +145,33 @@ describe('MarkdownSourceEditor', () => {
     requestMeasureSpy.mockRestore();
   });
 
+  it('remeasures after a content resize and disconnects the observer on unmount', () => {
+    let notify: ResizeObserverCallback;
+    const observe = vi.fn();
+    const disconnect = vi.fn();
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: ResizeObserverCallback) { notify = callback; }
+      observe = observe;
+      disconnect = disconnect;
+    });
+    const measure = vi.spyOn(EditorView.prototype, 'requestMeasure');
+    try {
+      const { unmount } = renderEditor();
+      expect(observe).toHaveBeenCalledWith(screen.getByRole('textbox', { name: 'Markdown source' }));
+      measure.mockClear();
+      act(() => notify!([], {} as ResizeObserver));
+      expect(measure).toHaveBeenCalled();
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+      measure.mockClear();
+      act(() => notify!([], {} as ResizeObserver));
+      expect(measure).not.toHaveBeenCalled();
+    } finally {
+      measure.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('synchronizes font size and requests measure on external font size event', () => {
     const requestMeasureSpy = vi.spyOn(EditorView.prototype, 'requestMeasure');
     const { container } = renderEditor();
@@ -489,6 +516,33 @@ it('preserves undo and redo history across unmount and remount with the same ses
 
     fireEvent.click(screen.getByText('Cancel'));
     expect(screen.queryByTestId('link-insert-dialog')).toBeNull();
+  });
+
+  it.each([
+    ['Table', 'table-insert-confirm'],
+    ['Link', 'link-insert-confirm'],
+  ])('does not insert a %s from an already open dialog after the document becomes read-only', (button, confirm) => {
+    const { rerender, props } = renderEditor({ value: 'Working draft' });
+    fireEvent.click(screen.getByRole('button', { name: button }));
+    if (button === 'Link') {
+      fireEvent.change(screen.getByTestId('link-insert-url'), { target: { value: 'guide.md' } });
+    }
+    rerender(<MarkdownSourceEditor {...props} disabled />);
+    fireEvent.click(screen.getByTestId(confirm));
+    expect(props.onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'Markdown source' })).toHaveTextContent('Working draft');
+  });
+
+  it('inserts at the end of a line without an extra blank line after the table', () => {
+    const onChange = vi.fn();
+    renderEditor({ value: 'Introduction\nNext section', onChange });
+    const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Markdown source' }))!;
+    act(() => view.dispatch({ selection: { anchor: 'Introduction'.length } }));
+    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+    fireEvent.click(screen.getByTestId('table-insert-confirm'));
+    const source = onChange.mock.lastCall?.[0];
+    expect(source).toMatch(/^Introduction\n\n\|/);
+    expect(source).toMatch(/\|\n\nNext section$/);
   });
 
   it('caps editor sessions to 15 entries and evicts oldest by LRU', async () => {
